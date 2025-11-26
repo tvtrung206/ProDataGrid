@@ -3057,5 +3057,73 @@ namespace Avalonia.Controls
                 inpc.PropertyChanged -= CollectionViewGroup_PropertyChanged;
             }
         }
+
+        private void OnRowHeightChanged(AvaloniaPropertyChangedEventArgs e)
+        {
+            if (!_areHandlersSuspended)
+            {
+                InvalidateRowHeightEstimate();
+                // Re-measure all the rows due to the Height change
+                InvalidateRowsMeasure(invalidateIndividualElements: true);
+                // DataGrid needs to update the layout information and the ScrollBars
+                InvalidateMeasure();
+            }
+        }
+
+        private void OnRowHeaderWidthChanged(AvaloniaPropertyChangedEventArgs e)
+        {
+            if (!_areHandlersSuspended)
+            {
+                EnsureRowHeaderWidth();
+            }
+        }
+
+        private void OnAreRowGroupHeadersFrozenChanged(AvaloniaPropertyChangedEventArgs e)
+        {
+            var value = (bool)e.NewValue;
+            ProcessFrozenColumnCount();
+
+            // Update elements in the RowGroupHeader that were previously frozen
+            if (value)
+            {
+                if (_rowsPresenter != null)
+                {
+                    foreach (Control element in _rowsPresenter.Children)
+                    {
+                        if (element is DataGridRowGroupHeader groupHeader)
+                        {
+                            groupHeader.ClearFrozenStates();
+                        }
+                    }
+                }
+            }
+        }
+
+        protected virtual void OnLoadingRow(DataGridRowEventArgs e)
+        {
+            EventHandler<DataGridRowEventArgs> handler = LoadingRow;
+            if (handler != null)
+            {
+                Debug.Assert(!_loadedRows.Contains(e.Row));
+                _loadedRows.Add(e.Row);
+                LoadingOrUnloadingRow = true;
+                handler(this, e);
+                LoadingOrUnloadingRow = false;
+                Debug.Assert(_loadedRows.Contains(e.Row));
+                _loadedRows.Remove(e.Row);
+            }
+        }
+
+        protected virtual void OnUnloadingRow(DataGridRowEventArgs e)
+        {
+            EventHandler<DataGridRowEventArgs> handler = UnloadingRow;
+            if (handler != null)
+            {
+                LoadingOrUnloadingRow = true;
+                handler(this, e);
+                LoadingOrUnloadingRow = false;
+            }
+        }
+
     }
 }

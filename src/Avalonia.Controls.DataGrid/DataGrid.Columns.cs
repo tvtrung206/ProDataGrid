@@ -1790,6 +1790,65 @@ namespace Avalonia.Controls
             }
         }
 
+
+        private void OnColumnWidthChanged(AvaloniaPropertyChangedEventArgs e)
+        {
+            var value = (DataGridLength)e.NewValue;
+
+            foreach (DataGridColumn column in ColumnsInternal.GetDisplayedColumns())
+            {
+                if (column.InheritsWidth)
+                {
+                    column.SetWidthInternalNoCallback(value);
+                }
+            }
+
+            EnsureHorizontalLayout();
+        }
+
+        private void OnCanUserResizeColumnsChanged(AvaloniaPropertyChangedEventArgs e)
+        {
+            EnsureHorizontalLayout();
+        }
+
+        private void OnMinColumnWidthChanged(AvaloniaPropertyChangedEventArgs e)
+        {
+            if (!_areHandlersSuspended)
+            {
+                double oldValue = (double)e.OldValue;
+                foreach (DataGridColumn column in ColumnsInternal.GetDisplayedColumns())
+                {
+                    OnColumnMinWidthChanged(column, Math.Max(column.MinWidth, oldValue));
+                }
+            }
+        }
+
+        private void OnMaxColumnWidthChanged(AvaloniaPropertyChangedEventArgs e)
+        {
+            if (!_areHandlersSuspended)
+            {
+                var oldValue = (double)e.OldValue;
+                foreach (DataGridColumn column in ColumnsInternal.GetDisplayedColumns())
+                {
+                    OnColumnMaxWidthChanged(column, Math.Min(column.MaxWidth, oldValue));
+                }
+            }
+        }
+
+        private void OnFrozenColumnCountChanged(AvaloniaPropertyChangedEventArgs e)
+        {
+            ProcessFrozenColumnCount();
+        }
+
+        private void ProcessFrozenColumnCount()
+        {
+            CorrectColumnFrozenStates();
+            ComputeScrollBarsLayout();
+
+            InvalidateColumnHeadersArrange();
+            InvalidateCellsArrange();
+        }
+
     }
 
 }
