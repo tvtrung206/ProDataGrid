@@ -11,7 +11,7 @@
 
 `ProDataGrid` is a hard fork of the original `Avalonia.Controls.DataGrid` control for [Avalonia](https://github.com/AvaloniaUI/Avalonia).
 
-It displays repeating data in a customizable grid with enhanced features and improved performance.
+It displays repeating data in a customizable grid with enhanced features and improved performance, and is maintained as an independent NuGet package to evolve faster than the in-box control.
 
 ## Features
 
@@ -23,6 +23,26 @@ It displays repeating data in a customizable grid with enhanced features and imp
 | Editing & navigation | In-place editing, commit/cancel, keyboard navigation, clipboard copy modes, current cell tracking. |
 | Data operations | Sorting, grouping, paging, currency management via `DataGridCollectionView` family. |
 | Styling & theming | Fluent/Simple v2 ScrollViewer templates, row/cell styling, template overrides, theme resources, focus/selection visuals. |
+
+## Supported targets
+
+- .NET 6.0 and 10.0; .NET Standard 2.0 for compatibility.
+- Avalonia 11.3.x (see `Directory.Packages.props`).
+- Windows, Linux, and macOS (via Avalonia’s cross-platform stack).
+
+## Installation
+
+Install from NuGet:
+
+```sh
+dotnet add package ProDataGrid
+```
+
+Or add a package reference:
+
+```xml
+<PackageReference Include="ProDataGrid" Version="..." />
+```
 
 ## Usage
 
@@ -133,6 +153,11 @@ Override the estimator per grid:
 - When handling wheel/gesture input, rely on the built-in logic (it routes through `UpdateScroll` when `UseLogicalScrollable` is true).
 - For theme v2, ensure frozen columns and header separators are kept in sync with horizontal offset (the supplied templates already do this).
 - If you depend on stable scroll positioning with dynamic row heights, choose the estimator that matches your data set and reset it after data source changes if needed.
+
+## Samples
+
+- The sample app (`src/DataGridSample`) includes pages for pixel-perfect columns, frozen columns, large datasets, and variable-height scenarios (`Pages/*Page.axaml`).
+- Run it locally with `dotnet run --project src/DataGridSample/DataGridSample.csproj` to see templates and estimators in action.
 
 ## License
 
