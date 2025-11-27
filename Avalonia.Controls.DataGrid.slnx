@@ -1,0 +1,20 @@
+<Solution>
+    <Folder Name="/build/">
+        <File Path="build/SharedVersion.props"/>
+        <File Path="Directory.Build.props"/>
+        <File Path="global.json"/>
+    </Folder>
+    <Folder Name="/docs/">
+        <File Path="licence.md"/>
+        <File Path="readme.md"/>
+    </Folder>
+    <Folder Name="/src/">
+        <Project Path="src/Avalonia.Controls.DataGrid/Avalonia.Controls.DataGrid.csproj"/>
+    </Folder>
+    <Folder Name="/tests/">
+        <Project Path="src/Avalonia.Controls.DataGrid.UnitTests/Avalonia.Controls.DataGrid.UnitTests.csproj"/>
+    </Folder>
+    <Folder Name="/samples/">
+        <Project Path="src/DataGridSample/DataGridSample.csproj"/>
+    </Folder>
+</Solution>
