@@ -14,6 +14,9 @@
     <TabItem Header="Variable Height Scrolling">
       <local:VariableHeightPage />
     </TabItem>
+    <TabItem Header="Large Variable Height">
+      <local:LargeVariableHeightPage />
+    </TabItem>
     <TabItem Header="Pixel Columns">
       <local:PixelColumnsPage />
     </TabItem>
