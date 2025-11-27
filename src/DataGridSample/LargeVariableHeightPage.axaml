@@ -1,0 +1,62 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:models="clr-namespace:DataGridSample.Models"
+             xmlns:viewModels="clr-namespace:DataGridSample.ViewModels"
+             xmlns:dgrid="clr-namespace:Avalonia.Controls;assembly=Avalonia.Controls.DataGrid"
+             x:Class="DataGridSample.LargeVariableHeightPage"
+             x:DataType="viewModels:LargeVariableHeightViewModel">
+  <UserControl.DataContext>
+    <viewModels:LargeVariableHeightViewModel/>
+  </UserControl.DataContext>
+
+  <DataGrid ItemsSource="{Binding Items}"
+            UseLogicalScrollable="True"
+            IsReadOnly="True"
+            HeadersVisibility="All"
+            CanUserResizeColumns="True"
+            CanUserReorderColumns="True"
+            CanUserSortColumns="True"
+            RowBackground="#08000000"
+            GridLinesVisibility="Horizontal">
+    <DataGrid.RowHeightEstimator>
+      <dgrid:AdvancedRowHeightEstimator/>
+    </DataGrid.RowHeightEstimator>
+    <DataGrid.Columns>
+      <DataGridTextColumn Header="ID"
+                          Binding="{Binding Id}"
+                          Width="80"
+                          x:DataType="models:VariableHeightItem" />
+      <DataGridTextColumn Header="Title"
+                          Binding="{Binding Title}"
+                          Width="140"
+                          x:DataType="models:VariableHeightItem" />
+      <DataGridTextColumn Header="Lines"
+                          Binding="{Binding LineCount}"
+                          Width="80"
+                          x:DataType="models:VariableHeightItem" />
+      <DataGridTextColumn Header="Est. Height"
+                          Binding="{Binding ExpectedHeight, StringFormat='{}{0:F0}'}"
+                          Width="100"
+                          x:DataType="models:VariableHeightItem" />
+      <DataGridTemplateColumn Header="Description (Variable Height)"
+                              Width="*"
+                              x:DataType="models:VariableHeightItem">
+        <DataGridTemplateColumn.CellTemplate>
+          <DataTemplate x:DataType="models:VariableHeightItem">
+            <Border Padding="4" Background="Transparent">
+              <TextBlock Text="{Binding Description}"
+                         TextWrapping="Wrap"
+                         VerticalAlignment="Top"/>
+            </Border>
+          </DataTemplate>
+        </DataGridTemplateColumn.CellTemplate>
+      </DataGridTemplateColumn>
+    </DataGrid.Columns>
+
+    <DataGrid.Styles>
+      <Style Selector="DataGridRow">
+        <Setter Property="Header" Value="{Binding $self.Index}"/>
+      </Style>
+    </DataGrid.Styles>
+  </DataGrid>
+</UserControl>
