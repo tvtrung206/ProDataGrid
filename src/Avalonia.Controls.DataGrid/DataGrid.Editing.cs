@@ -714,11 +714,16 @@ namespace Avalonia.Controls
         //TODO TabStop
         private bool FocusEditingCell(bool setFocus)
         {
+            if (_editingColumnIndex == -1 || EditingRow == null)
+            {
+                return false;
+            }
+
             Debug.Assert(CurrentColumnIndex >= 0);
             Debug.Assert(CurrentColumnIndex < ColumnsItemsInternal.Count);
             Debug.Assert(CurrentSlot >= -1);
             Debug.Assert(CurrentSlot < SlotCount);
-            Debug.Assert(EditingRow != null && EditingRow.Slot == CurrentSlot);
+            Debug.Assert(EditingRow.Slot == CurrentSlot);
             Debug.Assert(_editingColumnIndex != -1);
 
             //IsTabStop = false;
