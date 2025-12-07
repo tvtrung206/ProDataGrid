@@ -89,14 +89,20 @@ public class SelectionModelStabilityViewModel : ObservableObject
 
     private void ShuffleItems()
     {
-        var shuffled = Items.OrderBy(_ => _random.Next()).ToList();
-        Reorder(shuffled);
+        WithSelectionPreserved(() =>
+        {
+            var shuffled = Items.OrderBy(_ => _random.Next()).ToList();
+            Reorder(shuffled);
+        });
     }
 
     private void SortByName()
     {
-        var sorted = Items.OrderBy(x => x.Name).ToList();
-        Reorder(sorted);
+        WithSelectionPreserved(() =>
+        {
+            var sorted = Items.OrderBy(x => x.Name).ToList();
+            Reorder(sorted);
+        });
     }
 
     private void AddAtTop()
@@ -144,6 +150,34 @@ public class SelectionModelStabilityViewModel : ObservableObject
             {
                 Items.Move(currentIndex, targetIndex);
             }
+        }
+    }
+
+    private void WithSelectionPreserved(Action mutate)
+    {
+        var snapshot = SelectionModel.SelectedItems.OfType<Country>().ToList();
+
+        mutate();
+
+        _syncingSelection = true;
+        try
+        {
+            using (SelectionModel.BatchUpdate())
+            {
+                SelectionModel.Clear();
+                foreach (var item in snapshot)
+                {
+                    var index = Items.IndexOf(item);
+                    if (index >= 0)
+                    {
+                        SelectionModel.Select(index);
+                    }
+                }
+            }
+        }
+        finally
+        {
+            _syncingSelection = false;
         }
     }
 }
