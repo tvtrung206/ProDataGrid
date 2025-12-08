@@ -101,6 +101,9 @@
     <TabItem Header="DataTable">
       <local:DataTablePage />
     </TabItem>
+    <TabItem Header="Sorting Model">
+      <pages:SortingModelPage />
+    </TabItem>
   </TabControl>
 
 </Window>
