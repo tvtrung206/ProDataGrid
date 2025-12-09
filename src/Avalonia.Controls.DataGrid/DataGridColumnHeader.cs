@@ -14,20 +14,24 @@ using Avalonia.Collections;
 using Avalonia.Controls.Automation.Peers;
 using Avalonia.Controls.Metadata;
 using Avalonia.Controls.Mixins;
+using Avalonia.Controls.Primitives;
 using Avalonia.Controls.Shapes;
 using Avalonia.Controls.Templates;
 using Avalonia.Controls.Utils;
 using Avalonia.Data;
 using Avalonia.Input;
+using Avalonia.Interactivity;
 using Avalonia.Media;
+using Avalonia.Styling;
 using Avalonia.Utilities;
+using Button = Avalonia.Controls.Button;
 
 namespace Avalonia.Controls
 {
     /// <summary>
     /// Represents an individual <see cref="T:Avalonia.Controls.DataGrid" /> column header.
     /// </summary>
-    [PseudoClasses(":dragIndicator", ":pressed", ":sortascending", ":sortdescending")]
+    [PseudoClasses(":dragIndicator", ":pressed", ":sortascending", ":sortdescending", ":filtered")]
 #if !DATAGRID_INTERNAL
     public
 #endif
@@ -71,15 +75,44 @@ namespace Avalonia.Controls
                 nameof(AreSeparatorsVisible),
                 defaultValue: true);
 
+        public static readonly StyledProperty<ControlTheme> FilterThemeProperty =
+            AvaloniaProperty.Register<DataGridColumnHeader, ControlTheme>(nameof(FilterTheme));
+
+        public static readonly StyledProperty<FlyoutBase> FilterFlyoutProperty =
+            AvaloniaProperty.Register<DataGridColumnHeader, FlyoutBase>(nameof(FilterFlyout));
+
+        public static readonly StyledProperty<bool> ShowFilterButtonProperty =
+            AvaloniaProperty.Register<DataGridColumnHeader, bool>(nameof(ShowFilterButton));
+
         public bool AreSeparatorsVisible
         {
             get { return GetValue(AreSeparatorsVisibleProperty); }
             set { SetValue(AreSeparatorsVisibleProperty, value); }
         }
 
+        public ControlTheme FilterTheme
+        {
+            get { return GetValue(FilterThemeProperty); }
+            set { SetValue(FilterThemeProperty, value); }
+        }
+
+        public FlyoutBase FilterFlyout
+        {
+            get { return GetValue(FilterFlyoutProperty); }
+            set { SetValue(FilterFlyoutProperty, value); }
+        }
+
+        public bool ShowFilterButton
+        {
+            get { return GetValue(ShowFilterButtonProperty); }
+            set { SetValue(ShowFilterButtonProperty, value); }
+        }
+
         static DataGridColumnHeader()
         {
             AreSeparatorsVisibleProperty.Changed.AddClassHandler<DataGridColumnHeader>((x, e) => x.OnAreSeparatorsVisibleChanged(e));
+            FilterFlyoutProperty.Changed.AddClassHandler<DataGridColumnHeader>((x, e) => x.OnFilterFlyoutChanged(e));
+            ShowFilterButtonProperty.Changed.AddClassHandler<DataGridColumnHeader>((x, e) => x.OnShowFilterButtonChanged(e));
             PressedMixin.Attach<DataGridColumnHeader>();
             IsTabStopProperty.OverrideDefaultValue<DataGridColumnHeader>(false);
             AutomationProperties.IsOffscreenBehaviorProperty.OverrideDefaultValue<DataGridColumnHeader>(IsOffscreenBehavior.FromClip);
@@ -97,6 +130,8 @@ namespace Avalonia.Controls
             PointerEntered += DataGridColumnHeader_PointerEntered;
             PointerExited += DataGridColumnHeader_PointerExited;
         }
+
+        private Button _filterButton;
 
         protected override AutomationPeer OnCreateAutomationPeer()
         {
@@ -116,6 +151,25 @@ namespace Avalonia.Controls
                 {
                     UpdateSeparatorVisibility(null);
                 }
+            }
+        }
+
+        protected override void OnApplyTemplate(TemplateAppliedEventArgs e)
+        {
+            base.OnApplyTemplate(e);
+
+            if (_filterButton != null)
+            {
+                _filterButton.Click -= FilterButton_Click;
+            }
+
+            _filterButton = e.NameScope.Find<Button>("PART_FilterButton");
+
+            if (_filterButton != null)
+            {
+                _filterButton.Click += FilterButton_Click;
+                ApplyFilterFlyout();
+                UpdateFilterButtonVisibility();
             }
         }
 
@@ -187,6 +241,58 @@ namespace Avalonia.Controls
                 CurrentSortingState == ListSortDirection.Ascending);
             PseudoClasses.Set(":sortdescending",
                 CurrentSortingState == ListSortDirection.Descending);
+            PseudoClasses.Set(":filtered",
+                OwningGrid?.GetFilteringDescriptorForColumn(OwningColumn) != null);
+        }
+
+        private void FilterButton_Click(object sender, RoutedEventArgs e)
+        {
+            var flyout = FilterFlyout;
+            if (_filterButton != null && flyout != null)
+            {
+                FlyoutBase.SetAttachedFlyout(_filterButton, flyout);
+                FlyoutBase.ShowAttachedFlyout(_filterButton);
+            }
+        }
+
+        private void ApplyFilterFlyout()
+        {
+            if (_filterButton == null)
+            {
+                return;
+            }
+
+            var flyout = FilterFlyout;
+            if (flyout != null)
+            {
+                FlyoutBase.SetAttachedFlyout(_filterButton, flyout);
+            }
+        }
+
+        private void UpdateFilterButtonVisibility()
+        {
+            if (_filterButton == null)
+            {
+                return;
+            }
+
+            _filterButton.IsVisible = ShowFilterButton;
+        }
+
+        private void OnFilterFlyoutChanged(AvaloniaPropertyChangedEventArgs e)
+        {
+            if (e.NewValue is FlyoutBase && !ShowFilterButton)
+            {
+                SetValue(ShowFilterButtonProperty, true);
+            }
+
+            ApplyFilterFlyout();
+            UpdateFilterButtonVisibility();
+        }
+
+        private void OnShowFilterButtonChanged(AvaloniaPropertyChangedEventArgs e)
+        {
+            UpdateFilterButtonVisibility();
         }
 
         internal void UpdateSeparatorVisibility(DataGridColumn lastVisibleColumn)

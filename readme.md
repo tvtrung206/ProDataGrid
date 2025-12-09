@@ -286,6 +286,81 @@ grid.SortingAdapterFactory = adapterFactory;
 
 Header clicks update the `SortingModel`; the custom adapter overrides `TryApplyModelToView`, so instead of touching `SortDescriptions` it rebuilds a `SortExpressionComparer` chain and pushes it to the DynamicData `Sort` operator. The grid still shows glyphs/state from the `SortingModel`, but the actual sort happens in the DynamicData pipeline.
 
+## Filtering model integration
+
+Filtering is also driven by a pluggable model/adapter pair so header filters stay in sync with UI state and selection remains stable when rows are filtered.
+
+- Bind `FilteringModel` or set `FilteringModelFactory`; `OwnsViewFilter` switches between authoritative mode (adapter owns `Filter`) and observer mode (adapter reconciles to an external `Filter`), with `FilteringChanging/Changed` and `BeginUpdate/EndUpdate/DeferRefresh` batching a single refresh.
+- Swap adapters via `FilteringAdapterFactory` (DynamicData/server-side) that override `TryApplyModelToView`; adapter lifecycle hooks mirror sorting (`AttachLifecycle`) so selection/currency snapshots are restored after filters apply.
+- Per-column predicate factories avoid reflection: set `DataGridColumnFilter.PredicateFactory` to return a typed predicate/parser for that column; descriptors carry culture/string comparison.
+- Adapter guarantees: descriptor → predicate for string/between/in/custom cases, duplicate guards, observer-mode reconciliation, and selection stability are covered by unit tests.
+- Shared header filter resources (`DataGridFilterResources.xaml`) provide a reusable filter button glyph/pseudo-class and default editors (text/number/date/enum) that can be consumed across themes and samples.
+
+```xml
+<DataGrid ItemsSource="{Binding Items}"
+          FilteringModel="{Binding MyFilteringModel}">
+  <DataGrid.Columns>
+    <DataGridTextColumn x:Name="NameColumn"
+                        Header="Name"
+                        Binding="{Binding Name}"
+                        SortMemberPath="Name" />
+    <DataGridTextColumn x:Name="ScoreColumn"
+                        Header="Score"
+                        Binding="{Binding Score}"
+                        SortMemberPath="Score" />
+  </DataGrid.Columns>
+</DataGrid>
+```
+
+```csharp
+public IFilteringModel MyFilteringModel { get; } = new FilteringModel { OwnsViewFilter = true };
+
+public void ApplyFilters()
+{
+    MyFilteringModel.Apply(new[]
+    {
+        new FilteringDescriptor("Score", FilteringOperator.GreaterThanOrEqual, nameof(Item.Score), value: 5),
+        new FilteringDescriptor("Name", FilteringOperator.Contains, nameof(Item.Name), value: "al", stringComparison: StringComparison.OrdinalIgnoreCase)
+    });
+}
+
+// Optional: typed predicate, no reflection
+DataGridColumnFilter.SetPredicateFactory(ScoreColumn, descriptor =>
+    o => ((Item)o).Score >= 5);
+```
+
+For DynamicData/server-side filtering, supply a custom `FilteringAdapterFactory` that overrides `TryApplyModelToView` and pushes a composed predicate (or query object) upstream; the grid still drives glyphs and descriptors locally while selection stays intact.
+
+### DynamicData integration (filtering)
+
+Keep filtering upstream in a DynamicData pipeline while the grid shows filter glyphs from `FilteringModel`:
+
+```csharp
+var source = new SourceList<Deployment>();
+source.AddRange(Deployment.CreateSeed());
+
+var adapterFactory = new DynamicDataFilteringAdapterFactory(log => Debug.WriteLine(log));
+var filterSubject = new BehaviorSubject<Func<Deployment, bool>>(adapterFactory.FilterPredicate);
+
+source.Connect()
+      .Filter(filterSubject) // DynamicData performs the filtering
+      .Bind(out _view)
+      .Subscribe();
+
+var filteringModel = new FilteringModel { OwnsViewFilter = true };
+
+filteringModel.FilteringChanged += (_, e) =>
+{
+    adapterFactory.UpdateFilter(e.NewDescriptors);
+    filterSubject.OnNext(adapterFactory.FilterPredicate);
+};
+
+grid.FilteringModel = filteringModel;
+grid.FilteringAdapterFactory = adapterFactory; // bypasses DataGridCollectionView.Filter churn
+```
+
+If an external consumer owns `DataGridCollectionView.Filter`, set `OwnsViewFilter=false` and the adapter reconciles descriptors to that external filter (observer mode) while keeping glyphs in sync.
+
 ## Samples
 
 - The sample app (`src/DataGridSample`) includes pages for pixel-perfect columns, frozen columns, large datasets, and variable-height scenarios (`Pages/*Page.axaml`).

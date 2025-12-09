@@ -186,6 +186,21 @@ namespace Avalonia.Controls
         }
 
         /// <summary>
+        /// Identifies the <see cref="ColumnHeaderFilterTheme"/> dependency property.
+        /// </summary>
+        public static readonly StyledProperty<ControlTheme> ColumnHeaderFilterThemeProperty =
+            AvaloniaProperty.Register<DataGrid, ControlTheme>(nameof(ColumnHeaderFilterTheme));
+
+        /// <summary>
+        /// Gets or sets the theme applied to column header filter buttons.
+        /// </summary>
+        public ControlTheme ColumnHeaderFilterTheme
+        {
+            get { return GetValue(ColumnHeaderFilterThemeProperty); }
+            set { SetValue(ColumnHeaderFilterThemeProperty, value); }
+        }
+
+        /// <summary>
         /// Identifies the <see cref="RowGroupTheme"/> dependency property.
         /// </summary>
         public static readonly StyledProperty<ControlTheme> RowGroupThemeProperty =
@@ -549,6 +564,17 @@ namespace Avalonia.Controls
                 nameof(SortingModel),
                 o => o.SortingModel,
                 (o, v) => o.SortingModel = v,
+                defaultBindingMode: BindingMode.TwoWay);
+
+        /// <summary>
+        /// Gets or sets the filtering model that drives column filtering. If not provided, a default
+        /// filtering model is created.
+        /// </summary>
+        public static readonly DirectProperty<DataGrid, Avalonia.Controls.DataGridFiltering.IFilteringModel> FilteringModelProperty =
+            AvaloniaProperty.RegisterDirect<DataGrid, Avalonia.Controls.DataGridFiltering.IFilteringModel>(
+                nameof(FilteringModel),
+                o => o.FilteringModel,
+                (o, v) => o.FilteringModel = v,
                 defaultBindingMode: BindingMode.TwoWay);
 
         public static readonly StyledProperty<DataGridClipboardCopyMode> ClipboardCopyModeProperty =

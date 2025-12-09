@@ -11,6 +11,7 @@ using System.Diagnostics;
 using System.Linq;
 using Avalonia.Collections;
 using Avalonia.Controls.Templates;
+using Avalonia.Controls.Primitives;
 using Avalonia.Controls.Utils;
 using Avalonia.Data;
 using Avalonia.Input;
@@ -41,8 +42,11 @@ namespace Avalonia.Controls
         private ICellEditBinding _editBinding;
         private IBinding _clipboardContentBinding;
         private ControlTheme _cellTheme;
+        private ControlTheme _filterTheme;
         private Classes _cellStyleClasses;
         private bool _setWidthInternalNoCallback;
+        private bool _showFilterButton;
+        private FlyoutBase _filterFlyout;
 
         /// <summary>
         /// Occurs when the pointer is pressed over the column's header
@@ -454,6 +458,96 @@ namespace Avalonia.Controls
         {
             get { return _cellTheme; }
             set { SetAndRaise(CellThemeProperty, ref _cellTheme, value); }
+        }
+
+        /// <summary>
+        /// Backing field for FilterTheme property.
+        /// </summary>
+        public static readonly DirectProperty<DataGridColumn, ControlTheme> FilterThemeProperty =
+            AvaloniaProperty.RegisterDirect<DataGridColumn, ControlTheme>(
+                nameof(FilterTheme),
+                o => o.FilterTheme,
+                (o, v) => o.FilterTheme = v);
+
+        /// <summary>
+        /// Gets or sets the theme applied to the filter button inside the column header.
+        /// </summary>
+        public ControlTheme FilterTheme
+        {
+            get { return _filterTheme; }
+            set
+            {
+                if (SetAndRaise(FilterThemeProperty, ref _filterTheme, value))
+                {
+                    if (_headerCell != null)
+                    {
+                        _headerCell.FilterTheme = value ?? OwningGrid?.ColumnHeaderFilterTheme;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Backing field for ShowFilterButton property.
+        /// </summary>
+        public static readonly DirectProperty<DataGridColumn, bool> ShowFilterButtonProperty =
+            AvaloniaProperty.RegisterDirect<DataGridColumn, bool>(
+                nameof(ShowFilterButton),
+                o => o.ShowFilterButton,
+                (o, v) => o.ShowFilterButton = v);
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the column header should display the filter button.
+        /// </summary>
+        public bool ShowFilterButton
+        {
+            get { return _showFilterButton; }
+            set
+            {
+                if (SetAndRaise(ShowFilterButtonProperty, ref _showFilterButton, value))
+                {
+                    if (_headerCell != null)
+                    {
+                        _headerCell.ShowFilterButton = value || _filterFlyout != null;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Backing field for FilterFlyout property.
+        /// </summary>
+        public static readonly DirectProperty<DataGridColumn, FlyoutBase> FilterFlyoutProperty =
+            AvaloniaProperty.RegisterDirect<DataGridColumn, FlyoutBase>(
+                nameof(FilterFlyout),
+                o => o.FilterFlyout,
+                (o, v) => o.FilterFlyout = v);
+
+        /// <summary>
+        /// Gets or sets the flyout that will be attached to the column header filter button.
+        /// </summary>
+        public FlyoutBase FilterFlyout
+        {
+            get { return _filterFlyout; }
+            set
+            {
+                if (SetAndRaise(FilterFlyoutProperty, ref _filterFlyout, value))
+                {
+                    if (value != null && !_showFilterButton)
+                    {
+                        ShowFilterButton = true;
+                    }
+
+                    if (_headerCell != null)
+                    {
+                        _headerCell.FilterFlyout = value;
+                        if (value != null)
+                        {
+                            _headerCell.ShowFilterButton = true;
+                        }
+                    }
+                }
+            }
         }
 
         /// <summary>

@@ -86,6 +86,7 @@ namespace Avalonia.Controls
                 }
 
                 UpdateSortingAdapterView();
+                UpdateFilteringAdapterView();
 
                 if (DataConnection.DataSource != null)
                 {

@@ -138,6 +138,15 @@ namespace Avalonia.Controls
                 result.SetValue(StyledElement.ThemeProperty, columnTheme, BindingPriority.Template);
             }
 
+            var filterTheme = FilterTheme ?? OwningGrid?.ColumnHeaderFilterTheme;
+            if (filterTheme != null)
+            {
+                result.FilterTheme = filterTheme;
+            }
+
+            result.FilterFlyout = FilterFlyout;
+            result.ShowFilterButton = ShowFilterButton || FilterFlyout != null;
+
             result.PointerPressed += (s, e) => { HeaderPointerPressed?.Invoke(this, e); };
             result.PointerReleased += (s, e) => { HeaderPointerReleased?.Invoke(this, e); };
             return result;

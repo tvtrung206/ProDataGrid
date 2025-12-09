@@ -2,9 +2,44 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:collections="using:Avalonia.Collections">
   <Styles.Resources>
-    <Thickness x:Key="DataGridTextColumnCellTextBlockMargin">4</Thickness>
-    <ControlTheme x:Key="DataGridCellTextBlockTheme"
-                  TargetType="TextBlock">
+    <ResourceDictionary>
+      <Thickness x:Key="DataGridTextColumnCellTextBlockMargin">4</Thickness>
+      <!-- Funnel icon, centered and balanced for 16px: translated MDL2-style geometry -->
+      <StreamGeometry x:Key="DataGridFilterIconPath">M256 128 L1792 128 L1248 832 L1248 1664 L800 1408 L800 832 Z</StreamGeometry>
+      <StreamGeometry x:Key="DataGridFilterIconFilledPath">M256 128 L1792 128 L1248 832 L1248 1664 L800 1408 L800 832 Z</StreamGeometry>
+      <ControlTheme x:Key="DataGridFilterButtonTheme" TargetType="Button">
+      <Setter Property="Width" Value="22" />
+      <Setter Property="Height" Value="22" />
+      <Setter Property="Padding" Value="0" />
+      <Setter Property="HorizontalAlignment" Value="Center" />
+      <Setter Property="VerticalAlignment" Value="Center" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="Template">
+        <ControlTemplate>
+          <Border Background="{TemplateBinding Background}"
+                  BorderBrush="{TemplateBinding BorderBrush}"
+                  BorderThickness="{TemplateBinding BorderThickness}"
+                  CornerRadius="{TemplateBinding CornerRadius}">
+            <Path x:Name="FilterGlyph"
+                  Data="{DynamicResource DataGridFilterIconPath}"
+                  Width="12"
+                  Height="12"
+                  Stretch="Uniform"
+                  Fill="Transparent"
+                  Stroke="{TemplateBinding Foreground}"
+                  StrokeThickness="1.2"
+                  HorizontalAlignment="Center"
+                  VerticalAlignment="Center" />
+          </Border>
+        </ControlTemplate>
+      </Setter>
+    </ControlTheme>
+      <ResourceDictionary.MergedDictionaries>
+        <ResourceInclude Source="avares://Avalonia.Controls.DataGrid/Themes/DataGridFilterResources.xaml" />
+      </ResourceDictionary.MergedDictionaries>
+      <ControlTheme x:Key="DataGridCellTextBlockTheme"
+                    TargetType="TextBlock">
       <Setter Property="Margin" Value="{DynamicResource DataGridTextColumnCellTextBlockMargin}" />
       <Setter Property="VerticalAlignment" Value="Center" />
     </ControlTheme>
@@ -53,6 +88,7 @@
       <Setter Property="SeparatorBrush" Value="{DynamicResource ThemeControlLowColor}" />
       <Setter Property="Padding" Value="4" />
       <Setter Property="Background" Value="{DynamicResource ThemeControlMidBrush}" />
+      <Setter Property="FilterTheme" Value="{StaticResource DataGridFilterButtonTheme}" />
       <Setter Property="Template">
         <ControlTemplate>
           <Border x:Name="HeaderBorder"
@@ -70,16 +106,25 @@
                                   Content="{TemplateBinding Content}"
                                   ContentTemplate="{TemplateBinding ContentTemplate}" />
 
-                <Path Name="SortIcon"
-                      Grid.Column="1"
-                      Width="8"
-                      Margin="4,0,0,0"
-                      HorizontalAlignment="Left"
-                      VerticalAlignment="Center"
-                      Data="F1 M -5.215,6.099L 5.215,6.099L 0,0L -5.215,6.099 Z "
-                      Fill="{TemplateBinding Foreground}"
-                      IsVisible="False"
-                      Stretch="Uniform" />
+                <StackPanel Grid.Column="1"
+                            Orientation="Horizontal"
+                            Spacing="4"
+                            HorizontalAlignment="Left"
+                            VerticalAlignment="Center">
+                  <Button Name="PART_FilterButton"
+                          Theme="{TemplateBinding FilterTheme}"
+                          FlyoutBase.AttachedFlyout="{TemplateBinding FilterFlyout}"
+                          IsVisible="{TemplateBinding ShowFilterButton}" />
+                  <Path Name="SortIcon"
+                        Margin="0,0,4,0"
+                        Width="8"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Center"
+                        Data="F1 M -5.215,6.099L 5.215,6.099L 0,0L -5.215,6.099 Z "
+                        Fill="{TemplateBinding Foreground}"
+                        IsVisible="False"
+                        Stretch="Uniform" />
+                </StackPanel>
 
               </Grid>
 
@@ -122,6 +167,13 @@
             <ScaleTransform ScaleX="1" ScaleY="-1" />
           </Setter.Value>
         </Setter>
+      </Style>
+
+      <Style Selector="^:filtered /template/ Button#PART_FilterButton Path#FilterGlyph">
+        <Setter Property="Data" Value="{DynamicResource DataGridFilterIconFilledPath}" />
+        <Setter Property="Fill" Value="{TemplateBinding Foreground}" />
+        <Setter Property="Stroke" Value="{TemplateBinding Foreground}" />
+        <Setter Property="StrokeThickness" Value="1.2" />
       </Style>
     </ControlTheme>
 
@@ -372,5 +424,6 @@
         </ControlTemplate>
       </Setter>
     </ControlTheme>
+    </ResourceDictionary>
   </Styles.Resources>
 </Styles>

@@ -10,11 +10,13 @@ using Avalonia.Controls.Templates;
 using Avalonia.Data;
 using Avalonia.Controls.DataGridSelection;
 using Avalonia.Controls.Selection;
+using Avalonia.Controls.DataGridFiltering;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.VisualTree;
 using Avalonia.Utilities;
+using Avalonia.Threading;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -119,6 +121,10 @@ namespace Avalonia.Controls
         private Avalonia.Controls.DataGridSorting.DataGridSortingAdapter _sortingAdapter;
         private Avalonia.Controls.DataGridSorting.IDataGridSortingModelFactory _sortingModelFactory;
         private Avalonia.Controls.DataGridSorting.IDataGridSortingAdapterFactory _sortingAdapterFactory;
+        private Avalonia.Controls.DataGridFiltering.IFilteringModel _filteringModel;
+        private Avalonia.Controls.DataGridFiltering.DataGridFilteringAdapter _filteringAdapter;
+        private Avalonia.Controls.DataGridFiltering.IDataGridFilteringModelFactory _filteringModelFactory;
+        private Avalonia.Controls.DataGridFiltering.IDataGridFilteringAdapterFactory _filteringAdapterFactory;
 
         // Nth row of rows 0..N that make up the RowHeightEstimate
         private int _lastEstimatedRow;
@@ -219,6 +225,7 @@ namespace Avalonia.Controls
             _collapsedSlotsTable = new IndexToValueTable<bool>();
 
             SetSortingModel(CreateSortingModel(), initializing: true);
+            SetFilteringModel(CreateFilteringModel(), initializing: true);
 
             AnchorSlot = -1;
             _lastEstimatedRow = -1;
@@ -902,6 +909,11 @@ namespace Avalonia.Controls
             return _sortingModelFactory?.Create() ?? new SortingModel();
         }
 
+        protected virtual Avalonia.Controls.DataGridFiltering.IFilteringModel CreateFilteringModel()
+        {
+            return _filteringModelFactory?.Create() ?? new Avalonia.Controls.DataGridFiltering.FilteringModel();
+        }
+
         /// <summary>
         /// Optional factory used when creating the default sorting model.
         /// </summary>
@@ -912,6 +924,15 @@ namespace Avalonia.Controls
         }
 
         /// <summary>
+        /// Optional factory used when creating the default filtering model.
+        /// </summary>
+        public Avalonia.Controls.DataGridFiltering.IDataGridFilteringModelFactory FilteringModelFactory
+        {
+            get => _filteringModelFactory;
+            set => _filteringModelFactory = value;
+        }
+
+        /// <summary>
         /// Optional factory for creating the sorting adapter. Use this to plug in a custom adapter
         /// (e.g., DynamicData/server-side sorting) without subclassing <see cref="DataGrid"/>.
         /// </summary>
@@ -919,6 +940,16 @@ namespace Avalonia.Controls
         {
             get => _sortingAdapterFactory;
             set => _sortingAdapterFactory = value;
+        }
+
+        /// <summary>
+        /// Optional factory for creating the filtering adapter. Use this to plug in a custom adapter
+        /// (e.g., DynamicData/server-side filtering) without subclassing <see cref="DataGrid"/>.
+        /// </summary>
+        public Avalonia.Controls.DataGridFiltering.IDataGridFilteringAdapterFactory FilteringAdapterFactory
+        {
+            get => _filteringAdapterFactory;
+            set => _filteringAdapterFactory = value;
         }
 
         /// <summary>
@@ -977,6 +1008,15 @@ namespace Avalonia.Controls
         }
 
         /// <summary>
+        /// Gets or sets the filtering model that drives column filtering.
+        /// </summary>
+        public Avalonia.Controls.DataGridFiltering.IFilteringModel FilteringModel
+        {
+            get => _filteringModel;
+            set => SetFilteringModel(value);
+        }
+
+        /// <summary>
         /// Creates the adapter that connects the sorting model to the grid.
         /// </summary>
         /// <param name="model">Sorting model instance.</param>
@@ -996,6 +1036,29 @@ namespace Avalonia.Controls
             }
 
             adapter.AttachLifecycle(OnSortingAdapterApplying, OnSortingAdapterApplied);
+            return adapter;
+        }
+
+        /// <summary>
+        /// Creates the adapter that connects the filtering model to the grid.
+        /// </summary>
+        /// <param name="model">Filtering model instance.</param>
+        /// <returns>Adapter that will bridge the model to the collection view and grid.</returns>
+        protected virtual Avalonia.Controls.DataGridFiltering.DataGridFilteringAdapter CreateFilteringAdapter(Avalonia.Controls.DataGridFiltering.IFilteringModel model)
+        {
+            var adapter = _filteringAdapterFactory?.Create(this, model)
+                ?? new Avalonia.Controls.DataGridFiltering.DataGridFilteringAdapter(
+                    model,
+                    () => ColumnsItemsInternal,
+                    OnFilteringAdapterApplying,
+                    OnFilteringAdapterApplied);
+
+            if (adapter == null)
+            {
+                throw new InvalidOperationException("Filtering adapter factory returned null.");
+            }
+
+            adapter.AttachLifecycle(OnFilteringAdapterApplying, OnFilteringAdapterApplied);
             return adapter;
         }
 
@@ -1063,6 +1126,11 @@ namespace Avalonia.Controls
             RefreshColumnSortStates();
         }
 
+        private void FilteringModel_FilteringChanged(object sender, Avalonia.Controls.DataGridFiltering.FilteringChangedEventArgs e)
+        {
+            RefreshColumnFilterStates();
+        }
+
         private void OnSortingAdapterApplying()
         {
             UpdateSelectionSnapshot();
@@ -1076,6 +1144,36 @@ namespace Avalonia.Controls
                 RestoreSelectionFromSnapshot();
                 RefreshSelectionFromModel();
                 RefreshColumnSortStates();
+
+                // Some custom adapters (e.g., DynamicData) push sort changes upstream and the
+                // resulting collection mutations can arrive asynchronously after this callback.
+                // Re-run selection restoration on the UI thread to keep selection stable if the
+                // view reorders after the initial restore above.
+                Dispatcher.UIThread.Post(() =>
+                {
+                    if (DataConnection?.CollectionView != null)
+                    {
+                        RestoreSelectionFromSnapshot();
+                        RefreshSelectionFromModel();
+                    }
+                }, DispatcherPriority.Background);
+            }
+        }
+
+        private void OnFilteringAdapterApplying()
+        {
+            UpdateSelectionSnapshot();
+        }
+
+        private void OnFilteringAdapterApplied()
+        {
+            if (DataConnection?.CollectionView != null)
+            {
+                RefreshRowsAndColumns(clearRows: false);
+                RestoreSelectionFromSnapshot();
+                RefreshSelectionFromModel();
+                RefreshColumnSortStates();
+                RefreshColumnFilterStates();
             }
         }
 
@@ -1085,7 +1183,25 @@ namespace Avalonia.Controls
             RefreshColumnSortStates();
         }
 
+        private void UpdateFilteringAdapterView()
+        {
+            _filteringAdapter?.AttachView(DataConnection?.CollectionView);
+        }
+
         internal void RefreshColumnSortStates()
+        {
+            if (ColumnsItemsInternal == null)
+            {
+                return;
+            }
+
+            foreach (DataGridColumn column in ColumnsItemsInternal)
+            {
+                column?.HeaderCell?.UpdatePseudoClasses();
+            }
+        }
+
+        internal void RefreshColumnFilterStates()
         {
             if (ColumnsItemsInternal == null)
             {
@@ -1136,6 +1252,50 @@ namespace Avalonia.Controls
             RaisePropertyChanged(SortingModelProperty, oldModel, _sortingModel);
         }
 
+        private void SetFilteringModel(Avalonia.Controls.DataGridFiltering.IFilteringModel model, bool initializing = false)
+        {
+            var oldModel = _filteringModel;
+            var newModel = model ?? CreateFilteringModel();
+
+            if (ReferenceEquals(oldModel, newModel))
+            {
+                return;
+            }
+
+            bool ownsView = oldModel?.OwnsViewFilter ?? newModel.OwnsViewFilter;
+
+            _filteringAdapter?.Dispose();
+            _filteringAdapter = null;
+
+            if (oldModel != null)
+            {
+                oldModel.FilteringChanged -= FilteringModel_FilteringChanged;
+                oldModel.PropertyChanged -= FilteringModel_PropertyChanged;
+            }
+
+            _filteringModel = newModel;
+            _filteringModel.OwnsViewFilter = ownsView;
+            _filteringModel.FilteringChanged += FilteringModel_FilteringChanged;
+            _filteringModel.PropertyChanged += FilteringModel_PropertyChanged;
+
+            _filteringAdapter = CreateFilteringAdapter(_filteringModel);
+
+            if (!initializing)
+            {
+                UpdateFilteringAdapterView();
+            }
+
+            RaisePropertyChanged(FilteringModelProperty, oldModel, _filteringModel);
+        }
+
+        private void FilteringModel_PropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == nameof(Avalonia.Controls.DataGridFiltering.IFilteringModel.OwnsViewFilter))
+            {
+                _filteringAdapter?.AttachView(DataConnection?.CollectionView);
+            }
+        }
+
         internal SortingDescriptor GetSortingDescriptorForColumn(DataGridColumn column)
         {
             if (column == null || _sortingModel == null)
@@ -1167,6 +1327,41 @@ namespace Avalonia.Controls
         internal ListSortDirection? GetColumnSortDirection(DataGridColumn column)
         {
             return GetSortingDescriptorForColumn(column)?.Direction;
+        }
+
+        internal Avalonia.Controls.DataGridFiltering.FilteringDescriptor GetFilteringDescriptorForColumn(DataGridColumn column)
+        {
+            if (column == null || _filteringModel == null)
+            {
+                return null;
+            }
+
+            foreach (var descriptor in _filteringModel.Descriptors)
+            {
+                if (ReferenceEquals(descriptor.ColumnId, column))
+                {
+                    return descriptor;
+                }
+
+                if (!string.IsNullOrEmpty(descriptor.PropertyPath))
+                {
+                    var propertyName = column.GetSortPropertyName();
+                    if (!string.IsNullOrEmpty(propertyName) &&
+                        string.Equals(descriptor.PropertyPath, propertyName, StringComparison.Ordinal))
+                    {
+                        return descriptor;
+                    }
+
+                    var sortMemberPath = column.SortMemberPath;
+                    if (!string.IsNullOrEmpty(sortMemberPath) &&
+                        string.Equals(descriptor.PropertyPath, sortMemberPath, StringComparison.Ordinal))
+                    {
+                        return descriptor;
+                    }
+                }
+            }
+
+            return null;
         }
 
         internal void ProcessSort(DataGridColumn column, KeyModifiers keyModifiers, ListSortDirection? forcedDirection)
