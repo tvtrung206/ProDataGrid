@@ -187,6 +187,68 @@ ProDataGrid now routes row selection through Avalonia’s `SelectionModel<object
 - Multi-select gestures and `SelectionMode` map to the model (`SelectionMode=Single` ↔ `SingleSelect=true`).
 - A thin adapter keeps row index ↔ slot mapping internal, so custom selection models can be injected later.
 
+## Sorting model integration
+
+Sorting is now driven by a dedicated `ISortingModel` and adapter instead of directly mutating `SortDescriptions` from the header. This keeps sort state explicit, pluggable, and testable:
+
+- Configure gesture policies on the model via `IsMultiSortEnabled`, `SortCycleMode` (2- or 3-state), and `OwnsSortDescriptions` (strict vs observe external changes).
+- Per-column comparers/culture and `SortMemberPath` flow into `SortingDescriptor`s; duplicate-column guards and batch updates prevent drift.
+- Plug in a custom model without subclassing the grid: set `SortingModel` or `SortingModelFactory` before use to inject alternate sort pipelines (e.g., server-side).
+- The adapter mirrors `Sorting` ↔ `DataGridCollectionView.SortDescriptions`, logging/rolling back on failures and refreshing rows while preserving selection snapshots.
+- Gestures are unchanged (click/shift/meta), but glyphs and programmatic updates now reflect the model, so tests and automation can drive sorting through the same surface.
+- Centralized descriptors plus `SortingChanging/SortingChanged` events make sort state observable; batch updates and duplicate-column guards prevent drift.
+- Observe mode keeps the model in sync when `SortDescriptions` is mutated externally; strict mode keeps the model authoritative.
+- Per-column `CustomSortComparer`/culture/paths are preserved in `SortingDescriptor`s, so custom comparers are first-class (including natural/ordinal/culture-aware string sorts).
+- Sample: see `Sorting Model Playground` in `src/DataGridSample` for presets, external-sort reconciliation, and event logging.
+
+### Using SortingModel with DataGrid
+
+Bind a custom sorting model or factory just like selection:
+
+```xml
+<DataGrid ItemsSource="{Binding Items}"
+          SortingModel="{Binding MySortingModel}"
+          IsMultiSortEnabled="True"
+          SortCycleMode="AscendingDescendingNone"
+          OwnsSortDescriptions="True">
+  <DataGrid.Columns>
+    <DataGridTextColumn Header="Name"
+                        Binding="{Binding Name}"
+                        SortMemberPath="Name" />
+    <DataGridTextColumn Header="Status"
+                        Binding="{Binding Status}"
+                        SortMemberPath="Status"
+                        CustomSortComparer="{Binding StatusComparer}" />
+  </DataGrid.Columns>
+</DataGrid>
+```
+
+```csharp
+public ISortingModel MySortingModel { get; } = new SortingModel
+{
+    MultiSort = true,
+    CycleMode = SortCycleMode.AscendingDescendingNone,
+    OwnsViewSorts = true
+};
+
+public IComparer StatusComparer { get; } = new StatusComparer();
+
+public void ApplyPreset()
+{
+    MySortingModel.Apply(new[]
+    {
+        new SortingDescriptor("Status", ListSortDirection.Ascending, "Status", StatusComparer),
+        new SortingDescriptor("Name", ListSortDirection.Ascending, "Name")
+    });
+}
+```
+
+Or swap the model creation globally:
+
+```csharp
+dataGrid.SortingModelFactory = new MyCustomSortingFactory();
+```
+
 ## Samples
 
 - The sample app (`src/DataGridSample`) includes pages for pixel-perfect columns, frozen columns, large datasets, and variable-height scenarios (`Pages/*Page.axaml`).
