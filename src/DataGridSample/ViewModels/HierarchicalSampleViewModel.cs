@@ -40,7 +40,7 @@ namespace DataGridSample.ViewModels
             var root = CreateRoot(rootPath);
             var options = new HierarchicalOptions
             {
-                ChildrenSelector = item =>
+                ItemsSelector = item =>
                 {
                     if (item is TreeItem tree)
                     {

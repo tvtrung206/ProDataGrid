@@ -5,6 +5,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.Reflection;
 
 namespace Avalonia.Controls.DataGridHierarchical
 {
@@ -186,12 +187,14 @@ namespace Avalonia.Controls.DataGridHierarchical
     {
         private readonly List<HierarchicalNode> _flattened;
         private readonly IReadOnlyList<HierarchicalNode> _flattenedView;
+        private readonly Dictionary<(Type, string), Func<object, object?>> _propertyPathCache;
 
         public HierarchicalModel(HierarchicalOptions? options = null)
         {
             Options = options ?? new HierarchicalOptions();
             _flattened = new List<HierarchicalNode>();
             _flattenedView = _flattened.AsReadOnly();
+            _propertyPathCache = new Dictionary<(Type, string), Func<object, object?>>();
         }
 
         public HierarchicalOptions Options { get; }
@@ -822,6 +825,21 @@ namespace Avalonia.Controls.DataGridHierarchical
 
             try
             {
+                if (HasReachedMaxDepth(node))
+                {
+                    node.ChildrenSource = null;
+                    DetachChildrenNotifier(node);
+                    foreach (var child in node.MutableChildren)
+                    {
+                        DetachHierarchy(child);
+                    }
+                    node.MutableChildren.Clear();
+                    node.HasMaterializedChildren = true;
+                    node.IsLeaf = true;
+                    OnNodeLoaded(node);
+                    return node.Children;
+                }
+
                 if (forceReload && node.MutableChildren.Count > 0)
                 {
                     foreach (var child in node.MutableChildren)
@@ -850,6 +868,12 @@ namespace Avalonia.Controls.DataGridHierarchical
                 {
                     if (childItem == null)
                     {
+                        continue;
+                    }
+
+                    if (CreatesCycle(node, childItem))
+                    {
+                        OnNodeLoadFailed(node, new InvalidOperationException("Cycle detected in hierarchical data."));
                         continue;
                     }
 
@@ -922,12 +946,18 @@ namespace Avalonia.Controls.DataGridHierarchical
                 return Options.ChildrenSelector(item);
             }
 
-            if (!string.IsNullOrEmpty(Options.ChildrenPropertyPath))
+            if (Options.ItemsSelector != null)
             {
-                throw new NotSupportedException("ChildrenPropertyPath resolution is not implemented yet.");
+                return Options.ItemsSelector(item);
             }
 
-            throw new InvalidOperationException("ChildrenSelector must be provided to resolve children.");
+            if (!string.IsNullOrEmpty(Options.ChildrenPropertyPath))
+            {
+                var value = GetPropertyPathValue(item, Options.ChildrenPropertyPath!);
+                return value as IEnumerable;
+            }
+
+            throw new InvalidOperationException("Provide ChildrenSelector, ItemsSelector, or ChildrenPropertyPath to resolve children.");
         }
 
         private void SortChildren(HierarchicalNode parent, IComparer<object> comparer, bool recursive)
@@ -947,6 +977,90 @@ namespace Avalonia.Controls.DataGridHierarchical
                     SortChildren(child, comparer, recursive);
                 }
             }
+        }
+
+        private bool HasReachedMaxDepth(HierarchicalNode node)
+        {
+            if (Options.MaxDepth == null)
+            {
+                return false;
+            }
+
+            return node.Level >= Options.MaxDepth.Value;
+        }
+
+        private bool CreatesCycle(HierarchicalNode parent, object childItem)
+        {
+            var current = parent;
+            while (current != null)
+            {
+                if (ReferenceEquals(current.Item, childItem))
+                {
+                    return true;
+                }
+
+                current = current.Parent!;
+            }
+
+            return false;
+        }
+
+        private object? GetPropertyPathValue(object target, string propertyPath)
+        {
+            var key = (target.GetType(), propertyPath);
+
+            if (!_propertyPathCache.TryGetValue(key, out var accessor))
+            {
+                accessor = CreatePropertyPathAccessor(target.GetType(), propertyPath);
+                _propertyPathCache[key] = accessor;
+            }
+
+            return accessor(target);
+        }
+
+        private static Func<object, object?> CreatePropertyPathAccessor(Type targetType, string propertyPath)
+        {
+            if (string.IsNullOrWhiteSpace(propertyPath))
+            {
+                throw new ArgumentException("Property path cannot be null or whitespace.", nameof(propertyPath));
+            }
+
+            var parts = propertyPath.Split('.');
+            var properties = new PropertyInfo[parts.Length];
+            var currentType = targetType;
+
+            for (int i = 0; i < parts.Length; i++)
+            {
+                var propertyName = parts[i].Trim();
+                var property = currentType.GetProperty(
+                    propertyName,
+                    BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+
+                if (property == null)
+                {
+                    throw new InvalidOperationException(
+                        $"Property '{propertyName}' was not found on type '{currentType.FullName}'.");
+                }
+
+                properties[i] = property;
+                currentType = property.PropertyType;
+            }
+
+            return instance =>
+            {
+                object? current = instance;
+                foreach (var property in properties)
+                {
+                    if (current == null)
+                    {
+                        return null;
+                    }
+
+                    current = property.GetValue(current);
+                }
+
+                return current;
+            };
         }
     }
 }

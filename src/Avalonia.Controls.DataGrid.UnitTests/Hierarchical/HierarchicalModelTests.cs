@@ -33,6 +33,91 @@ public class HierarchicalModelTests
     }
 
     [Fact]
+    public void ChildrenPropertyPath_ResolvesChildren()
+    {
+        var root = new Item("root");
+        root.Children.Add(new Item("child"));
+
+        var model = new HierarchicalModel(new HierarchicalOptions
+        {
+            ChildrenPropertyPath = nameof(Item.Children)
+        });
+
+        model.SetRoot(root);
+        model.Expand(model.Root!);
+
+        Assert.Equal(2, model.Count);
+        Assert.Same(root.Children[0], model.GetItem(1));
+    }
+
+    [Fact]
+    public void ItemsSelector_ResolvesChildren()
+    {
+        var root = new Item("root");
+        root.Children.Add(new Item("child"));
+
+        var model = new HierarchicalModel(new HierarchicalOptions
+        {
+            ItemsSelector = item => ((Item)item).Children
+        });
+
+        model.SetRoot(root);
+        model.Expand(model.Root!);
+
+        Assert.Equal(2, model.Count);
+        Assert.Same(root.Children[0], model.GetItem(1));
+    }
+
+    [Fact]
+    public void MaxDepth_TreatsNodesAsLeaves()
+    {
+        var root = new Item("root");
+        var child = new Item("child");
+        var grand = new Item("grand");
+        child.Children.Add(grand);
+        root.Children.Add(child);
+
+        var model = new HierarchicalModel(new HierarchicalOptions
+        {
+            ChildrenSelector = item => ((Item)item).Children,
+            MaxDepth = 1
+        });
+
+        model.SetRoot(root);
+        model.Expand(model.Root!);
+
+        Assert.Equal(2, model.Count);
+        Assert.True(model.GetNode(1).IsLeaf);
+
+        model.Expand(model.GetNode(1));
+
+        Assert.Equal(2, model.Count);
+    }
+
+    [Fact]
+    public void CycleDetection_SkipsChild_AndRaisesLoadFailed()
+    {
+        var root = new Item("root");
+        root.Children.Add(root);
+
+        var model = new HierarchicalModel(new HierarchicalOptions
+        {
+            ChildrenSelector = item => ((Item)item).Children
+        });
+
+        HierarchicalNodeLoadFailedEventArgs? loadFailedArgs = null;
+        model.NodeLoadFailed += (_, e) => loadFailedArgs = e;
+
+        model.SetRoot(root);
+        model.Expand(model.Root!);
+
+        Assert.Equal(1, model.Count);
+        Assert.True(model.Root!.IsLeaf);
+        Assert.NotNull(loadFailedArgs);
+        Assert.Same(model.Root, loadFailedArgs!.Node);
+    }
+
+    [Fact]
     public void AutoExpandRoot_Respects_MaxDepth()
     {
         var root = new Item("root");

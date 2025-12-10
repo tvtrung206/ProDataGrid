@@ -50,6 +50,17 @@ namespace Avalonia.Controls.DataGridHierarchical
         public Func<object, bool>? IsLeafSelector { get; set; }
 
         /// <summary>
+        /// Delegate mirroring Avalonia's <c>IHierarchicalDataTemplate.ItemsSelector</c> pattern. Invoked
+        /// when <see cref="ChildrenSelector"/> is null.
+        /// </summary>
+        public Func<object, IEnumerable?>? ItemsSelector { get; set; }
+
+        /// <summary>
+        /// Optional depth guard (root is level 0). When set, nodes at or beyond this level are treated as leaves.
+        /// </summary>
+        public int? MaxDepth { get; set; }
+
+        /// <summary>
         /// When true, grouping rows may be projected as hierarchical nodes (future integration path).
         /// Default is false to keep grouping separate.
         /// </summary>
