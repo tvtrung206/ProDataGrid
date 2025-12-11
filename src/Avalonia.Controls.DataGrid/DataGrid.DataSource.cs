@@ -194,16 +194,6 @@ namespace Avalonia.Controls
                         _pagedSelectionSource = null;
                     }
 
-                    if (view != null &&
-                        _selectionModelAdapter.Model.Source != null &&
-                        _selectionModelAdapter.Model.Source != source &&
-                        !ReferenceEquals(_selectionModelAdapter.Model.Source, source) &&
-                        !ReferenceEquals(_selectionModelAdapter.Model.Source, view))
-                    {
-                        throw new InvalidOperationException(
-                            "The supplied ISelectionModel already has an assigned Source but this collection is different to the Items on the control.");
-                    }
-
                     _selectionModelAdapter.Model.Source = source;
                 }
                 finally
