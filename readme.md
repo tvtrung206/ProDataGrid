@@ -367,7 +367,7 @@ Hierarchical rows are driven by `IHierarchicalModel` (flattened view of visible 
 
 - Plug in a model or factory: bind `HierarchicalModel`/`HierarchicalModelFactory` and set `HierarchicalRowsEnabled="True"`.
 - When hierarchical rows are enabled and no `ItemsSource` is provided, the grid auto-binds to the model's flattened view so callers don't have to manage or refresh a separate flattened collection; `ObservableFlattened` is available when you need `INotifyCollectionChanged`/reactive pipelines.
-- Provide children/leaves via `HierarchicalOptions` (`ChildrenSelector`, optional `IsLeafSelector`, `AutoExpandRoot/MaxAutoExpandDepth`, `SiblingComparer`, `VirtualizeChildren`).
+- Provide children/leaves via `HierarchicalOptions` (`ChildrenSelector`, optional `IsLeafSelector`, `AutoExpandRoot/MaxAutoExpandDepth`, `SiblingComparer`/`SiblingComparerSelector`, `VirtualizeChildren`). Use the typed flavor (`HierarchicalOptions<T>`/`HierarchicalModel<T>`) when you want strongly-typed selectors and observable flattened nodes.
 - The adapter exposes `Count/ItemAt/Toggle/Expand/Collapse` and raises `FlattenedChanged`; selection mapping uses the flattened indices.
 - Use `DataGridHierarchicalColumn` for the tree column; per-level indent is configurable via `Indent`.
 

@@ -334,11 +334,11 @@ namespace Avalonia.Controls.DataGridHierarchical
         HierarchicalNode? FindNode(object item);
 
         /// <summary>
-        /// Sorts siblings under the specified node (or root when null) using the provided comparer or <see cref="HierarchicalOptions.SiblingComparer"/>.
+        /// Sorts siblings under the specified node (or root when null) using the provided comparer or the configured options (`SiblingComparerSelector` first, then <see cref="HierarchicalOptions.SiblingComparer"/>).
         /// Only orders siblings within the same parent; cross-level sorting is not performed.
         /// </summary>
         /// <param name="node">Parent node whose children should be sorted; null for root.</param>
-        /// <param name="comparer">Comparer to apply; defaults to <see cref="HierarchicalOptions.SiblingComparer"/>.</param>
+        /// <param name="comparer">Comparer to apply; defaults to the per-node selector or <see cref="HierarchicalOptions.SiblingComparer"/>.</param>
         /// <param name="recursive">When true, recursively sorts expanded descendants.</param>
         void Sort(HierarchicalNode? node = null, IComparer<object>? comparer = null, bool recursive = true);
 
@@ -703,14 +703,14 @@ namespace Avalonia.Controls.DataGridHierarchical
                 return;
             }
 
-            var sortComparer = comparer ?? Options.SiblingComparer;
-            if (sortComparer == null)
+            var hasComparer = comparer != null || Options.SiblingComparerSelector != null || Options.SiblingComparer != null;
+            if (!hasComparer)
             {
                 return;
             }
 
             EnsureChildrenMaterialized(target);
-            SortChildren(target, sortComparer, recursive);
+            SortChildren(target, comparer, recursive);
 
             if (target.IsExpanded)
             {
@@ -1551,9 +1551,10 @@ namespace Avalonia.Controls.DataGridHierarchical
                     node.MutableChildren.Add(childNode);
                 }
 
-                if (Options.SiblingComparer != null)
+                var comparer = GetComparerForParent(node);
+                if (comparer != null)
                 {
-                    node.MutableChildren.Sort((x, y) => Options.SiblingComparer!.Compare(x.Item, y.Item));
+                    node.MutableChildren.Sort((x, y) => comparer.Compare(x.Item, y.Item));
                 }
 
                 node.HasMaterializedChildren = true;
@@ -1631,6 +1632,27 @@ namespace Avalonia.Controls.DataGridHierarchical
             }
 
             return false;
+        }
+
+        private IComparer<object>? GetComparerForParent(HierarchicalNode parent)
+        {
+            if (Options.SiblingComparerSelector != null)
+            {
+                try
+                {
+                    var comparer = Options.SiblingComparerSelector(parent.Item);
+                    if (comparer != null)
+                    {
+                        return comparer;
+                    }
+                }
+                catch
+                {
+                    // Ignore selector failures and fall back.
+                }
+            }
+
+            return Options.SiblingComparer;
         }
 
         private Task<IEnumerable?> ResolveChildrenAsync(object item, CancellationToken cancellationToken)
@@ -1720,9 +1742,13 @@ namespace Avalonia.Controls.DataGridHierarchical
             state.NextRetryUtc = null;
         }
 
-        private void SortChildren(HierarchicalNode parent, IComparer<object> comparer, bool recursive)
+        private void SortChildren(HierarchicalNode parent, IComparer<object>? comparerOverride, bool recursive)
         {
-            parent.MutableChildren.Sort((x, y) => comparer.Compare(x.Item, y.Item));
+            var comparer = comparerOverride ?? GetComparerForParent(parent);
+            if (comparer != null)
+            {
+                parent.MutableChildren.Sort((x, y) => comparer.Compare(x.Item, y.Item));
+            }
 
             if (!recursive)
             {
@@ -1734,7 +1760,7 @@ namespace Avalonia.Controls.DataGridHierarchical
                 if (child.IsExpanded)
                 {
                     EnsureChildrenMaterialized(child);
-                    SortChildren(child, comparer, recursive);
+                    SortChildren(child, comparerOverride, recursive);
                 }
             }
         }

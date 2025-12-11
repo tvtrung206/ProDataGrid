@@ -38,6 +38,7 @@ using Avalonia.Input.GestureRecognizers;
 using Avalonia.Controls.DataGridSorting;
 using Avalonia.Styling;
 using Avalonia.Reactive;
+using System.Reflection;
 
 namespace Avalonia.Controls
 {
@@ -922,7 +923,13 @@ namespace Avalonia.Controls
 
         protected virtual Avalonia.Controls.DataGridHierarchical.IHierarchicalModel CreateHierarchicalModel()
         {
-            return _hierarchicalModelFactory?.Create() ?? new Avalonia.Controls.DataGridHierarchical.HierarchicalModel();
+            var created = _hierarchicalModelFactory?.Create();
+            if (created != null)
+            {
+                return created;
+            }
+
+            return new Avalonia.Controls.DataGridHierarchical.HierarchicalModel();
         }
 
         protected virtual Avalonia.Controls.DataGridFiltering.IFilteringModel CreateFilteringModel()
@@ -1180,7 +1187,8 @@ namespace Avalonia.Controls
         /// <returns>Adapter bridging flattened hierarchy to grid gestures.</returns>
         protected virtual Avalonia.Controls.DataGridHierarchical.DataGridHierarchicalAdapter CreateHierarchicalAdapter(Avalonia.Controls.DataGridHierarchical.IHierarchicalModel model)
         {
-            var adapter = _hierarchicalAdapterFactory?.Create(this, model)
+            var adapter = TryCreateTypedHierarchicalAdapter(model)
+                ?? _hierarchicalAdapterFactory?.Create(this, model)
                 ?? new Avalonia.Controls.DataGridHierarchical.DataGridHierarchicalAdapter(model);
 
             if (adapter == null)
@@ -1189,6 +1197,52 @@ namespace Avalonia.Controls
             }
 
             return adapter;
+        }
+
+        private Avalonia.Controls.DataGridHierarchical.DataGridHierarchicalAdapter? TryCreateTypedHierarchicalAdapter(Avalonia.Controls.DataGridHierarchical.IHierarchicalModel model)
+        {
+            if (_hierarchicalAdapterFactory == null)
+            {
+                return null;
+            }
+
+            var modelType = model.GetType();
+            var typedModelInterface = modelType.GetInterfaces()
+                .FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(Avalonia.Controls.DataGridHierarchical.IHierarchicalModel<>));
+            if (typedModelInterface == null)
+            {
+                return null;
+            }
+
+            var typeArg = typedModelInterface.GenericTypeArguments[0];
+            var factoryInterface = _hierarchicalAdapterFactory.GetType().GetInterfaces()
+                .FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(Avalonia.Controls.DataGridHierarchical.IDataGridHierarchicalAdapterFactory<>)
+                    && i.GenericTypeArguments[0].IsAssignableFrom(typeArg));
+
+            if (factoryInterface == null)
+            {
+                return null;
+            }
+
+            var createMethod = factoryInterface.GetMethod("Create", new[] { typeof(DataGrid), typedModelInterface });
+            if (createMethod == null)
+            {
+                return null;
+            }
+
+            var typedAdapter = createMethod.Invoke(_hierarchicalAdapterFactory, new object[] { this, model });
+            if (typedAdapter == null)
+            {
+                return null;
+            }
+
+            var innerProperty = typedAdapter.GetType().GetProperty("InnerAdapter", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+            if (innerProperty?.GetValue(typedAdapter) is Avalonia.Controls.DataGridHierarchical.DataGridHierarchicalAdapter inner)
+            {
+                return inner;
+            }
+
+            return typedAdapter as Avalonia.Controls.DataGridHierarchical.DataGridHierarchicalAdapter;
         }
 
         private void SetSelectionModel(ISelectionModel model, bool initializing = false)

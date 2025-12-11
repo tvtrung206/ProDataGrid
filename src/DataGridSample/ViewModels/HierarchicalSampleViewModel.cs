@@ -35,7 +35,7 @@ namespace DataGridSample.ViewModels
             IgnoreInaccessible = true,
             AttributesToSkip = FileAttributes.Hidden | FileAttributes.System
         };
-        private readonly IComparer<object> _defaultComparer = new FileSystemNodeComparer();
+        private readonly IComparer<TreeItem> _defaultComparer = new FileSystemNodeComparer();
 
         public HierarchicalSampleViewModel()
         {
@@ -43,22 +43,17 @@ namespace DataGridSample.ViewModels
             var root = CreateRoot(rootPath);
             SortingModel = new SortingModel();
             SortingModel.SortingChanged += OnSortingChanged;
-            var options = new HierarchicalOptions
+            var options = new HierarchicalOptions<TreeItem>
             {
                 ItemsSelector = item =>
                 {
-                    if (item is TreeItem tree)
+                    if (!item.IsDirectory)
                     {
-                        if (!tree.IsDirectory)
-                        {
-                            return null;
-                        }
-
-                        EnsureChildren(tree, allowRescan: true);
-                        return tree.Children;
+                        return null;
                     }
 
-                    return null;
+                    EnsureChildren(item, allowRescan: true);
+                    return item.Children;
                 },
                 AutoExpandRoot = true,
                 MaxAutoExpandDepth = 0,
@@ -66,26 +61,16 @@ namespace DataGridSample.ViewModels
                 SiblingComparer = _defaultComparer,
                 IsLeafSelector = item =>
                 {
-                    if (item is TreeItem tree)
+                    if (!item.IsDirectory)
                     {
-                        if (!tree.IsDirectory)
-                        {
-                            return true;
-                        }
-
-                        return tree.HasScanned && tree.Children.Count == 0;
+                        return true;
                     }
 
-                    if (item is FileSystemInfo fsi)
-                    {
-                        return (fsi.Attributes & FileAttributes.Directory) == 0;
-                    }
-
-                    return false;
+                    return item.HasScanned && item.Children.Count == 0;
                 }
             };
 
-            Model = new HierarchicalModel(options);
+            Model = new HierarchicalModel<TreeItem>(options);
             Model.SetRoot(root);
 
             ExpandAllCommand = new RelayCommand(_ =>
@@ -102,9 +87,9 @@ namespace DataGridSample.ViewModels
             });
         }
 
-        public IHierarchicalModel Model { get; }
+        public HierarchicalModel<TreeItem> Model { get; }
 
-        public IComparer<object> DefaultComparer => _defaultComparer;
+        public IComparer<TreeItem> DefaultComparer => _defaultComparer;
 
         public ISortingModel SortingModel { get; }
 
@@ -237,34 +222,24 @@ namespace DataGridSample.ViewModels
             Model.ApplySiblingComparer(comparer, recursive: true);
         }
 
-        private static IComparer<object> BuildComparer(IReadOnlyList<SortingDescriptor> descriptors)
+        private static IComparer<TreeItem> BuildComparer(IReadOnlyList<SortingDescriptor> descriptors)
         {
-            return Comparer<object>.Create((x, y) =>
+            return Comparer<TreeItem>.Create((x, y) =>
             {
                 if (ReferenceEquals(x, y))
                 {
                     return 0;
                 }
 
-                if (x is not TreeItem left)
+                if (x.IsDirectory != y.IsDirectory)
                 {
-                    return -1;
-                }
-
-                if (y is not TreeItem right)
-                {
-                    return 1;
-                }
-
-                if (left.IsDirectory != right.IsDirectory)
-                {
-                    return left.IsDirectory ? -1 : 1;
+                    return x.IsDirectory ? -1 : 1;
                 }
 
                 foreach (var descriptor in descriptors)
                 {
                     var path = descriptor.PropertyPath;
-                    var result = CompareByPath(left, right, path);
+                    var result = CompareByPath(x, y, path);
                     if (result != 0)
                     {
                         return descriptor.Direction == ListSortDirection.Descending ? -result : result;
@@ -296,13 +271,10 @@ namespace DataGridSample.ViewModels
             }
         }
 
-        private sealed class FileSystemNodeComparer : IComparer<object>
+        private sealed class FileSystemNodeComparer : IComparer<TreeItem>
         {
-            public int Compare(object? x, object? y)
+            public int Compare(TreeItem? a, TreeItem? b)
             {
-                var a = x as TreeItem;
-                var b = y as TreeItem;
-
                 if (a == null && b == null) return 0;
                 if (a == null) return -1;
                 if (b == null) return 1;

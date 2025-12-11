@@ -50,6 +50,11 @@ namespace Avalonia.Controls.DataGridHierarchical
         public IComparer<object>? SiblingComparer { get; set; }
 
         /// <summary>
+        /// Optional selector for per-node sibling comparers. When provided, this takes precedence over <see cref="SiblingComparer"/>.
+        /// </summary>
+        public Func<object, IComparer<object>?>? SiblingComparerSelector { get; set; }
+
+        /// <summary>
         /// Optional delegate that determines whether an item should be treated as a leaf before
         /// children are materialized. Return true for leaf nodes, false for containers. When null,
         /// the model will defer the decision until children are resolved.

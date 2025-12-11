@@ -202,6 +202,97 @@ namespace Avalonia.Controls.DataGridTests.Hierarchical;
     }
 
     [Fact]
+    public void SiblingComparerSelector_Sorts_PerParent()
+    {
+        var root = new Item("root");
+        var gamma = new Item("gamma");
+        var alpha = new Item("alpha");
+        var beta = new Item("beta");
+        var child = new Item("child");
+        child.Children.Add(new Item("c1"));
+        child.Children.Add(new Item("c3"));
+        child.Children.Add(new Item("c2"));
+        root.Children.Add(gamma);
+        root.Children.Add(alpha);
+        root.Children.Add(beta);
+        root.Children.Add(child);
+
+        var model = new HierarchicalModel(new HierarchicalOptions
+        {
+            ChildrenSelector = item => ((Item)item).Children,
+            SiblingComparerSelector = item =>
+            {
+                var current = (Item)item;
+                return current.Name switch
+                {
+                    "root" => Comparer<object>.Create((x, y) =>
+                        string.Compare(((Item)x).Name, ((Item)y).Name, StringComparison.Ordinal)),
+                    "child" => Comparer<object>.Create((x, y) =>
+                        -string.Compare(((Item)x).Name, ((Item)y).Name, StringComparison.Ordinal)),
+                    _ => null
+                };
+            }
+        });
+
+        model.SetRoot(root);
+        model.Expand(model.Root!);
+
+        Assert.Equal("alpha", ((Item)model.GetItem(1)!).Name);
+        Assert.Equal("beta", ((Item)model.GetItem(2)!).Name);
+        Assert.Equal("child", ((Item)model.GetItem(3)!).Name);
+        Assert.Equal("gamma", ((Item)model.GetItem(4)!).Name);
+
+        var childNode = model.FindNode(child)!;
+        model.Expand(childNode);
+
+        Assert.Equal("c3", ((Item)model.GetItem(4)!).Name);
+        Assert.Equal("c2", ((Item)model.GetItem(5)!).Name);
+        Assert.Equal("c1", ((Item)model.GetItem(6)!).Name);
+    }
+
+    [Fact]
+    public void Sort_UsesComparerSelector_WhenNoComparerProvided()
+    {
+        var root = new Item("root");
+        var c = new Item("c");
+        var a = new Item("a");
+        root.Children.Add(c);
+        root.Children.Add(a);
+
+        var model = new HierarchicalModel(new HierarchicalOptions
+        {
+            ChildrenSelector = item => ((Item)item).Children,
+            SiblingComparerSelector = item =>
+            {
+                if (((Item)item).Name == "root")
+                {
+                    return Comparer<object>.Create((x, y) =>
+                        string.Compare(((Item)x).Name, ((Item)y).Name, StringComparison.Ordinal));
+                }
+
+                return null;
+            }
+        });
+
+        model.SetRoot(root);
+        model.Expand(model.Root!);
+
+        Assert.Equal("a", ((Item)model.GetItem(1)!).Name);
+        Assert.Equal("c", ((Item)model.GetItem(2)!).Name);
+
+        var b = new Item("b");
+        root.Children.Add(b);
+
+        Assert.Equal("b", ((Item)model.GetItem(3)!).Name);
+
+        model.Sort();
+
+        Assert.Equal("a", ((Item)model.GetItem(1)!).Name);
+        Assert.Equal("b", ((Item)model.GetItem(2)!).Name);
+        Assert.Equal("c", ((Item)model.GetItem(3)!).Name);
+    }
+
+    [Fact]
     public void AutoExpandRoot_Respects_MaxDepth()
     {
         var root = new Item("root");
@@ -435,6 +526,121 @@ namespace Avalonia.Controls.DataGridTests.Hierarchical;
         model.Collapse(model.GetNode(1));
         Assert.Equal(1, model.Root!.ExpandedCount);
         Assert.Equal(0, model.GetNode(1).ExpandedCount);
+    }
+
+    [Fact]
+    public void TypedOptions_PushChangesToUntypedOptions()
+    {
+        var options = new HierarchicalOptions<Item>();
+        var model = new HierarchicalModel<Item>(options);
+
+        options.AutoExpandRoot = true;
+        options.VirtualizeChildren = false;
+        options.SiblingComparer = Comparer<Item>.Create((a, b) => string.Compare(a.Name, b.Name, StringComparison.Ordinal));
+        options.SiblingComparerSelector = item => Comparer<Item>.Create((a, b) => string.Compare(a.Name, b.Name, StringComparison.Ordinal));
+        options.IsLeafSelector = item => item.Children.Count == 0;
+        options.ChildrenPropertyPath = nameof(Item.Children);
+
+        Assert.True(model.Options.AutoExpandRoot);
+        Assert.False(model.Options.VirtualizeChildren);
+        Assert.NotNull(model.Options.SiblingComparer);
+        Assert.NotNull(model.Options.SiblingComparerSelector);
+        Assert.NotNull(model.Options.IsLeafSelector);
+        Assert.Equal(nameof(Item.Children), model.Options.ChildrenPropertyPath);
+    }
+
+    [Fact]
+    public void TypedNode_ExposesExpandedCount()
+    {
+        var root = new Item("root");
+        root.Children.Add(new Item("child"));
+
+        var model = new HierarchicalModel<Item>(new HierarchicalOptions<Item>
+        {
+            ChildrenSelector = item => item.Children
+        });
+
+        model.SetRoot(root);
+        var typedRoot = model.Root!.Value;
+
+        Assert.Equal(0, typedRoot.ExpandedCount);
+
+        model.Expand(typedRoot);
+
+        typedRoot = model.Root!.Value;
+        Assert.Equal(1, typedRoot.ExpandedCount);
+    }
+
+    [Fact]
+    public void FlattenedChangedTyped_FiresWithTypedNodes()
+    {
+        var root = new Item("root");
+        root.Children.Add(new Item("child"));
+
+        var model = new HierarchicalModel<Item>(new HierarchicalOptions<Item>
+        {
+            ChildrenSelector = item => item.Children
+        });
+
+        model.SetRoot(root);
+
+        FlattenedChangedEventArgs<Item>? typedArgs = null;
+        model.FlattenedChangedTyped += (_, e) => typedArgs = e;
+
+        model.Expand(model.Root!.Value);
+
+        Assert.NotNull(typedArgs);
+        Assert.Equal(model.FlattenedVersion, typedArgs!.Version);
+        Assert.Equal(2, typedArgs.Flattened.Count);
+        Assert.Equal("child", typedArgs.Flattened[1].Item.Name);
+    }
+
+    [Fact]
+    public void TypedAdapter_ForwardsEventsAndNodes()
+    {
+        var root = new Item("root");
+        root.Children.Add(new Item("child"));
+
+        var model = new HierarchicalModel<Item>(new HierarchicalOptions<Item>
+        {
+            ChildrenSelector = item => item.Children
+        });
+        model.SetRoot(root);
+
+        var adapter = new DataGridHierarchicalAdapter<Item>(model);
+        FlattenedChangedEventArgs<Item>? args = null;
+        adapter.FlattenedChanged += (_, e) => args = e;
+
+        adapter.Expand(0);
+
+        Assert.NotNull(args);
+        Assert.Equal(2, adapter.Count);
+        Assert.Equal("child", adapter.ItemAt(1).Name);
+        Assert.True(adapter.NodeAt(0).IsExpanded);
+    }
+
+    [Fact]
+    public async Task ChildrenSelectorAsyncEnumerable_LoadsChildren()
+    {
+        var root = new Item("root");
+
+        var model = new HierarchicalModel<Item>(new HierarchicalOptions<Item>
+        {
+            ChildrenSelectorAsyncEnumerable = item => GetChildrenAsync(item)
+        });
+
+        model.SetRoot(root);
+        await model.ExpandAsync(model.Root!.Value);
+
+        Assert.Equal(3, model.Count);
+        Assert.Equal("child1", model.GetTypedNode(1).Item.Name);
+
+        static async IAsyncEnumerable<Item> GetChildrenAsync(Item _)
+        {
+            yield return new Item("child1");
+            await Task.Yield();
+            yield return new Item("child2");
+        }
     }
 
     [Fact]
