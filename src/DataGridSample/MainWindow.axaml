@@ -119,6 +119,9 @@
     <TabItem Header="Hierarchical Model">
       <pages:HierarchicalSamplePage />
     </TabItem>
+    <TabItem Header="Selection Origin">
+      <pages:SelectionOriginPage />
+    </TabItem>
   </TabControl>
 
 </Window>

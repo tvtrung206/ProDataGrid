@@ -29,6 +29,7 @@ namespace Avalonia.Controls
 
         public void SelectAll()
         {
+            using var _ = BeginSelectionChangeScope(DataGridSelectionChangeSource.Command);
             SetRowsSelection(0, SlotCount - 1);
         }
 
@@ -218,6 +219,7 @@ namespace Avalonia.Controls
 
             try
             {
+                using var _ = BeginSelectionChangeScope(DataGridSelectionChangeSource.SelectionModelSync);
                 _syncingSelectionModel = true;
 
                 ApplySelectionFromSelectionModel();
@@ -331,6 +333,7 @@ namespace Avalonia.Controls
 
             try
             {
+                using var _ = BeginSelectionChangeScope(DataGridSelectionChangeSource.SelectionModelSync);
                 _syncingSelectionModel = true;
                 ApplySelectionFromSelectionModel();
                 UpdateSelectionSnapshot();
@@ -350,6 +353,7 @@ namespace Avalonia.Controls
 
             try
             {
+                using var _ = BeginSelectionChangeScope(DataGridSelectionChangeSource.SelectionModelSync);
                 _syncingSelectionModel = true;
                 ClearRowSelection(resetAnchorSlot: true);
                 SetCurrentCellCore(-1, -1);
@@ -376,6 +380,7 @@ namespace Avalonia.Controls
 
             try
             {
+                using var _ = BeginSelectionChangeScope(DataGridSelectionChangeSource.SelectionModelSync);
                 _syncingSelectionModel = true;
                 using (_selectionModelAdapter.Model.BatchUpdate())
                 {
@@ -477,6 +482,7 @@ namespace Avalonia.Controls
                 return;
             }
 
+            using var _ = BeginSelectionChangeScope(DataGridSelectionChangeSource.SelectionModelSync);
             _syncingSelectionModel = true;
             try
             {
@@ -561,7 +567,9 @@ namespace Avalonia.Controls
                     FlushCurrentCellChanged();
                 }
 
-                SelectionChangedEventArgs e = _selectedItems.GetSelectionChangedEventArgs();
+                SelectionChangedEventArgs e = _selectedItems.GetSelectionChangedEventArgs(
+                    CurrentSelectionChangeSource,
+                    CurrentSelectionTriggerEvent);
                 if (e.AddedItems.Count > 0 || e.RemovedItems.Count > 0)
                 {
                     OnSelectionChanged(e);
@@ -618,6 +626,7 @@ namespace Avalonia.Controls
                 return;
             }
 
+            using var _ = BeginSelectionChangeScope(DataGridSelectionChangeSource.Programmatic);
             try
             {
                 _syncingSelectedItems = true;
@@ -649,6 +658,7 @@ namespace Avalonia.Controls
 
         private void ApplySelectedItemsFromBinding(IList boundItems)
         {
+            using var _ = BeginSelectionChangeScope(DataGridSelectionChangeSource.Programmatic);
             bool previousSync = _syncingSelectedItems;
             _syncingSelectedItems = true;
             try
@@ -1099,6 +1109,7 @@ namespace Avalonia.Controls
         {
             if (!_areHandlersSuspended)
             {
+                using var _ = BeginSelectionChangeScope(DataGridSelectionChangeSource.Programmatic);
                 int index = (int)e.NewValue;
 
                 // GetDataItem returns null if index is >= Count, we do not check newValue
@@ -1117,6 +1128,7 @@ namespace Avalonia.Controls
         {
             if (!_areHandlersSuspended)
             {
+                using var _ = BeginSelectionChangeScope(DataGridSelectionChangeSource.Programmatic);
                 int selectionIndex = (e.NewValue == null) ? -1 : GetSelectionModelIndexOfItem(e.NewValue);
                 if (selectionIndex == -1)
                 {
@@ -1200,6 +1212,7 @@ namespace Avalonia.Controls
         {
             if (!_areHandlersSuspended)
             {
+                using var _ = BeginSelectionChangeScope(DataGridSelectionChangeSource.Programmatic);
                 ClearRowSelection(resetAnchorSlot: true);
                 if (_selectionModelAdapter != null)
                 {

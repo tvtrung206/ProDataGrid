@@ -187,6 +187,28 @@ ProDataGrid now routes row selection through Avalonia’s `SelectionModel<object
 - Multi-select gestures and `SelectionMode` map to the model (`SelectionMode=Single` ↔ `SingleSelect=true`).
 - A thin adapter keeps row index ↔ slot mapping internal, so custom selection models can be injected later.
 
+## Selection change origin
+
+`SelectionChanged` now raises `DataGridSelectionChangedEventArgs`, which carries:
+
+- `Source` flag (`Pointer`, `Keyboard`, `Command`, `Programmatic`, `ItemsSourceChange`, `SelectionModelSync`).
+- `IsUserInitiated` helper (true when pointer/keyboard/command initiated the change).
+- `TriggerEvent` when an input event caused the change.
+
+Example handler:
+
+```csharp
+private void OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
+{
+    if (e is DataGridSelectionChangedEventArgs dg)
+    {
+        Debug.WriteLine($"Source={dg.Source}, user={dg.IsUserInitiated}, trigger={dg.TriggerEvent?.GetType().Name ?? "none"}");
+    }
+}
+```
+
+See the “Selection Origin” sample page in `DataGridSample` to observe the flags for pointer/keyboard, `SelectAll()`, `SelectionModel`, bindings, and ItemsSource changes.
+
 ## Sorting model integration
 
 Sorting is now driven by a dedicated `ISortingModel` and adapter instead of directly mutating `SortDescriptions` from the header. This keeps sort state explicit, pluggable, and testable:

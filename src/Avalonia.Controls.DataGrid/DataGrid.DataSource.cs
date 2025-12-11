@@ -31,6 +31,8 @@ namespace Avalonia.Controls
         /// <param name="e">The event arguments.</param>
         private void OnItemsSourcePropertyChanged(AvaloniaPropertyChangedEventArgs e)
         {
+            using var selectionScope = BeginSelectionChangeScope(DataGridSelectionChangeSource.ItemsSourceChange, sticky: true);
+
             var oldValue = (IEnumerable)e.OldValue;
             var newItemsSource = (IEnumerable)e.NewValue;
             var switchingFromOwnedHierarchical = ReferenceEquals(oldValue, _hierarchicalItemsSource) && _ownsHierarchicalItemsSource && !ReferenceEquals(oldValue, newItemsSource);
@@ -226,6 +228,7 @@ namespace Avalonia.Controls
                 return;
             }
 
+            using var _ = BeginSelectionChangeScope(DataGridSelectionChangeSource.SelectionModelSync);
             _syncingSelectionModel = true;
             try
             {
@@ -368,6 +371,8 @@ namespace Avalonia.Controls
 
         internal void UpdateStateOnCurrentChanged(object currentItem, int currentPosition)
         {
+            using var selectionScope = BeginSelectionChangeScope(DataGridSelectionChangeSource.ItemsSourceChange);
+
             var currentSelectionIndex = currentPosition;
             if (_selectionModelAdapter != null && TryGetPagingInfo(out _, out var pageStart))
             {

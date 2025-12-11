@@ -795,6 +795,8 @@ namespace Avalonia.Controls
 
         private void NotifyingDataSource_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
         {
+            using var _ = _owner.BeginSelectionChangeScope(DataGridSelectionChangeSource.ItemsSourceChange);
+
             if (_owner.LoadingOrUnloadingRow)
             {
                 throw DataGridError.DataGrid.CannotChangeItemsWhenLoadingRows();

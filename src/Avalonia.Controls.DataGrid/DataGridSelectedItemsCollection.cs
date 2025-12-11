@@ -12,6 +12,7 @@ using System.Diagnostics;
 using System.Collections.Generic;
 using System.Collections;
 using System.Linq;
+using Avalonia.Interactivity;
 
 namespace Avalonia.Controls
 {
@@ -65,6 +66,8 @@ namespace Avalonia.Controls
 
         public int Add(object dataItem)
         {
+            using var _ = OwningGrid.BeginSelectionChangeScope(DataGridSelectionChangeSource.Programmatic);
+
             if (OwningGrid.SelectionMode == DataGridSelectionMode.Single)
             {
                 throw DataGridError.DataGridSelectedItemsCollection.CannotChangeSelectedItemsCollectionInSingleMode();
@@ -91,6 +94,8 @@ namespace Avalonia.Controls
 
         public void Clear()
         {
+            using var _ = OwningGrid.BeginSelectionChangeScope(DataGridSelectionChangeSource.Programmatic);
+
             if (OwningGrid.SelectionMode == DataGridSelectionMode.Single)
             {
                 throw DataGridError.DataGridSelectedItemsCollection.CannotChangeSelectedItemsCollectionInSingleMode();
@@ -144,6 +149,8 @@ namespace Avalonia.Controls
 
         public void Remove(object dataItem)
         {
+            using var _ = OwningGrid.BeginSelectionChangeScope(DataGridSelectionChangeSource.Programmatic);
+
             if (OwningGrid.SelectionMode == DataGridSelectionMode.Single)
             {
                 throw DataGridError.DataGridSelectedItemsCollection.CannotChangeSelectedItemsCollectionInSingleMode();
@@ -168,6 +175,8 @@ namespace Avalonia.Controls
 
         public void RemoveAt(int index)
         {
+            using var _ = OwningGrid.BeginSelectionChangeScope(DataGridSelectionChangeSource.Programmatic);
+
             if (OwningGrid.SelectionMode == DataGridSelectionMode.Single)
             {
                 throw DataGridError.DataGridSelectedItemsCollection.CannotChangeSelectedItemsCollectionInSingleMode();
@@ -326,7 +335,9 @@ namespace Avalonia.Controls
             }
         }
 
-        internal SelectionChangedEventArgs GetSelectionChangedEventArgs()
+        internal SelectionChangedEventArgs GetSelectionChangedEventArgs(
+            DataGridSelectionChangeSource source = DataGridSelectionChangeSource.Unknown,
+            RoutedEventArgs triggerEvent = null)
         {
             List<object> addedSelectedItems = new List<object>();
             List<object> removedSelectedItems = new List<object>();
@@ -351,10 +362,15 @@ namespace Avalonia.Controls
 
             RaiseCollectionChanged(previousCount, addedSelectedItems, removedSelectedItems);
 
-            return new SelectionChangedEventArgs(DataGrid.SelectionChangedEvent, removedSelectedItems, addedSelectedItems)
-            {
-                Source = OwningGrid
-            };
+            var args = new DataGridSelectionChangedEventArgs(
+                DataGrid.SelectionChangedEvent,
+                removedSelectedItems,
+                addedSelectedItems,
+                source,
+                triggerEvent);
+
+            ((RoutedEventArgs)args).Source = OwningGrid;
+            return args;
         }
 
         private void RaiseCollectionChanged(int oldCount, List<object> addedItems, List<object> removedItems)

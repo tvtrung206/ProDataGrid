@@ -28,6 +28,8 @@ namespace Avalonia.Controls
         //TODO FlowDirection
         private bool ProcessDataGridKey(KeyEventArgs e)
         {
+            using var _ = BeginSelectionChangeScope(DataGridSelectionChangeSource.Keyboard, e);
+
             bool focusDataGrid = false;
             switch (e.Key)
             {
@@ -798,6 +800,8 @@ namespace Avalonia.Controls
         //TODO: Ensure left button is checked for
         private bool UpdateStateOnMouseLeftButtonDown(PointerPressedEventArgs pointerPressedEventArgs, int columnIndex, int slot, bool allowEdit, bool shift, bool ctrl)
         {
+            using var _ = BeginSelectionChangeScope(DataGridSelectionChangeSource.Pointer, pointerPressedEventArgs);
+
             bool beginEdit;
 
             Debug.Assert(slot >= 0);
@@ -885,6 +889,8 @@ namespace Avalonia.Controls
         //TODO: Ensure right button is checked for
         private bool UpdateStateOnMouseRightButtonDown(PointerPressedEventArgs pointerPressedEventArgs, int columnIndex, int slot, bool allowEdit, bool shift, bool ctrl)
         {
+            using var _ = BeginSelectionChangeScope(DataGridSelectionChangeSource.Pointer, pointerPressedEventArgs);
+
             Debug.Assert(slot >= 0);
 
             if (shift || ctrl)

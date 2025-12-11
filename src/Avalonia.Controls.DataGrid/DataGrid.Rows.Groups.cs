@@ -20,6 +20,8 @@ namespace Avalonia.Controls
 
         private void CollectionViewGroup_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
         {
+            using var _ = BeginSelectionChangeScope(DataGridSelectionChangeSource.ItemsSourceChange);
+
             // If we receive this event when the number of GroupDescriptions is different than what we have already
             // accounted for, that means the ICollectionView is still in the process of updating its groups.  It will
             // send a reset notification when it's done, at which point we can update our visuals.
@@ -45,6 +47,8 @@ namespace Avalonia.Controls
 
         private void CollectionViewGroup_CollectionChanged_Add(object sender, NotifyCollectionChangedEventArgs e)
         {
+            using var _ = BeginSelectionChangeScope(DataGridSelectionChangeSource.ItemsSourceChange);
+
             if (e.NewItems != null && e.NewItems.Count > 0)
             {
                 // We need to figure out the CollectionViewGroup that the sender belongs to.  We could cache
@@ -131,6 +135,8 @@ namespace Avalonia.Controls
 
         private void CollectionViewGroup_CollectionChanged_Remove(object sender, NotifyCollectionChangedEventArgs e)
         {
+            using var _ = BeginSelectionChangeScope(DataGridSelectionChangeSource.ItemsSourceChange);
+
             Debug.Assert(e.OldItems.Count == 1);
             if (e.OldItems != null && e.OldItems.Count > 0)
             {
