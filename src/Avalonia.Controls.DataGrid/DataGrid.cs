@@ -11,6 +11,7 @@ using Avalonia.Data;
 using Avalonia.Controls.DataGridSelection;
 using Avalonia.Controls.Selection;
 using Avalonia.Controls.DataGridFiltering;
+using Avalonia.Controls.DataGridHierarchical;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
@@ -37,6 +38,7 @@ using Avalonia.Input.GestureRecognizers;
 using Avalonia.Controls.DataGridSorting;
 using Avalonia.Styling;
 using Avalonia.Reactive;
+using System.Reflection;
 
 namespace Avalonia.Controls
 {
@@ -125,6 +127,15 @@ namespace Avalonia.Controls
         private Avalonia.Controls.DataGridFiltering.DataGridFilteringAdapter _filteringAdapter;
         private Avalonia.Controls.DataGridFiltering.IDataGridFilteringModelFactory _filteringModelFactory;
         private Avalonia.Controls.DataGridFiltering.IDataGridFilteringAdapterFactory _filteringAdapterFactory;
+        private Avalonia.Controls.DataGridHierarchical.IHierarchicalModel _hierarchicalModel;
+        private Avalonia.Controls.DataGridHierarchical.DataGridHierarchicalAdapter _hierarchicalAdapter;
+        private Avalonia.Controls.DataGridHierarchical.IDataGridHierarchicalModelFactory _hierarchicalModelFactory;
+        private Avalonia.Controls.DataGridHierarchical.IDataGridHierarchicalAdapterFactory _hierarchicalAdapterFactory;
+        private bool _hierarchicalRowsEnabled;
+        private int _hierarchicalRefreshSuppressionCount;
+        private bool _pendingHierarchicalRefresh;
+        private IEnumerable _hierarchicalItemsSource;
+        private bool _ownsHierarchicalItemsSource;
 
         // Nth row of rows 0..N that make up the RowHeightEstimate
         private int _lastEstimatedRow;
@@ -141,6 +152,7 @@ namespace Avalonia.Controls
         private IList _selectedItemsBinding;
         private INotifyCollectionChanged _selectedItemsBindingNotifications;
         private DataGridSelectionModelAdapter _selectionModelAdapter;
+        private ISelectionModel _selectionModelProxy;
         private DataGridSelection.DataGridPagedSelectionSource _pagedSelectionSource;
         private List<object> _selectionModelSnapshot;
         private bool _syncingSelectionModel;
@@ -320,7 +332,7 @@ namespace Avalonia.Controls
         /// </summary>
         public ISelectionModel Selection
         {
-            get => _selectionModelAdapter?.Model;
+            get => _selectionModelProxy ?? _selectionModelAdapter?.Model;
             set => SetSelectionModel(value);
         }
 
@@ -909,6 +921,17 @@ namespace Avalonia.Controls
             return _sortingModelFactory?.Create() ?? new SortingModel();
         }
 
+        protected virtual Avalonia.Controls.DataGridHierarchical.IHierarchicalModel CreateHierarchicalModel()
+        {
+            var created = _hierarchicalModelFactory?.Create();
+            if (created != null)
+            {
+                return created;
+            }
+
+            return new Avalonia.Controls.DataGridHierarchical.HierarchicalModel();
+        }
+
         protected virtual Avalonia.Controls.DataGridFiltering.IFilteringModel CreateFilteringModel()
         {
             return _filteringModelFactory?.Create() ?? new Avalonia.Controls.DataGridFiltering.FilteringModel();
@@ -933,13 +956,72 @@ namespace Avalonia.Controls
         }
 
         /// <summary>
+        /// Optional factory used when creating the default hierarchical model.
+        /// </summary>
+        public Avalonia.Controls.DataGridHierarchical.IDataGridHierarchicalModelFactory HierarchicalModelFactory
+        {
+            get => _hierarchicalModelFactory;
+            set => _hierarchicalModelFactory = value;
+        }
+
+        /// <summary>
+        /// Optional factory for creating the hierarchical adapter.
+        /// </summary>
+        public Avalonia.Controls.DataGridHierarchical.IDataGridHierarchicalAdapterFactory HierarchicalAdapterFactory
+        {
+            get => _hierarchicalAdapterFactory;
+            set => _hierarchicalAdapterFactory = value;
+        }
+
+        /// <summary>
+        /// Enables hierarchical row rendering through <see cref="HierarchicalModel"/>.
+        /// </summary>
+        public bool HierarchicalRowsEnabled
+        {
+            get => _hierarchicalRowsEnabled;
+            set
+            {
+                if (_hierarchicalRowsEnabled == value)
+                {
+                    return;
+                }
+
+                _hierarchicalRowsEnabled = value;
+                if (_hierarchicalRowsEnabled)
+                {
+                    EnsureHierarchicalItemsSource();
+                }
+                else
+                {
+                    DetachHierarchicalItemsSource();
+                }
+                UpdateSelectionProxy();
+            }
+        }
+
+        /// <summary>
         /// Optional factory for creating the sorting adapter. Use this to plug in a custom adapter
         /// (e.g., DynamicData/server-side sorting) without subclassing <see cref="DataGrid"/>.
         /// </summary>
         public IDataGridSortingAdapterFactory SortingAdapterFactory
         {
             get => _sortingAdapterFactory;
-            set => _sortingAdapterFactory = value;
+            set
+            {
+                if (_sortingAdapterFactory == value)
+                {
+                    return;
+                }
+
+                _sortingAdapterFactory = value;
+
+                if (_sortingModel != null)
+                {
+                    _sortingAdapter?.Dispose();
+                    _sortingAdapter = CreateSortingAdapter(_sortingModel);
+                    UpdateSortingAdapterView();
+                }
+            }
         }
 
         /// <summary>
@@ -1017,18 +1099,54 @@ namespace Avalonia.Controls
         }
 
         /// <summary>
+        /// Gets or sets the hierarchical model that drives tree-like rows.
+        /// </summary>
+        public Avalonia.Controls.DataGridHierarchical.IHierarchicalModel HierarchicalModel
+        {
+            get => _hierarchicalModel ?? EnsureHierarchicalModel();
+            set => SetHierarchicalModel(value);
+        }
+
+        private Avalonia.Controls.DataGridHierarchical.IHierarchicalModel EnsureHierarchicalModel()
+        {
+            if (_hierarchicalModel == null)
+            {
+                SetHierarchicalModel(null, initializing: true);
+            }
+
+            return _hierarchicalModel!;
+        }
+
+        /// <summary>
         /// Creates the adapter that connects the sorting model to the grid.
         /// </summary>
         /// <param name="model">Sorting model instance.</param>
         /// <returns>Adapter that will bridge the model to the collection view and grid.</returns>
         protected virtual DataGridSortingAdapter CreateSortingAdapter(ISortingModel model)
         {
-            var adapter = _sortingAdapterFactory?.Create(this, model)
-                ?? new DataGridSortingAdapter(
-                    model,
-                    () => ColumnsItemsInternal,
-                    OnSortingAdapterApplying,
-                    OnSortingAdapterApplied);
+            var adapter = _sortingAdapterFactory?.Create(this, model);
+
+            if (adapter == null)
+            {
+                if (_hierarchicalRowsEnabled && _hierarchicalModel != null)
+                {
+                    adapter = new Avalonia.Controls.DataGridHierarchical.HierarchicalSortingAdapter(
+                        _hierarchicalModel,
+                        model,
+                        () => ColumnsItemsInternal,
+                        _hierarchicalModel.Options.SiblingComparer,
+                        OnSortingAdapterApplying,
+                        OnSortingAdapterApplied);
+                }
+                else
+                {
+                    adapter = new DataGridSortingAdapter(
+                        model,
+                        () => ColumnsItemsInternal,
+                        OnSortingAdapterApplying,
+                        OnSortingAdapterApplied);
+                }
+            }
 
             if (adapter == null)
             {
@@ -1060,6 +1178,71 @@ namespace Avalonia.Controls
 
             adapter.AttachLifecycle(OnFilteringAdapterApplying, OnFilteringAdapterApplied);
             return adapter;
+        }
+
+        /// <summary>
+        /// Creates the adapter that connects the hierarchical model to the grid.
+        /// </summary>
+        /// <param name="model">Hierarchical model instance.</param>
+        /// <returns>Adapter bridging flattened hierarchy to grid gestures.</returns>
+        protected virtual Avalonia.Controls.DataGridHierarchical.DataGridHierarchicalAdapter CreateHierarchicalAdapter(Avalonia.Controls.DataGridHierarchical.IHierarchicalModel model)
+        {
+            var adapter = TryCreateTypedHierarchicalAdapter(model)
+                ?? _hierarchicalAdapterFactory?.Create(this, model)
+                ?? new Avalonia.Controls.DataGridHierarchical.DataGridHierarchicalAdapter(model);
+
+            if (adapter == null)
+            {
+                throw new InvalidOperationException("Hierarchical adapter factory returned null.");
+            }
+
+            return adapter;
+        }
+
+        private Avalonia.Controls.DataGridHierarchical.DataGridHierarchicalAdapter? TryCreateTypedHierarchicalAdapter(Avalonia.Controls.DataGridHierarchical.IHierarchicalModel model)
+        {
+            if (_hierarchicalAdapterFactory == null)
+            {
+                return null;
+            }
+
+            var modelType = model.GetType();
+            var typedModelInterface = modelType.GetInterfaces()
+                .FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(Avalonia.Controls.DataGridHierarchical.IHierarchicalModel<>));
+            if (typedModelInterface == null)
+            {
+                return null;
+            }
+
+            var typeArg = typedModelInterface.GenericTypeArguments[0];
+            var factoryInterface = _hierarchicalAdapterFactory.GetType().GetInterfaces()
+                .FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(Avalonia.Controls.DataGridHierarchical.IDataGridHierarchicalAdapterFactory<>)
+                    && i.GenericTypeArguments[0].IsAssignableFrom(typeArg));
+
+            if (factoryInterface == null)
+            {
+                return null;
+            }
+
+            var createMethod = factoryInterface.GetMethod("Create", new[] { typeof(DataGrid), typedModelInterface });
+            if (createMethod == null)
+            {
+                return null;
+            }
+
+            var typedAdapter = createMethod.Invoke(_hierarchicalAdapterFactory, new object[] { this, model });
+            if (typedAdapter == null)
+            {
+                return null;
+            }
+
+            var innerProperty = typedAdapter.GetType().GetProperty("InnerAdapter", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+            if (innerProperty?.GetValue(typedAdapter) is Avalonia.Controls.DataGridHierarchical.DataGridHierarchicalAdapter inner)
+            {
+                return inner;
+            }
+
+            return typedAdapter as Avalonia.Controls.DataGridHierarchical.DataGridHierarchicalAdapter;
         }
 
         private void SetSelectionModel(ISelectionModel model, bool initializing = false)
@@ -1102,6 +1285,8 @@ namespace Avalonia.Controls
             {
                 _syncingSelectionModel = false;
             }
+
+            UpdateSelectionProxy();
 
             RaisePropertyChanged(SelectionProperty, oldModel, newModel);
             RaisePropertyChanged(
@@ -1175,6 +1360,199 @@ namespace Avalonia.Controls
                 RefreshColumnSortStates();
                 RefreshColumnFilterStates();
             }
+        }
+
+        private void HierarchicalAdapter_FlattenedChanged(object sender, FlattenedChangedEventArgs e)
+        {
+            HandleHierarchicalFlattenedChanged(e);
+        }
+
+        private void HandleHierarchicalFlattenedChanged(FlattenedChangedEventArgs e)
+        {
+            if (!_hierarchicalRowsEnabled)
+            {
+                return;
+            }
+
+            if (_hierarchicalRefreshSuppressionCount > 0)
+            {
+                _pendingHierarchicalRefresh = true;
+                return;
+            }
+
+            var indexMap = e.IndexMap;
+            using (_hierarchicalModel?.BeginVirtualizationGuard())
+            using (_rowsPresenter?.BeginVirtualizationGuard())
+            {
+                RemapSelectionForHierarchyChange(indexMap);
+                RefreshRowsAndColumns(clearRows: false);
+                RefreshSelectionFromModel();
+            }
+        }
+
+        private void EnsureHierarchicalItemsSource()
+        {
+            if (!_hierarchicalRowsEnabled || _hierarchicalModel?.ObservableFlattened == null)
+            {
+                DetachHierarchicalItemsSource();
+                return;
+            }
+
+            var source = _hierarchicalModel.Flattened;
+            var itemsSource = ItemsSource;
+
+            if (!_ownsHierarchicalItemsSource &&
+                itemsSource != null &&
+                !ReferenceEquals(itemsSource, _hierarchicalItemsSource) &&
+                !ReferenceEquals(itemsSource, source))
+            {
+                return;
+            }
+
+            _hierarchicalItemsSource = source;
+            _ownsHierarchicalItemsSource = true;
+            SetCurrentValue(ItemsSourceProperty, source);
+        }
+
+        private void DetachHierarchicalItemsSource()
+        {
+            if (_ownsHierarchicalItemsSource && ReferenceEquals(ItemsSource, _hierarchicalItemsSource))
+            {
+                SetCurrentValue(ItemsSourceProperty, null);
+            }
+
+            _hierarchicalItemsSource = null;
+            _ownsHierarchicalItemsSource = false;
+        }
+
+        private void RunHierarchicalAction(Action action)
+        {
+            if (action == null)
+            {
+                return;
+            }
+
+            _hierarchicalRefreshSuppressionCount++;
+            try
+            {
+                action();
+            }
+            finally
+            {
+                _hierarchicalRefreshSuppressionCount = Math.Max(0, _hierarchicalRefreshSuppressionCount - 1);
+                if (_hierarchicalRefreshSuppressionCount == 0 && _pendingHierarchicalRefresh)
+                {
+                    _pendingHierarchicalRefresh = false;
+                    if (_hierarchicalRowsEnabled)
+                    {
+                        RefreshRowsAndColumns(clearRows: false);
+                    }
+                }
+            }
+        }
+
+        private void RemapSelectionForHierarchyChange(Avalonia.Controls.DataGridHierarchical.FlattenedIndexMap? indexMap)
+        {
+            if (indexMap == null || _selectionModelAdapter == null)
+            {
+                return;
+            }
+
+            var model = _selectionModelAdapter.Model;
+            var selected = model.SelectedIndexes;
+            if (selected == null || selected.Count == 0)
+            {
+                return;
+            }
+
+            var mapped = new List<int>(selected.Count);
+            var seen = new HashSet<int>();
+
+            foreach (var index in selected)
+            {
+                var mappedIndex = indexMap.MapOldIndexToNew(index);
+                if (mappedIndex >= 0 && seen.Add(mappedIndex))
+                {
+                    mapped.Add(mappedIndex);
+                }
+            }
+
+            var preferredMapped = _preferredSelectionIndex >= 0
+                ? indexMap.MapOldIndexToNew(_preferredSelectionIndex)
+                : -1;
+
+            var previous = PushSelectionSync();
+            var source = model.Source;
+            var view = DataConnection?.CollectionView as Avalonia.Collections.DataGridCollectionView;
+            try
+            {
+                if (source != null)
+                {
+                    // Temporarily detach to avoid collection change callbacks while remapping.
+                    model.Source = null;
+                }
+
+                using (_selectionModelAdapter.SelectedItemsView.SuppressNotifications())
+                using (model.BatchUpdate())
+                {
+                    model.Clear();
+                    foreach (var index in mapped)
+                    {
+                        model.Select(index);
+                    }
+                }
+
+                _preferredSelectionIndex = preferredMapped >= 0
+                    ? preferredMapped
+                    : (mapped.Count > 0 ? mapped[0] : -1);
+            }
+            finally
+            {
+                if (source != null)
+                {
+                    view?.Refresh();
+                    if (model.Source != source)
+                    {
+                        model.Source = source;
+                    }
+                }
+
+                PopSelectionSync(previous);
+            }
+        }
+
+        private void UpdateSelectionProxy()
+        {
+            if (_selectionModelAdapter?.Model != null &&
+                _hierarchicalRowsEnabled &&
+                _hierarchicalModel != null)
+            {
+                _selectionModelProxy = new HierarchicalSelectionProxy(
+                    _selectionModelAdapter.Model,
+                    ProjectHierarchicalSelectionItem,
+                    ResolveHierarchicalIndex);
+            }
+            else
+            {
+                _selectionModelProxy = null;
+            }
+        }
+
+        private object? ProjectHierarchicalSelectionItem(object? item)
+        {
+            return item is Avalonia.Controls.DataGridHierarchical.HierarchicalNode node
+                ? node.Item
+                : item;
+        }
+
+        private int ResolveHierarchicalIndex(object? item)
+        {
+            if (item == null || _hierarchicalModel == null)
+            {
+                return -1;
+            }
+
+            return _hierarchicalModel.IndexOf(item);
         }
 
         private void UpdateSortingAdapterView()
@@ -1296,6 +1674,41 @@ namespace Avalonia.Controls
             }
         }
 
+        private void SetHierarchicalModel(Avalonia.Controls.DataGridHierarchical.IHierarchicalModel model, bool initializing = false)
+        {
+            var oldModel = _hierarchicalModel;
+            var newModel = model ?? CreateHierarchicalModel();
+
+            if (ReferenceEquals(_hierarchicalModel, newModel))
+            {
+                return;
+            }
+
+            if (_hierarchicalAdapter != null)
+            {
+                _hierarchicalAdapter.FlattenedChanged -= HierarchicalAdapter_FlattenedChanged;
+                _hierarchicalAdapter.Dispose();
+                _hierarchicalAdapter = null;
+            }
+
+            if (_hierarchicalModel != null)
+            {
+                _hierarchicalModel.FlattenedChanged -= HierarchicalAdapter_FlattenedChanged;
+            }
+
+            _hierarchicalModel = newModel;
+
+            if (_hierarchicalModel != null)
+            {
+                _hierarchicalModel.FlattenedChanged += HierarchicalAdapter_FlattenedChanged;
+                _hierarchicalAdapter = CreateHierarchicalAdapter(_hierarchicalModel);
+            }
+
+            EnsureHierarchicalItemsSource();
+            UpdateSelectionProxy();
+            RaisePropertyChanged(HierarchicalModelProperty, oldModel, _hierarchicalModel);
+        }
+
         internal SortingDescriptor GetSortingDescriptorForColumn(DataGridColumn column)
         {
             if (column == null || _sortingModel == null)
@@ -1397,6 +1810,7 @@ namespace Avalonia.Controls
                 _selectionModelAdapter = null;
             }
 
+            _selectionModelProxy = null;
             _selectionModelSnapshot = null;
         }
 
@@ -1523,6 +1937,147 @@ namespace Avalonia.Controls
         internal void PopSelectionSync(bool previous)
         {
             _syncingSelectionModel = previous;
+        }
+
+        private sealed class HierarchicalSelectionProxy : ISelectionModel
+        {
+            private readonly ISelectionModel _inner;
+            private readonly Func<object?, object?> _itemSelector;
+            private readonly Func<object?, int> _indexResolver;
+
+            public HierarchicalSelectionProxy(
+                ISelectionModel inner,
+                Func<object?, object?> itemSelector,
+                Func<object?, int> indexResolver)
+            {
+                _inner = inner ?? throw new ArgumentNullException(nameof(inner));
+                _itemSelector = itemSelector ?? throw new ArgumentNullException(nameof(itemSelector));
+                _indexResolver = indexResolver ?? throw new ArgumentNullException(nameof(indexResolver));
+            }
+
+            public IEnumerable? Source
+            {
+                get => _inner.Source;
+                set => _inner.Source = value;
+            }
+
+            public bool SingleSelect
+            {
+                get => _inner.SingleSelect;
+                set => _inner.SingleSelect = value;
+            }
+
+            public int SelectedIndex
+            {
+                get => _inner.SelectedIndex;
+                set => _inner.SelectedIndex = value;
+            }
+
+            public IReadOnlyList<int> SelectedIndexes => _inner.SelectedIndexes;
+
+            public object? SelectedItem
+            {
+                get => _itemSelector(_inner.SelectedItem);
+                set
+                {
+                    if (value != null)
+                    {
+                        var resolved = _indexResolver(value);
+                        if (resolved >= 0)
+                        {
+                            _inner.SelectedIndex = resolved;
+                            return;
+                        }
+                    }
+
+                    _inner.SelectedItem = value;
+                }
+            }
+
+            public IReadOnlyList<object?> SelectedItems =>
+                new ProjectedReadOnlyList(_inner.SelectedItems, _itemSelector);
+
+            public int AnchorIndex
+            {
+                get => _inner.AnchorIndex;
+                set => _inner.AnchorIndex = value;
+            }
+
+            public int Count => _inner.Count;
+
+            public event EventHandler<SelectionModelIndexesChangedEventArgs>? IndexesChanged
+            {
+                add => _inner.IndexesChanged += value;
+                remove => _inner.IndexesChanged -= value;
+            }
+
+            public event EventHandler<SelectionModelSelectionChangedEventArgs>? SelectionChanged
+            {
+                add => _inner.SelectionChanged += value;
+                remove => _inner.SelectionChanged -= value;
+            }
+
+            public event EventHandler? LostSelection
+            {
+                add => _inner.LostSelection += value;
+                remove => _inner.LostSelection -= value;
+            }
+
+            public event EventHandler? SourceReset
+            {
+                add => _inner.SourceReset += value;
+                remove => _inner.SourceReset -= value;
+            }
+
+            public event PropertyChangedEventHandler? PropertyChanged
+            {
+                add => _inner.PropertyChanged += value;
+                remove => _inner.PropertyChanged -= value;
+            }
+
+            public void BeginBatchUpdate() => _inner.BeginBatchUpdate();
+
+            public void EndBatchUpdate() => _inner.EndBatchUpdate();
+
+            public bool IsSelected(int index) => _inner.IsSelected(index);
+
+            public void Select(int index) => _inner.Select(index);
+
+            public void Deselect(int index) => _inner.Deselect(index);
+
+            public void SelectRange(int start, int end) => _inner.SelectRange(start, end);
+
+            public void DeselectRange(int start, int end) => _inner.DeselectRange(start, end);
+
+            public void SelectAll() => _inner.SelectAll();
+
+            public void Clear() => _inner.Clear();
+
+            private sealed class ProjectedReadOnlyList : IReadOnlyList<object?>
+            {
+                private readonly IReadOnlyList<object?> _inner;
+                private readonly Func<object?, object?> _selector;
+
+                public ProjectedReadOnlyList(IReadOnlyList<object?> inner, Func<object?, object?> selector)
+                {
+                    _inner = inner ?? throw new ArgumentNullException(nameof(inner));
+                    _selector = selector ?? throw new ArgumentNullException(nameof(selector));
+                }
+
+                public object? this[int index] => _selector(_inner[index]);
+
+                public int Count => _inner.Count;
+
+                public IEnumerator<object?> GetEnumerator()
+                {
+                    foreach (var item in _inner)
+                    {
+                        yield return _selector(item);
+                    }
+                }
+
+                IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+            }
         }
 
         private void RemoveDisplayedColumnHeader(DataGridColumn dataGridColumn)

@@ -577,6 +577,17 @@ namespace Avalonia.Controls
                 (o, v) => o.FilteringModel = v,
                 defaultBindingMode: BindingMode.TwoWay);
 
+        /// <summary>
+        /// Gets or sets the hierarchical model that drives tree-like rows. If not provided, a default
+        /// hierarchical model is created.
+        /// </summary>
+        public static readonly DirectProperty<DataGrid, Avalonia.Controls.DataGridHierarchical.IHierarchicalModel> HierarchicalModelProperty =
+            AvaloniaProperty.RegisterDirect<DataGrid, Avalonia.Controls.DataGridHierarchical.IHierarchicalModel>(
+                nameof(HierarchicalModel),
+                o => o.HierarchicalModel,
+                (o, v) => o.HierarchicalModel = v,
+                defaultBindingMode: BindingMode.TwoWay);
+
         public static readonly StyledProperty<DataGridClipboardCopyMode> ClipboardCopyModeProperty =
             AvaloniaProperty.Register<DataGrid, DataGridClipboardCopyMode>(
                 nameof(ClipboardCopyMode),

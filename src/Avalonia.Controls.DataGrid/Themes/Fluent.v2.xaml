@@ -1,7 +1,8 @@
 <!-- Copyright (c) Wiesław Šoltés. All rights reserved. -->
 <!-- Licensed under the MIT license. See LICENSE file in the project root for details. -->
 <Styles xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:collections="using:Avalonia.Collections">
+        xmlns:collections="using:Avalonia.Collections"
+        xmlns:controls="clr-namespace:Avalonia.Controls">
   <Styles.Resources>
    <ResourceDictionary>
     <ResourceDictionary.ThemeDictionaries>
@@ -94,6 +95,96 @@
           </Border>
         </ControlTemplate>
       </Setter>
+    </ControlTheme>
+
+    <DataTemplate x:Key="DataGridHierarchicalCellTemplate">
+      <TextBlock VerticalAlignment="Center"
+                 Text="{Binding}" />
+    </DataTemplate>
+
+    <ControlTheme x:Key="DataGridHierarchicalExpanderTheme" TargetType="ToggleButton">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="BorderBrush" Value="Transparent" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="Padding" Value="0" />
+      <Setter Property="Template">
+        <ControlTemplate>
+          <Border Background="Transparent"
+                  BorderBrush="Transparent"
+                  BorderThickness="0"
+                  HorizontalAlignment="Center"
+                  VerticalAlignment="Center">
+            <Path x:Name="PART_Glyph"
+                  Width="10"
+                  Height="10"
+                  Stretch="Uniform"
+                  Fill="{TemplateBinding Foreground}"
+                  Data="{DynamicResource DataGridRowGroupHeaderIconClosedPath}" />
+          </Border>
+        </ControlTemplate>
+      </Setter>
+      <Style Selector="^:checked /template/ Path#PART_Glyph">
+        <Setter Property="Data" Value="{DynamicResource DataGridRowGroupHeaderIconOpenedPath}" />
+      </Style>
+    </ControlTheme>
+
+    <ControlTheme x:Key="{x:Type controls:DataGridHierarchicalPresenter}" TargetType="controls:DataGridHierarchicalPresenter">
+      <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+      <Setter Property="VerticalContentAlignment" Value="Center" />
+      <Setter Property="Indent" Value="16" />
+      <Setter Property="Template">
+        <ControlTemplate>
+          <Border Padding="{TemplateBinding Padding}">
+            <Grid ColumnDefinitions="Auto,*">
+              <ToggleButton x:Name="PART_Expander"
+                            Width="28"
+                            Height="28"
+                            Theme="{StaticResource DataGridHierarchicalExpanderTheme}"
+                            Background="Transparent"
+                            BorderBrush="Transparent"
+                            BorderThickness="0"
+                            IsEnabled="{TemplateBinding IsExpandable}"
+                            IsVisible="{TemplateBinding IsExpandable}"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            IsChecked="{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}}">
+                <Path x:Name="PART_Glyph"
+                      Width="10"
+                      Height="10"
+                      Stretch="Uniform"
+                      Fill="{TemplateBinding Foreground}"
+                      Data="{DynamicResource DataGridRowGroupHeaderIconClosedPath}" />
+              </ToggleButton>
+
+              <ContentPresenter Grid.Column="1"
+                                Margin="6,0,0,0"
+                                HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                ContentTemplate="{TemplateBinding ContentTemplate}"
+                                Content="{TemplateBinding Content}" />
+            </Grid>
+          </Border>
+        </ControlTemplate>
+      </Setter>
+      <Style Selector="^ /template/ ToggleButton#PART_Expander:checked Path#PART_Glyph">
+        <Setter Property="Data" Value="{DynamicResource DataGridRowGroupHeaderIconOpenedPath}" />
+      </Style>
+      <Style Selector="^ /template/ ToggleButton#PART_Expander:pointerover">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+      </Style>
+      <Style Selector="^ /template/ ToggleButton#PART_Expander:pressed">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+      </Style>
+      <Style Selector="^ /template/ ToggleButton#PART_Expander:checked">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+      </Style>
+      <Style Selector="^ /template/ ToggleButton#PART_Expander:focused">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+      </Style>
     </ControlTheme>
 
     <StaticResource x:Key="DataGridRowBackgroundBrush" ResourceKey="SystemControlTransparentBrush" />

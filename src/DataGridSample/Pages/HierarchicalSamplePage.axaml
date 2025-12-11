@@ -1,0 +1,81 @@
+<!--
+  Copyright (c) Wiesław Šoltés. All rights reserved.
+  Licensed under the MIT license. See LICENSE file in the project root for details.
+-->
+<UserControl
+    x:Class="DataGridSample.Pages.HierarchicalSamplePage"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:viewModels="clr-namespace:DataGridSample.ViewModels"
+    xmlns:adapters="clr-namespace:DataGridSample.Adapters"
+    d:DesignHeight="720"
+    d:DesignWidth="1100"
+    mc:Ignorable="d">
+
+  <UserControl.DataContext>
+    <viewModels:HierarchicalSampleViewModel />
+  </UserControl.DataContext>
+
+  <UserControl.Resources>
+    <adapters:HierarchicalSortingAdapterFactory x:Key="HierarchicalSortingAdapterFactory" />
+  </UserControl.Resources>
+
+  <Grid Margin="12"
+        RowDefinitions="Auto,Auto,*"
+        ColumnDefinitions="*">
+    <StackPanel Spacing="4">
+      <TextBlock Text="Hierarchical Model (file system tree with expand/collapse)"
+                 FontWeight="Bold"
+                 FontSize="18" />
+      <TextBlock TextWrapping="Wrap"
+                 Text="This sample displays a portion of your file system using the hierarchical model's flattened nodes, automatically bound by the DataGrid. Use the toggle buttons to expand or collapse nodes; virtualization clears children on collapse." />
+    </StackPanel>
+
+    <StackPanel Grid.Row="1"
+                Orientation="Horizontal"
+                Spacing="8"
+                Margin="0 8">
+      <Button Content="Expand all"
+              Command="{Binding ExpandAllCommand}" />
+      <Button Content="Collapse all"
+              Command="{Binding CollapseAllCommand}" />
+      <Button Content="Refresh root"
+              Command="{Binding RefreshRootCommand}" />
+    </StackPanel>
+
+    <DataGrid Grid.Row="2"
+              AutoGenerateColumns="False"
+              HierarchicalModel="{Binding Model}"
+              SortingModel="{Binding SortingModel, Mode=OneWay}"
+              SortingAdapterFactory="{StaticResource HierarchicalSortingAdapterFactory}"
+              HierarchicalRowsEnabled="True"
+              CanUserSortColumns="True"
+              HeadersVisibility="Column"
+              GridLinesVisibility="Horizontal"
+              SelectionMode="Single">
+      <DataGrid.Columns>
+        <DataGridHierarchicalColumn Header="Name"
+                                    SortMemberPath="Item.Name"
+                                    Width="2*"
+                                    Binding="{Binding Item.Name}" />
+
+        <DataGridTextColumn Header="Kind"
+                            SortMemberPath="Item.Kind"
+                            Width="120"
+                            Binding="{Binding Item.Kind}" />
+
+        <DataGridTextColumn Header="Size"
+                            SortMemberPath="Item.Size"
+                            Width="120"
+                            Binding="{Binding Item.Size, StringFormat=N0}" />
+
+        <DataGridTextColumn Header="Modified"
+                            SortMemberPath="Item.Modified"
+                            Width="160"
+                            Binding="{Binding Item.Modified, StringFormat=yyyy-MM-dd HH:mm}" />
+      </DataGrid.Columns>
+    </DataGrid>
+  </Grid>
+</UserControl>

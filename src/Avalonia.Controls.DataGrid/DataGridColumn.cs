@@ -343,6 +343,13 @@ namespace Avalonia.Controls
                     string propertyPath = GetSortPropertyName();
                     Type propertyType = OwningGrid.DataConnection.DataType.GetNestedPropertyType(propertyPath);
 
+                    // If we can't resolve the property type (e.g. nested paths on object-typed nodes),
+                    // fall back to the grid default instead of disabling sorting entirely.
+                    if (propertyType == null)
+                    {
+                        return DataGrid.DATAGRID_defaultCanUserSortColumns;
+                    }
+
                     // if the type is nullable, then we will compare the non-nullable type
                     if (TypeHelper.IsNullableType(propertyType))
                     {

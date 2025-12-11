@@ -139,14 +139,14 @@ namespace Avalonia.Controls
 
         internal bool ProcessLeftKey(KeyEventArgs e)
         {
-            KeyboardHelper.GetMetaKeyState(this, e.KeyModifiers, out bool ctrl, out bool shift);
-            return ProcessLeftKey(shift, ctrl);
+            KeyboardHelper.GetMetaKeyState(this, e.KeyModifiers, out bool ctrl, out bool shift, out bool alt);
+            return ProcessLeftKey(shift, ctrl, alt);
         }
 
         internal bool ProcessRightKey(KeyEventArgs e)
         {
-            KeyboardHelper.GetMetaKeyState(this, e.KeyModifiers, out bool ctrl, out bool shift);
-            return ProcessRightKey(shift, ctrl);
+            KeyboardHelper.GetMetaKeyState(this, e.KeyModifiers, out bool ctrl, out bool shift, out bool alt);
+            return ProcessRightKey(shift, ctrl, alt);
         }
 
         internal bool ProcessHomeKey(KeyEventArgs e)
