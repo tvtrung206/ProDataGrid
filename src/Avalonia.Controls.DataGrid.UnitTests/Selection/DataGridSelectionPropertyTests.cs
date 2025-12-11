@@ -57,6 +57,27 @@ public class DataGridSelectionPropertyTests
     }
 
     [AvaloniaFact]
+    public void Selection_Model_Source_Updates_When_ItemsSource_Changes()
+    {
+        var items1 = new ObservableCollection<string> { "A", "B" };
+        var items2 = new ObservableCollection<string> { "X", "Y" };
+        var selectionModel = new SelectionModel<string> { SingleSelect = false };
+
+        var grid = CreateGrid(items1);
+        grid.Selection = selectionModel;
+        grid.UpdateLayout();
+
+        Assert.Same(grid.CollectionView, selectionModel.Source);
+
+        grid.ItemsSource = items2;
+        grid.UpdateLayout();
+
+        Assert.Same(grid.CollectionView, selectionModel.Source);
+        Assert.Equal(-1, selectionModel.SelectedIndex);
+        Assert.Null(selectionModel.SelectedItem);
+    }
+
+    [AvaloniaFact]
     public void Replacing_Selection_Raises_Removed_SelectionChanged()
     {
         var items = new ObservableCollection<string> { "A", "B" };

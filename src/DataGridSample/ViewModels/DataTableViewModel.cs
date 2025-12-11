@@ -44,6 +44,7 @@ namespace DataGridSample.ViewModels
         private void Reset()
         {
             Items = new DataGridCollectionView(BuildTable().DefaultView);
+            SelectedRow = null;
             OnPropertyChanged(nameof(Items));
         }
 
