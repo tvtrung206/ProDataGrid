@@ -38,10 +38,10 @@ namespace Avalonia.Controls.DataGridTests
                 .GetMethod("AutoGenerateColumnsPrivate", BindingFlags.Instance | BindingFlags.NonPublic)!
                 .Invoke(grid, null);
 
-            Assert.Equal(3, grid.Columns.Count);
+            Assert.Equal(3, grid.ColumnDefinitions.Count);
 
             Assert.Collection(
-                grid.Columns,
+                grid.ColumnDefinitions,
                 col =>
                 {
                     Assert.Equal("Id", col.Header);
@@ -85,10 +85,10 @@ namespace Avalonia.Controls.DataGridTests
                 .GetMethod("AutoGenerateColumnsPrivate", BindingFlags.Instance | BindingFlags.NonPublic)!
                 .Invoke(grid, null);
 
-            Assert.Equal(3, grid.Columns.Count);
+            Assert.Equal(3, grid.ColumnDefinitions.Count);
 
             Assert.Collection(
-                grid.Columns,
+                grid.ColumnDefinitions,
                 col =>
                 {
                     Assert.Equal("Id", col.Header);

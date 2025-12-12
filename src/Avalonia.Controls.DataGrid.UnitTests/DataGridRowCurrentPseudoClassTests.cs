@@ -69,7 +69,7 @@ public class DataGridRowCurrentPseudoClassTests
             var firstRow = FindRow(items[0], grid);
             Assert.True(((IPseudoClasses)firstRow.Classes).Contains(":current"));
 
-            grid.ScrollIntoView(items[15], grid.Columns[0]);
+            grid.ScrollIntoView(items[15], grid.ColumnDefinitions[0]);
             grid.SelectedItem = items[15];
             grid.UpdateLayout();
 
@@ -104,13 +104,13 @@ public class DataGridRowCurrentPseudoClassTests
             ItemsSource = people
         };
 
-        grid.Columns.Add(new DataGridTextColumn
+        grid.ColumnDefinitions.Add(new DataGridTextColumn
         {
             Header = "Name",
             Binding = new Binding(nameof(Person.Name))
         });
 
-        grid.Columns.Add(new DataGridTextColumn
+        grid.ColumnDefinitions.Add(new DataGridTextColumn
         {
             Header = "Role",
             Binding = new Binding(nameof(Person.Role))

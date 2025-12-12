@@ -71,7 +71,7 @@ public class HierarchicalHeadlessTests
             ItemsSource = model.Flattened
         };
 
-        grid.Columns.Add(new DataGridHierarchicalColumn
+        grid.ColumnDefinitions.Add(new DataGridHierarchicalColumn
         {
             Header = "Name",
             Binding = new Avalonia.Data.Binding("Item.Name")
@@ -116,7 +116,7 @@ public class HierarchicalHeadlessTests
             ItemsSource = model.Flattened
         };
 
-        grid.Columns.Add(new DataGridHierarchicalColumn
+        grid.ColumnDefinitions.Add(new DataGridHierarchicalColumn
         {
             Header = "Name",
             Binding = new Avalonia.Data.Binding("Item.Name")
@@ -178,7 +178,7 @@ public class HierarchicalHeadlessTests
             ItemsSource = model.Flattened
         };
 
-        grid.Columns.Add(new DataGridHierarchicalColumn
+        grid.ColumnDefinitions.Add(new DataGridHierarchicalColumn
         {
             Header = "Name",
             Binding = new Avalonia.Data.Binding("Item.Name")
@@ -278,7 +278,7 @@ public class HierarchicalHeadlessTests
             Source = new Uri("avares://Avalonia.Controls.DataGrid/Themes/Simple.xaml")
         });
 
-        grid.Columns.Add(new DataGridHierarchicalColumn
+        grid.ColumnDefinitions.Add(new DataGridHierarchicalColumn
         {
             Header = "Name",
             Binding = new Avalonia.Data.Binding("Item.Name"),
@@ -339,7 +339,7 @@ public class HierarchicalHeadlessTests
         {
             var adapterField = typeof(DataGrid).GetField("_sortingAdapter", BindingFlags.Instance | BindingFlags.NonPublic);
             var adapter = adapterField?.GetValue(grid) as DataGridSortingAdapter;
-            var column = grid.Columns.First(c => Equals(c.Header, header));
+            var column = grid.ColumnDefinitions.First(c => Equals(c.Header, header));
             adapter?.HandleHeaderClick(column, modifiers);
         }
     }
@@ -432,7 +432,7 @@ public class HierarchicalHeadlessTests
     {
         public DataGridSortingAdapter Create(DataGrid grid, ISortingModel model)
         {
-            return new HierarchicalSortingAdapter(model, () => grid.Columns, null, null);
+            return new HierarchicalSortingAdapter(model, () => grid.ColumnDefinitions, null, null);
         }
     }
 

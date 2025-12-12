@@ -120,7 +120,7 @@ public class DataGridSelectionPagingTests
             grid.Selection = selection;
         }
 
-        grid.Columns.Add(new DataGridTextColumn
+        grid.ColumnDefinitions.Add(new DataGridTextColumn
         {
             Header = "Value",
             Binding = new Binding(".")

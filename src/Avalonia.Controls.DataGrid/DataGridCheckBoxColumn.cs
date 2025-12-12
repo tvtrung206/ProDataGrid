@@ -244,7 +244,7 @@ namespace Avalonia.Controls
         {
             if (e.Action == NotifyCollectionChangedAction.Remove && e.OldItems.Contains(this) && _owningGrid != null)
             {
-                _owningGrid.Columns.CollectionChanged -= Columns_CollectionChanged;
+                _owningGrid.ColumnsInternal.CollectionChanged -= Columns_CollectionChanged;
                 _owningGrid.CurrentCellChanged -= OwningGrid_CurrentCellChanged;
                 _owningGrid.KeyDown -= OwningGrid_KeyDown;
                 _owningGrid.LoadingRow -= OwningGrid_LoadingRow;
@@ -266,7 +266,7 @@ namespace Avalonia.Controls
                 if (OwningGrid != _owningGrid)
                 {
                     _owningGrid = OwningGrid;
-                    _owningGrid.Columns.CollectionChanged += Columns_CollectionChanged;
+                    _owningGrid.ColumnsInternal.CollectionChanged += Columns_CollectionChanged;
                     _owningGrid.CurrentCellChanged += OwningGrid_CurrentCellChanged;
                     _owningGrid.KeyDown += OwningGrid_KeyDown;
                     _owningGrid.LoadingRow += OwningGrid_LoadingRow;

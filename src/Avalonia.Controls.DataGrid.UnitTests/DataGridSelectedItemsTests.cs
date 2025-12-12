@@ -234,7 +234,7 @@ public class DataGridSelectedItemsTests
 
         var selected = Assert.IsType<SortableItem>(grid.SelectedItem);
         var model = grid.SortingModel;
-        var column = grid.Columns[0];
+        var column = grid.ColumnDefinitions[0];
 
         model.Toggle(new SortingDescriptor(column, ListSortDirection.Ascending, column.SortMemberPath, culture: view.Culture));
         grid.UpdateLayout();
@@ -327,7 +327,7 @@ public class DataGridSelectedItemsTests
             SelectionMode = DataGridSelectionMode.Extended,
         };
 
-        grid.Columns.Add(new DataGridTextColumn
+        grid.ColumnDefinitions.Add(new DataGridTextColumn
         {
             Header = "Value",
             Binding = new Binding(".")
@@ -359,14 +359,14 @@ public class DataGridSelectedItemsTests
             SelectionMode = DataGridSelectionMode.Extended,
         };
 
-        grid.Columns.Add(new DataGridTextColumn
+        grid.ColumnDefinitions.Add(new DataGridTextColumn
         {
             Header = "Id",
             Binding = new Binding(nameof(SortableItem.Id)),
             SortMemberPath = nameof(SortableItem.Id)
         });
 
-        grid.Columns.Add(new DataGridTextColumn
+        grid.ColumnDefinitions.Add(new DataGridTextColumn
         {
             Header = "Name",
             Binding = new Binding(nameof(SortableItem.Name))

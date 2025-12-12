@@ -27,8 +27,8 @@ public class DataGridHeaderThemeTests
 
         try
         {
-            var firstHeader = GetHeaderForColumn(grid, grid.Columns[0]);
-            var secondHeader = GetHeaderForColumn(grid, grid.Columns[1]);
+            var firstHeader = GetHeaderForColumn(grid, grid.ColumnDefinitions[0]);
+            var secondHeader = GetHeaderForColumn(grid, grid.ColumnDefinitions[1]);
 
             Assert.Same(columnTheme, firstHeader.GetValue(StyledElement.ThemeProperty));
             Assert.Same(gridTheme, secondHeader.GetValue(StyledElement.ThemeProperty));
@@ -49,13 +49,13 @@ public class DataGridHeaderThemeTests
 
         try
         {
-            var firstHeader = GetHeaderForColumn(grid, grid.Columns[0]);
+            var firstHeader = GetHeaderForColumn(grid, grid.ColumnDefinitions[0]);
             Assert.Same(gridTheme, firstHeader.GetValue(StyledElement.ThemeProperty));
 
-            grid.Columns[0].HeaderTheme = columnTheme;
+            grid.ColumnDefinitions[0].HeaderTheme = columnTheme;
             grid.UpdateLayout();
 
-            firstHeader = GetHeaderForColumn(grid, grid.Columns[0]);
+            firstHeader = GetHeaderForColumn(grid, grid.ColumnDefinitions[0]);
             Assert.Same(columnTheme, firstHeader.GetValue(StyledElement.ThemeProperty));
         }
         finally
@@ -73,10 +73,10 @@ public class DataGridHeaderThemeTests
 
         try
         {
-            var header = GetHeaderForColumn(grid, grid.Columns[0]);
+            var header = GetHeaderForColumn(grid, grid.ColumnDefinitions[0]);
 
             Assert.NotNull(header.OwningColumn);
-            Assert.Same(grid.Columns[0], header.OwningColumn);
+            Assert.Same(grid.ColumnDefinitions[0], header.OwningColumn);
         }
         finally
         {
@@ -120,9 +120,9 @@ public class DataGridHeaderThemeTests
         {
             nameColumn.HeaderTheme = columnHeaderTheme;
         }
-        grid.Columns.Add(nameColumn);
+        grid.ColumnDefinitions.Add(nameColumn);
 
-        grid.Columns.Add(new DataGridTextColumn
+        grid.ColumnDefinitions.Add(new DataGridTextColumn
         {
             Header = "Group",
             Binding = new Binding(nameof(Item.Group))

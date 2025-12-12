@@ -82,19 +82,19 @@ namespace DataGridSample.Pages
             _grid.IsMultiSortEnabled = _vm.MultiSortEnabled;
             _grid.SortCycleMode = _vm.SortCycleMode;
 
-            if (_grid.Columns.Count >= 3)
+            if (_grid.ColumnDefinitions.Count >= 3)
             {
-                if (_grid.Columns[0] is DataGridTextColumn serviceColumn)
+                if (_grid.ColumnDefinitions[0] is DataGridTextColumn serviceColumn)
                 {
                     serviceColumn.CustomSortComparer = _vm.ServiceSorter;
                 }
 
-                if (_grid.Columns[1] is DataGridTextColumn statusColumn)
+                if (_grid.ColumnDefinitions[1] is DataGridTextColumn statusColumn)
                 {
                     statusColumn.CustomSortComparer = _vm.StatusSorter;
                 }
 
-                if (_grid.Columns[2] is DataGridTextColumn ringColumn)
+                if (_grid.ColumnDefinitions[2] is DataGridTextColumn ringColumn)
                 {
                     ringColumn.CustomSortComparer = _vm.RingSorter;
                 }

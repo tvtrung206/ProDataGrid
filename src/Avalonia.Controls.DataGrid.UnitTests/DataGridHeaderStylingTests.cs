@@ -107,7 +107,7 @@ public class DataGridHeaderStylingTests
         column.HeaderStyleClasses.Add("pill");
         column.HeaderStyleClasses.Add("accent-border");
 
-        grid.Columns.Add(column);
+        grid.ColumnDefinitions.Add(column);
         root.Content = grid;
         root.Show();
         grid.UpdateLayout();
@@ -157,8 +157,8 @@ public class DataGridHeaderStylingTests
             HeaderTheme = columnTheme
         };
 
-        grid.Columns.Add(defaultColumn);
-        grid.Columns.Add(themedColumn);
+        grid.ColumnDefinitions.Add(defaultColumn);
+        grid.ColumnDefinitions.Add(themedColumn);
 
         root.Content = grid;
         root.Show();
@@ -187,4 +187,3 @@ public class DataGridHeaderStylingTests
         public string Group { get; }
     }
 }
-

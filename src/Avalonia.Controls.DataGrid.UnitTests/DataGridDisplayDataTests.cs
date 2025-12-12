@@ -36,7 +36,7 @@ public class DataGridDisplayDataTests
         Assert.True(initialRowCount < items.Count); // Not all rows should be realized
         
         // Scroll down
-        target.ScrollIntoView(items[50], target.Columns[0]);
+        target.ScrollIntoView(items[50], target.ColumnDefinitions[0]);
         target.UpdateLayout();
         
         var newRows = GetRows(target);
@@ -52,14 +52,14 @@ public class DataGridDisplayDataTests
         var target = CreateTarget(items);
         
         // First scroll down
-        target.ScrollIntoView(items[50], target.Columns[0]);
+        target.ScrollIntoView(items[50], target.ColumnDefinitions[0]);
         target.UpdateLayout();
         
         var midScrollRows = GetRows(target);
         var midScrollRowCount = midScrollRows.Count;
         
         // Now scroll back up
-        target.ScrollIntoView(items[0], target.Columns[0]);
+        target.ScrollIntoView(items[0], target.ColumnDefinitions[0]);
         target.UpdateLayout();
         
         var finalRows = GetRows(target);
@@ -80,7 +80,7 @@ public class DataGridDisplayDataTests
         Assert.All(initialRows, row => Assert.True(row.IsVisible));
         
         // Scroll to middle
-        target.ScrollIntoView(items[50], target.Columns[0]);
+        target.ScrollIntoView(items[50], target.ColumnDefinitions[0]);
         target.UpdateLayout();
         
         // Get all rows including recycled ones from Children
@@ -126,7 +126,7 @@ public class DataGridDisplayDataTests
         
         Assert.Equal(0, GetFirstRealizedRowIndex(target));
         
-        target.ScrollIntoView(items[50], target.Columns[0]);
+        target.ScrollIntoView(items[50], target.ColumnDefinitions[0]);
         target.UpdateLayout();
         
         var firstIndex = GetFirstRealizedRowIndex(target);
@@ -162,7 +162,7 @@ public class DataGridDisplayDataTests
         var items = Enumerable.Range(0, 100).Select(x => new TestItem($"Item {x}")).ToList();
         var target = CreateTarget(items);
         
-        target.ScrollIntoView(items[50], target.Columns[0]);
+        target.ScrollIntoView(items[50], target.ColumnDefinitions[0]);
         target.UpdateLayout();
         
         var rows = GetRows(target);
@@ -186,7 +186,7 @@ public class DataGridDisplayDataTests
         var target = CreateTarget(items);
         
         // Fast scroll to end
-        target.ScrollIntoView(items[999], target.Columns[0]);
+        target.ScrollIntoView(items[999], target.ColumnDefinitions[0]);
         target.UpdateLayout();
         
         var lastIndex = GetLastRealizedRowIndex(target);
@@ -203,11 +203,11 @@ public class DataGridDisplayDataTests
         var target = CreateTarget(items);
         
         // Scroll to end first
-        target.ScrollIntoView(items[999], target.Columns[0]);
+        target.ScrollIntoView(items[999], target.ColumnDefinitions[0]);
         target.UpdateLayout();
         
         // Then fast scroll back to beginning
-        target.ScrollIntoView(items[0], target.Columns[0]);
+        target.ScrollIntoView(items[0], target.ColumnDefinitions[0]);
         target.UpdateLayout();
         
         var firstIndex = GetFirstRealizedRowIndex(target);
@@ -226,13 +226,13 @@ public class DataGridDisplayDataTests
         // Scroll multiple times
         for (int i = 0; i < 5; i++)
         {
-            target.ScrollIntoView(items[999], target.Columns[0]);
+            target.ScrollIntoView(items[999], target.ColumnDefinitions[0]);
             target.UpdateLayout();
             
-            target.ScrollIntoView(items[0], target.Columns[0]);
+            target.ScrollIntoView(items[0], target.ColumnDefinitions[0]);
             target.UpdateLayout();
             
-            target.ScrollIntoView(items[500], target.Columns[0]);
+            target.ScrollIntoView(items[500], target.ColumnDefinitions[0]);
             target.UpdateLayout();
         }
         
@@ -257,7 +257,7 @@ public class DataGridDisplayDataTests
         var target = CreateTarget(items);
         
         // Scroll to middle
-        target.ScrollIntoView(items[50], target.Columns[0]);
+        target.ScrollIntoView(items[50], target.ColumnDefinitions[0]);
         target.UpdateLayout();
         
         var firstIndexBefore = GetFirstRealizedRowIndex(target);
@@ -269,7 +269,7 @@ public class DataGridDisplayDataTests
         target.UpdateLayout();
         
         // Scroll back to where we were (adjusted for insertion)
-        target.ScrollIntoView(items[51], target.Columns[0]);
+        target.ScrollIntoView(items[51], target.ColumnDefinitions[0]);
         target.UpdateLayout();
         
         var rows = GetRows(target);
@@ -320,7 +320,7 @@ public class DataGridDisplayDataTests
         var target = CreateGroupedTarget(items, "Category");
         
         // Scroll to middle
-        target.ScrollIntoView(items[50], target.Columns[0]);
+        target.ScrollIntoView(items[50], target.ColumnDefinitions[0]);
         target.UpdateLayout();
         
         var rows = GetRows(target);
@@ -341,11 +341,11 @@ public class DataGridDisplayDataTests
         var initialCount = initialHeaders.Count;
         
         // Scroll to end
-        target.ScrollIntoView(items[199], target.Columns[0]);
+        target.ScrollIntoView(items[199], target.ColumnDefinitions[0]);
         target.UpdateLayout();
         
         // Scroll back
-        target.ScrollIntoView(items[0], target.Columns[0]);
+        target.ScrollIntoView(items[0], target.ColumnDefinitions[0]);
         target.UpdateLayout();
         
         var finalHeaders = GetGroupHeaders(target);
@@ -375,7 +375,7 @@ public class DataGridDisplayDataTests
 
         var target = new DataGrid
         {
-            Columns =
+            ColumnDefinitions =
             {
                 new DataGridTextColumn { Header = "Name", Binding = new Binding("Name") }
             },
@@ -408,7 +408,7 @@ public class DataGridDisplayDataTests
 
         var target = new DataGrid
         {
-            Columns =
+            ColumnDefinitions =
             {
                 new DataGridTextColumn { Header = "Name", Binding = new Binding("Name") }
             },

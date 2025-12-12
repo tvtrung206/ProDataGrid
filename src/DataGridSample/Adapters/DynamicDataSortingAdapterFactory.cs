@@ -31,7 +31,7 @@ namespace DataGridSample.Adapters
 
         public DataGridSortingAdapter Create(DataGrid grid, ISortingModel model)
         {
-            return new DynamicDataSortingAdapter(model, () => grid.Columns, UpdateComparer, _log);
+            return new DynamicDataSortingAdapter(model, () => grid.ColumnDefinitions, UpdateComparer, _log);
         }
 
         public void UpdateComparer(IReadOnlyList<SortingDescriptor> descriptors)

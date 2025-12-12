@@ -120,7 +120,7 @@ public class DataGridSortingPropertyTests
             ItemsSource = new DataGridCollectionView(items)
         };
 
-        grid.Columns.Add(new DataGridTextColumn
+        grid.ColumnDefinitions.Add(new DataGridTextColumn
         {
             Header = "Name",
             Binding = new Binding(nameof(Item.Name)),
@@ -165,7 +165,7 @@ public class DataGridSortingPropertyTests
         grid.SortingModel = sortingModel;
         grid.ItemsSource = view;
 
-        grid.Columns.Add(new DataGridTextColumn
+        grid.ColumnDefinitions.Add(new DataGridTextColumn
         {
             Header = "Name",
             Binding = new Binding(nameof(Item.Name)),
@@ -190,7 +190,7 @@ public class DataGridSortingPropertyTests
 
         public DataGridSortingAdapter Create(DataGrid grid, ISortingModel model)
         {
-            return new ReorderingAdapter(model, () => grid.Columns, _items);
+            return new ReorderingAdapter(model, () => grid.ColumnDefinitions, _items);
         }
 
         private sealed class ReorderingAdapter : DataGridSortingAdapter
@@ -248,7 +248,7 @@ public class DataGridSortingPropertyTests
         public DataGridSortingAdapter Create(DataGrid grid, ISortingModel model)
         {
             CreateCount++;
-            return new CountingSortingAdapter(model, () => grid.Columns);
+            return new CountingSortingAdapter(model, () => grid.ColumnDefinitions);
         }
 
         internal sealed class CountingSortingAdapter : DataGridSortingAdapter

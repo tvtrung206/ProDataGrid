@@ -44,7 +44,7 @@ public class DataGridOwningPropertiesTests
             RowDetailsVisibilityMode = DataGridRowDetailsVisibilityMode.Visible,
             RowDetailsTemplate = new FuncDataTemplate<Item>((_, _) => new TextBlock { Text = "details" })
         };
-        grid.Columns.Add(new DataGridTextColumn
+        grid.ColumnDefinitions.Add(new DataGridTextColumn
         {
             Header = "Name",
             Binding = new Binding(nameof(Item.Name))

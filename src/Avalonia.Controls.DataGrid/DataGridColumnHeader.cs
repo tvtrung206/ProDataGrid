@@ -691,7 +691,7 @@ namespace Avalonia.Controls
             }
             else
             {
-                return OwningGrid.Columns.Count - 1;
+                return OwningGrid.ColumnDefinitions.Count - 1;
             }
         }
 

@@ -113,7 +113,7 @@ public class DataGridCellStylingTests
         };
         column.CellStyleClasses.Add("numeric");
 
-        grid.Columns.Add(column);
+        grid.ColumnDefinitions.Add(column);
         root.Content = grid;
         root.Show();
         if (layoutNow)

@@ -84,8 +84,8 @@ public class DataGridFilterThemeTests
             ShowFilterButton = true
         };
 
-        grid.Columns.Add(defaultColumn);
-        grid.Columns.Add(overrideColumn);
+        grid.ColumnDefinitions.Add(defaultColumn);
+        grid.ColumnDefinitions.Add(overrideColumn);
 
         root.Content = grid;
         root.Show();

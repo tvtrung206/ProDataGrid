@@ -42,7 +42,7 @@ namespace DataGridSample.Adapters
         {
             return new HierarchicalSortingAdapter(
                 model,
-                () => grid.Columns,
+                () => grid.ColumnDefinitions,
                 null,
                 null);
         }

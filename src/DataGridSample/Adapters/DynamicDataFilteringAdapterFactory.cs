@@ -29,7 +29,7 @@ namespace DataGridSample.Adapters
 
         public DataGridFilteringAdapter Create(DataGrid grid, IFilteringModel model)
         {
-            return new DynamicDataFilteringAdapter(model, () => grid.Columns, UpdateFilter, _log);
+            return new DynamicDataFilteringAdapter(model, () => grid.ColumnDefinitions, UpdateFilter, _log);
         }
 
         public void UpdateFilter(IReadOnlyList<FilteringDescriptor> descriptors)

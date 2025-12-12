@@ -434,7 +434,7 @@ namespace Avalonia.Controls
                     {
                         if (value < 0 || value >= OwningGrid.ColumnsItemsInternal.Count)
                         {
-                            throw DataGridError.DataGrid.ValueMustBeBetween(nameof(value), nameof(DisplayIndex), 0, true, OwningGrid.Columns.Count, false);
+                            throw DataGridError.DataGrid.ValueMustBeBetween(nameof(value), nameof(DisplayIndex), 0, true, OwningGrid.ColumnDefinitions.Count, false);
                         }
                         // Will throw an error if a visible frozen column is placed inside a non-frozen area or vice-versa.
                         OwningGrid.OnColumnDisplayIndexChanging(this, value);

@@ -167,19 +167,19 @@ public class DataGridSortingHeaderTests
             SelectionMode = DataGridSelectionMode.Extended
         };
 
-        grid.Columns.Add(new DataGridTextColumn
+        grid.ColumnDefinitions.Add(new DataGridTextColumn
         {
             Header = "Name",
             Binding = new Binding(nameof(Item.Name)),
             SortMemberPath = nameof(Item.Name)
         });
-        grid.Columns.Add(new DataGridTextColumn
+        grid.ColumnDefinitions.Add(new DataGridTextColumn
         {
             Header = "Group",
             Binding = new Binding(nameof(Item.Group)),
             SortMemberPath = nameof(Item.Group)
         });
-        grid.Columns.Add(new DataGridTextColumn
+        grid.ColumnDefinitions.Add(new DataGridTextColumn
         {
             Header = "Value",
             Binding = new Binding(nameof(Item.Value)),

@@ -101,6 +101,9 @@
     <TabItem Header="Auto Columns">
       <local:AutoColumnsPage />
     </TabItem>
+    <TabItem Header="Bindable Columns">
+      <pages:BindableColumnsPage />
+    </TabItem>
     <TabItem Header="DataTable">
       <local:DataTablePage />
     </TabItem>

@@ -64,7 +64,7 @@ public class DataGridRowStylingTests
             ItemsSource = items
         };
 
-        grid.Columns.Add(new DataGridTextColumn
+        grid.ColumnDefinitions.Add(new DataGridTextColumn
         {
             Header = "Value",
             Binding = new Binding(nameof(Item.Name))

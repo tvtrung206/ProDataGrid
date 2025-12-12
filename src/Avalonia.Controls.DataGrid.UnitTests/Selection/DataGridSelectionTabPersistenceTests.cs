@@ -141,7 +141,7 @@ namespace Avalonia.Controls.DataGridTests.Selection;
             ForceLayout(window, new Size(400, 300));
 
             var targetItem = items1[150];
-            grid1.ScrollIntoView(targetItem, grid1.Columns[0]);
+            grid1.ScrollIntoView(targetItem, grid1.ColumnDefinitions[0]);
             ForceLayout(window, new Size(400, 300));
 
             var offsetBefore = grid1.GetVerticalOffset();
@@ -207,7 +207,7 @@ namespace Avalonia.Controls.DataGridTests.Selection;
                 ForceLayout(window, new Size(400, 300));
 
                 var targetItem = items1[180];
-                grid1.ScrollIntoView(targetItem, grid1.Columns[0]);
+                grid1.ScrollIntoView(targetItem, grid1.ColumnDefinitions[0]);
                 ForceLayout(window, new Size(400, 300));
 
                 var beforeRows = GetRealizedRows(grid1).Select(r => r.DataContext).ToArray();
@@ -237,7 +237,7 @@ namespace Avalonia.Controls.DataGridTests.Selection;
             ItemsSource = items,
             SelectionMode = DataGridSelectionMode.Extended
         };
-        grid.Columns.Add(new DataGridTextColumn
+        grid.ColumnDefinitions.Add(new DataGridTextColumn
         {
             Header = "Value",
             Binding = new Binding(".")
@@ -263,7 +263,7 @@ namespace Avalonia.Controls.DataGridTests.Selection;
             Dispatcher.UIThread.RunJobs();
             grid.ApplyTemplate();
             grid.UpdateLayout();
-            grid.ScrollIntoView(item, grid.Columns[0]);
+            grid.ScrollIntoView(item, grid.ColumnDefinitions[0]);
             grid.UpdateLayout();
             Dispatcher.UIThread.RunJobs();
             var row = FindRow(grid, item);

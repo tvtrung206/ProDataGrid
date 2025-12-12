@@ -341,7 +341,7 @@ namespace Avalonia.Controls
 
                     RefreshRows(recycleRows: false, clearRows: false);
 
-                    if (Columns.Count > 0 && CurrentColumnIndex == -1)
+                    if (ColumnDefinitions.Count > 0 && CurrentColumnIndex == -1)
                     {
                         MakeFirstDisplayedCellCurrentCell();
                     }
@@ -464,6 +464,8 @@ namespace Avalonia.Controls
 
         private void ColumnsInternal_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
         {
+            OnColumnsInternalBindingChanged(e);
+
             if (e.Action == NotifyCollectionChangedAction.Add
                 || e.Action == NotifyCollectionChangedAction.Remove
                 || e.Action == NotifyCollectionChangedAction.Reset)
