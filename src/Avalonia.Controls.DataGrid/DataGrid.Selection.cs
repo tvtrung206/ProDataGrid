@@ -976,6 +976,428 @@ namespace Avalonia.Controls
             }
         }
 
+        private void SetSelectedCellsCollection(IList<DataGridCellInfo> value)
+        {
+            IList<DataGridCellInfo> newValue = value ?? (IList<DataGridCellInfo>)_selectedCellsView;
+            IList<DataGridCellInfo> oldValue = SelectedCells;
+
+            if (ReferenceEquals(oldValue, newValue))
+            {
+                return;
+            }
+
+            DetachBoundSelectedCells();
+            _selectedCellsBinding = ReferenceEquals(newValue, _selectedCellsView) ? null : newValue;
+            AttachBoundSelectedCells();
+
+            RaisePropertyChanged(SelectedCellsProperty, oldValue, SelectedCells);
+
+            if (_selectedCellsBinding != null)
+            {
+                ApplySelectedCellsFromBinding(_selectedCellsBinding);
+            }
+        }
+
+        private void AttachBoundSelectedCells()
+        {
+            if (_selectedCellsBinding is INotifyCollectionChanged incc)
+            {
+                _selectedCellsBindingNotifications = incc;
+                _selectedCellsBindingNotifications.CollectionChanged += OnBoundSelectedCellsCollectionChanged;
+            }
+        }
+
+        private void DetachBoundSelectedCells()
+        {
+            if (_selectedCellsBindingNotifications != null)
+            {
+                _selectedCellsBindingNotifications.CollectionChanged -= OnBoundSelectedCellsCollectionChanged;
+                _selectedCellsBindingNotifications = null;
+            }
+        }
+
+        private void OnBoundSelectedCellsCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+        {
+            if (_syncingSelectedCells || _selectedCellsBinding == null)
+            {
+                return;
+            }
+
+            using var _ = BeginSelectionChangeScope(DataGridSelectionChangeSource.Programmatic);
+            try
+            {
+                _syncingSelectedCells = true;
+                ApplySelectedCellsChangeFromBinding(e);
+            }
+            finally
+            {
+                _syncingSelectedCells = false;
+            }
+        }
+
+        private void OnSelectedCellsCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+        {
+            if (_syncingSelectedCells || _selectedCellsBinding == null)
+            {
+                return;
+            }
+
+            try
+            {
+                _syncingSelectedCells = true;
+                ApplySelectedCellsChangeToBinding(e);
+            }
+            finally
+            {
+                _syncingSelectedCells = false;
+            }
+        }
+
+        private void ApplySelectedCellsFromBinding(IList<DataGridCellInfo> boundCells)
+        {
+            bool previousSync = _syncingSelectedCells;
+            _syncingSelectedCells = true;
+            try
+            {
+                var removed = _selectedCellsView.ToList();
+                ClearCellSelectionInternal(clearRows: true, raiseEvent: false);
+
+                var added = new List<DataGridCellInfo>();
+                foreach (var cell in boundCells)
+                {
+                    if (!TryNormalizeCell(cell, out var normalized))
+                    {
+                        continue;
+                    }
+
+                    if (AddCellSelectionInternal(normalized, added))
+                    {
+                        SetRowSelection(SlotFromRowIndex(normalized.RowIndex), isSelected: true, setAnchorSlot: false);
+                    }
+                }
+
+                if (added.Count > 0 || removed.Count > 0)
+                {
+                    RaiseSelectedCellsChanged(added, removed);
+                }
+            }
+            finally
+            {
+                _syncingSelectedCells = previousSync;
+            }
+        }
+
+        private void ApplySelectedCellsChangeFromBinding(NotifyCollectionChangedEventArgs e)
+        {
+            if (ReferenceEquals(_selectedCellsBinding, _selectedCellsView))
+            {
+                return;
+            }
+
+            switch (e.Action)
+            {
+                case NotifyCollectionChangedAction.Reset:
+                    ApplySelectedCellsFromBinding(_selectedCellsBinding);
+                    break;
+                default:
+                    ApplySelectedCellsFromBinding(_selectedCellsBinding);
+                    break;
+            }
+        }
+
+        private void ApplySelectedCellsChangeToBinding(NotifyCollectionChangedEventArgs e)
+        {
+            if (_selectedCellsBinding == null || ReferenceEquals(_selectedCellsBinding, _selectedCellsView))
+            {
+                return;
+            }
+
+            void CopyToBinding()
+            {
+                _selectedCellsBinding.Clear();
+                foreach (var cell in _selectedCellsView)
+                {
+                    _selectedCellsBinding.Add(cell);
+                }
+            }
+
+            switch (e.Action)
+            {
+                case NotifyCollectionChangedAction.Reset:
+                    CopyToBinding();
+                    break;
+                case NotifyCollectionChangedAction.Add:
+                case NotifyCollectionChangedAction.Remove:
+                case NotifyCollectionChangedAction.Replace:
+                case NotifyCollectionChangedAction.Move:
+                    CopyToBinding();
+                    break;
+            }
+        }
+
+        private bool TryNormalizeCell(DataGridCellInfo cell, out DataGridCellInfo normalized)
+        {
+            normalized = default;
+
+            if (cell.ColumnIndex < 0 ||
+                cell.RowIndex < 0 ||
+                ColumnsItemsInternal == null ||
+                cell.ColumnIndex >= ColumnsItemsInternal.Count)
+            {
+                return false;
+            }
+
+            var column = ColumnsItemsInternal[cell.ColumnIndex];
+            if (column == null || !column.IsVisible)
+            {
+                return false;
+            }
+
+            if (DataConnection == null || cell.RowIndex >= DataConnection.Count)
+            {
+                return false;
+            }
+
+            var item = DataConnection.GetDataItem(cell.RowIndex);
+            normalized = new DataGridCellInfo(item, column, cell.RowIndex, cell.ColumnIndex, isValid: true);
+            return true;
+        }
+
+        private void ClearCellSelectionInternal(bool clearRows, bool raiseEvent = true)
+        {
+            if (_selectedCells.Count == 0 && _selectedCellsView.Count == 0)
+            {
+                return;
+            }
+
+            var removed = _selectedCellsView.ToList();
+
+            _selectedCells.Clear();
+            _selectedCellsView.Clear();
+
+            if (clearRows && SelectionUnit != DataGridSelectionUnit.FullRow)
+            {
+                foreach (var cell in removed)
+                {
+                    int slot = SlotFromRowIndex(cell.RowIndex);
+                    if (slot >= 0)
+                    {
+                        SetRowSelection(slot, isSelected: false, setAnchorSlot: false);
+                    }
+                }
+            }
+
+            if (raiseEvent)
+            {
+                RaiseSelectedCellsChanged(Array.Empty<DataGridCellInfo>(), removed);
+            }
+        }
+
+        private bool AddCellSelectionInternal(DataGridCellInfo cell, List<DataGridCellInfo>? addedCollector = null)
+        {
+            if (!_selectedCells.TryGetValue(cell.RowIndex, out var columns))
+            {
+                columns = new HashSet<int>();
+                _selectedCells[cell.RowIndex] = columns;
+            }
+
+            if (!columns.Add(cell.ColumnIndex))
+            {
+                return false;
+            }
+
+            _selectedCellsView.Add(cell);
+
+            addedCollector?.Add(cell);
+            return true;
+        }
+
+        private bool RemoveCellSelectionInternal(int rowIndex, int columnIndex, List<DataGridCellInfo>? removedCollector = null)
+        {
+            if (!_selectedCells.TryGetValue(rowIndex, out var columns) || !columns.Remove(columnIndex))
+            {
+                return false;
+            }
+
+            if (columns.Count == 0)
+            {
+                _selectedCells.Remove(rowIndex);
+            }
+
+            var existing = _selectedCellsView.FirstOrDefault(x => x.RowIndex == rowIndex && x.ColumnIndex == columnIndex);
+            if (existing.IsValid)
+            {
+                _selectedCellsView.Remove(existing);
+                removedCollector?.Add(existing);
+            }
+
+            return true;
+        }
+
+        private void RaiseSelectedCellsChanged(IReadOnlyList<DataGridCellInfo> addedCells, IReadOnlyList<DataGridCellInfo> removedCells)
+        {
+            if ((addedCells.Count == 0 && removedCells.Count == 0) || SelectedCellsChanged == null)
+            {
+                return;
+            }
+
+            SelectedCellsChanged?.Invoke(this, new DataGridSelectedCellsChangedEventArgs(addedCells, removedCells));
+        }
+
+        internal bool IsCellSelected(int rowIndex, int columnIndex)
+        {
+            return _selectedCells.TryGetValue(rowIndex, out var columns) && columns.Contains(columnIndex);
+        }
+
+        internal bool GetCellSelectionFromSlot(int slot, int columnIndex)
+        {
+            if (SelectionUnit == DataGridSelectionUnit.FullRow)
+            {
+                return GetRowSelection(slot);
+            }
+
+            int rowIndex = RowIndexFromSlot(slot);
+            if (rowIndex < 0)
+            {
+                return false;
+            }
+
+            return IsCellSelected(rowIndex, columnIndex);
+        }
+
+        public void SelectAllCells()
+        {
+            if (DataConnection == null || ColumnsInternal == null)
+            {
+                return;
+            }
+
+            using var _ = BeginSelectionChangeScope(DataGridSelectionChangeSource.Command);
+            var removed = _selectedCellsView.ToList();
+            ClearCellSelectionInternal(clearRows: true, raiseEvent: false);
+
+            var added = new List<DataGridCellInfo>();
+            var visibleColumns = ColumnsInternal.GetVisibleColumns().ToList();
+
+            for (int rowIndex = 0; rowIndex < DataConnection.Count; rowIndex++)
+            {
+                int slot = SlotFromRowIndex(rowIndex);
+                if (slot < 0 || RowGroupHeadersTable.Contains(slot))
+                {
+                    continue;
+                }
+
+                foreach (var column in visibleColumns)
+                {
+                    var cell = new DataGridCellInfo(
+                        DataConnection.GetDataItem(rowIndex),
+                        column,
+                        rowIndex,
+                        column.Index,
+                        isValid: true);
+                    AddCellSelectionInternal(cell, added);
+                }
+
+                SetRowSelection(slot, isSelected: true, setAnchorSlot: false);
+            }
+
+            if (visibleColumns.Count > 0 && DataConnection.Count > 0)
+            {
+                _cellAnchor = new DataGridCellCoordinates(visibleColumns[0].Index, SlotFromRowIndex(0));
+            }
+
+            RaiseSelectedCellsChanged(added, removed);
+            _successfullyUpdatedSelection = true;
+        }
+
+        private void AddSingleCellSelection(int columnIndex, int slot, List<DataGridCellInfo> addedCollector)
+        {
+            if (DataConnection == null)
+            {
+                return;
+            }
+
+            int rowIndex = RowIndexFromSlot(slot);
+            if (rowIndex < 0 || columnIndex < 0 || columnIndex >= ColumnsItemsInternal.Count)
+            {
+                return;
+            }
+
+            var column = ColumnsItemsInternal[columnIndex];
+            if (column == null || !column.IsVisible)
+            {
+                return;
+            }
+
+            var item = DataConnection.GetDataItem(rowIndex);
+            var cell = new DataGridCellInfo(item, column, rowIndex, columnIndex, isValid: true);
+
+            if (AddCellSelectionInternal(cell, addedCollector))
+            {
+                _cellAnchor = new DataGridCellCoordinates(columnIndex, slot);
+                SetRowSelection(slot, isSelected: true, setAnchorSlot: false);
+            }
+        }
+
+        private void RemoveCellSelectionFromSlot(int slot, int columnIndex, List<DataGridCellInfo> removedCollector)
+        {
+            int rowIndex = RowIndexFromSlot(slot);
+            if (rowIndex < 0)
+            {
+                return;
+            }
+
+            if (RemoveCellSelectionInternal(rowIndex, columnIndex, removedCollector))
+            {
+                if (!_selectedCells.TryGetValue(rowIndex, out var remaining) || remaining.Count == 0)
+                {
+                    SetRowSelection(slot, isSelected: false, setAnchorSlot: false);
+                }
+            }
+        }
+
+        private void SelectCellRangeInternal(int startRowIndex, int endRowIndex, int startColumnIndex, int endColumnIndex, List<DataGridCellInfo> addedCollector)
+        {
+            if (DataConnection == null)
+            {
+                return;
+            }
+
+            for (int rowIndex = startRowIndex; rowIndex <= endRowIndex; rowIndex++)
+            {
+                if (rowIndex < 0 || rowIndex >= DataConnection.Count)
+                {
+                    continue;
+                }
+
+                int slot = SlotFromRowIndex(rowIndex);
+                if (slot < 0 || RowGroupHeadersTable.Contains(slot))
+                {
+                    continue;
+                }
+
+                for (int columnIndex = startColumnIndex; columnIndex <= endColumnIndex; columnIndex++)
+                {
+                    if (columnIndex < 0 || columnIndex >= ColumnsItemsInternal.Count)
+                    {
+                        continue;
+                    }
+
+                    var column = ColumnsItemsInternal[columnIndex];
+                    if (column == null || !column.IsVisible)
+                    {
+                        continue;
+                    }
+
+                    var item = DataConnection.GetDataItem(rowIndex);
+                    var cell = new DataGridCellInfo(item, column, rowIndex, columnIndex, isValid: true);
+                    AddCellSelectionInternal(cell, addedCollector);
+                }
+
+                SetRowSelection(slot, isSelected: true, setAnchorSlot: false);
+            }
+        }
+
         private void NormalizeBoundSelectionForSingleMode()
         {
             if (_selectedItemsBinding == null || ReferenceEquals(_selectedItemsBinding, _selectedItems))
@@ -1230,6 +1652,27 @@ namespace Avalonia.Controls
                     SyncSelectionModelFromGridSelection();
                 }
             }
+        }
+
+        private void OnSelectionUnitChanged(AvaloniaPropertyChangedEventArgs e)
+        {
+            if (_areHandlersSuspended)
+            {
+                return;
+            }
+
+            var newValue = (DataGridSelectionUnit)e.NewValue;
+            if (newValue == DataGridSelectionUnit.FullRow)
+            {
+                ClearCellSelectionInternal(clearRows: false);
+            }
+            else
+            {
+                ClearRowSelection(resetAnchorSlot: true);
+                _cellAnchor = new DataGridCellCoordinates(-1, -1);
+            }
+
+            RefreshVisibleSelection();
         }
 
         private void OnAutoScrollToSelectedItemChanged(AvaloniaPropertyChangedEventArgs e)

@@ -159,12 +159,18 @@ namespace Avalonia.Controls
         private DataGridSelectedItemsCollection _selectedItems;
         private IList _selectedItemsBinding;
         private INotifyCollectionChanged _selectedItemsBindingNotifications;
+        private IList<DataGridCellInfo> _selectedCellsBinding;
+        private INotifyCollectionChanged _selectedCellsBindingNotifications;
         private DataGridSelectionModelAdapter _selectionModelAdapter;
         private ISelectionModel _selectionModelProxy;
         private DataGridSelection.DataGridPagedSelectionSource _pagedSelectionSource;
         private List<object> _selectionModelSnapshot;
         private bool _syncingSelectionModel;
         private bool _syncingSelectedItems;
+        private bool _syncingSelectedCells;
+        private readonly Dictionary<int, HashSet<int>> _selectedCells = new();
+        private readonly AvaloniaList<DataGridCellInfo> _selectedCellsView = new();
+        private DataGridCellCoordinates _cellAnchor = new DataGridCellCoordinates(-1, -1);
         private int _preferredSelectionIndex = -1;
         private IDataGridSelectionModelFactory _selectionModelFactory;
         private bool _autoScrollPending;
@@ -244,6 +250,7 @@ namespace Avalonia.Controls
             RowHeightProperty.Changed.AddClassHandler<DataGrid>((x, e) => x.OnRowHeightChanged(e));
             RowHeaderWidthProperty.Changed.AddClassHandler<DataGrid>((x, e) => x.OnRowHeaderWidthChanged(e));
             SelectionModeProperty.Changed.AddClassHandler<DataGrid>((x, e) => x.OnSelectionModeChanged(e));
+            SelectionUnitProperty.Changed.AddClassHandler<DataGrid>((x, e) => x.OnSelectionUnitChanged(e));
             VerticalGridLinesBrushProperty.Changed.AddClassHandler<DataGrid>((x, e) => x.OnVerticalGridLinesBrushChanged(e));
             SelectedIndexProperty.Changed.AddClassHandler<DataGrid>((x, e) => x.OnSelectedIndexChanged(e));
             SelectedItemProperty.Changed.AddClassHandler<DataGrid>((x, e) => x.OnSelectedItemChanged(e));
@@ -282,6 +289,7 @@ namespace Avalonia.Controls
             _lostFocusActions = new Queue<Action>();
             _selectedItems = new DataGridSelectedItemsCollection(this);
             _selectedItems.CollectionChanged += OnSelectedItemsCollectionChanged;
+            _selectedCellsView.CollectionChanged += OnSelectedCellsCollectionChanged;
             RowGroupHeadersTable = new IndexToValueTable<DataGridRowGroupInfo>();
             _bindingValidationErrors = new List<Exception>();
 
@@ -388,6 +396,28 @@ namespace Avalonia.Controls
             }
             set => SetSelectedItemsCollection(value);
         }
+
+        /// <summary>
+        /// Gets or sets the collection of selected cells.
+        /// </summary>
+        public IList<DataGridCellInfo> SelectedCells
+        {
+            get
+            {
+                if (_selectedCellsBinding != null)
+                {
+                    return _selectedCellsBinding;
+                }
+
+                return _selectedCellsView;
+            }
+            set => SetSelectedCellsCollection(value);
+        }
+
+        /// <summary>
+        /// Raised when the set of selected cells changes.
+        /// </summary>
+        public event EventHandler<DataGridSelectedCellsChangedEventArgs> SelectedCellsChanged;
 
         /// <summary>
         /// Gets or sets the selection model that drives row selection.

@@ -427,6 +427,11 @@ namespace Avalonia.Controls
         public static readonly StyledProperty<DataGridSelectionMode> SelectionModeProperty =
             AvaloniaProperty.Register<DataGrid, DataGridSelectionMode>(nameof(SelectionMode));
 
+        public static readonly StyledProperty<DataGridSelectionUnit> SelectionUnitProperty =
+            AvaloniaProperty.Register<DataGrid, DataGridSelectionUnit>(
+                nameof(SelectionUnit),
+                defaultValue: DataGridSelectionUnit.FullRow);
+
         /// <summary>
         /// Gets or sets the selection behavior of the data grid.
         /// </summary>
@@ -434,6 +439,15 @@ namespace Avalonia.Controls
         {
             get { return GetValue(SelectionModeProperty); }
             set { SetValue(SelectionModeProperty, value); }
+        }
+
+        /// <summary>
+        /// Gets or sets whether selection targets rows or cells.
+        /// </summary>
+        public DataGridSelectionUnit SelectionUnit
+        {
+            get { return GetValue(SelectionUnitProperty); }
+            set { SetValue(SelectionUnitProperty, value); }
         }
 
         public static readonly StyledProperty<IBrush> VerticalGridLinesBrushProperty =
@@ -563,6 +577,13 @@ namespace Avalonia.Controls
                 nameof(SelectedItems),
                 o => o.SelectedItems,
                 (o, v) => o.SelectedItems = v,
+                defaultBindingMode: BindingMode.TwoWay);
+
+        public static readonly DirectProperty<DataGrid, IList<DataGridCellInfo>> SelectedCellsProperty =
+            AvaloniaProperty.RegisterDirect<DataGrid, IList<DataGridCellInfo>>(
+                nameof(SelectedCells),
+                o => o.SelectedCells,
+                (o, v) => o.SelectedCells = v,
                 defaultBindingMode: BindingMode.TwoWay);
 
         /// <summary>

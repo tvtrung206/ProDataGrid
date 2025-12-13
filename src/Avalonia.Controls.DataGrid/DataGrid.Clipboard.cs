@@ -11,6 +11,7 @@ using Avalonia.Input.Platform;
 using Avalonia.Interactivity;
 using Avalonia.Utilities;
 using System;
+using System.Linq;
 using System.Text;
 
 namespace Avalonia.Controls
@@ -81,32 +82,78 @@ namespace Avalonia.Controls
         {
             KeyboardHelper.GetMetaKeyState(this, modifiers, out bool ctrl, out bool shift, out bool alt);
 
-            if (ctrl && !shift && !alt && ClipboardCopyMode != DataGridClipboardCopyMode.None && SelectedItems.Count > 0)
+            if (ctrl && !shift && !alt && ClipboardCopyMode != DataGridClipboardCopyMode.None)
             {
                 var textBuilder = StringBuilderCache.Acquire();
 
-                if (ClipboardCopyMode == DataGridClipboardCopyMode.IncludeHeader)
+                if (SelectionUnit == DataGridSelectionUnit.FullRow)
                 {
-                    DataGridRowClipboardEventArgs headerArgs = new DataGridRowClipboardEventArgs(null, true, CopyingRowClipboardContentEvent, this);
-                    foreach (DataGridColumn column in ColumnsInternal.GetVisibleColumns())
+                    if (SelectedItems.Count == 0)
                     {
-                        headerArgs.ClipboardRowContent.Add(new DataGridClipboardCellContent(null, column, column.Header));
+                        return false;
                     }
-                    OnCopyingRowClipboardContent(headerArgs);
-                    textBuilder.Append(FormatClipboardContent(headerArgs));
-                }
 
-                for (int index = 0; index < SelectedItems.Count; index++)
-                {
-                    object item = SelectedItems[index];
-                    DataGridRowClipboardEventArgs itemArgs = new DataGridRowClipboardEventArgs(item, false, CopyingRowClipboardContentEvent, this);
-                    foreach (DataGridColumn column in ColumnsInternal.GetVisibleColumns())
+                    if (ClipboardCopyMode == DataGridClipboardCopyMode.IncludeHeader)
                     {
-                        object content = column.GetCellValue(item, column.ClipboardContentBinding);
-                        itemArgs.ClipboardRowContent.Add(new DataGridClipboardCellContent(item, column, content));
+                        DataGridRowClipboardEventArgs headerArgs = new DataGridRowClipboardEventArgs(null, true, CopyingRowClipboardContentEvent, this);
+                        foreach (DataGridColumn column in ColumnsInternal.GetVisibleColumns())
+                        {
+                            headerArgs.ClipboardRowContent.Add(new DataGridClipboardCellContent(null, column, column.Header));
+                        }
+                        OnCopyingRowClipboardContent(headerArgs);
+                        textBuilder.Append(FormatClipboardContent(headerArgs));
                     }
-                    OnCopyingRowClipboardContent(itemArgs);
-                    textBuilder.Append(FormatClipboardContent(itemArgs));
+
+                    for (int index = 0; index < SelectedItems.Count; index++)
+                    {
+                        object item = SelectedItems[index];
+                        DataGridRowClipboardEventArgs itemArgs = new DataGridRowClipboardEventArgs(item, false, CopyingRowClipboardContentEvent, this);
+                        foreach (DataGridColumn column in ColumnsInternal.GetVisibleColumns())
+                        {
+                            object content = column.GetCellValue(item, column.ClipboardContentBinding);
+                            itemArgs.ClipboardRowContent.Add(new DataGridClipboardCellContent(item, column, content));
+                        }
+                        OnCopyingRowClipboardContent(itemArgs);
+                        textBuilder.Append(FormatClipboardContent(itemArgs));
+                    }
+                }
+                else
+                {
+                    var validCells = SelectedCells?.Where(c => c.IsValid).ToList();
+                    if (validCells == null || validCells.Count == 0)
+                    {
+                        return false;
+                    }
+
+                    var orderedColumns = validCells
+                        .GroupBy(c => c.Column)
+                        .Select(g => g.First())
+                        .OrderBy(c => c.ColumnIndex)
+                        .ToList();
+
+                    if (ClipboardCopyMode == DataGridClipboardCopyMode.IncludeHeader)
+                    {
+                        DataGridRowClipboardEventArgs headerArgs = new DataGridRowClipboardEventArgs(null, true, CopyingRowClipboardContentEvent, this);
+                        foreach (var cell in orderedColumns)
+                        {
+                            headerArgs.ClipboardRowContent.Add(new DataGridClipboardCellContent(null, cell.Column, cell.Column.Header));
+                        }
+                        OnCopyingRowClipboardContent(headerArgs);
+                        textBuilder.Append(FormatClipboardContent(headerArgs));
+                    }
+
+                    foreach (var rowGroup in validCells.GroupBy(c => c.RowIndex).OrderBy(g => g.Key))
+                    {
+                        var item = DataConnection?.GetDataItem(rowGroup.Key);
+                        DataGridRowClipboardEventArgs itemArgs = new DataGridRowClipboardEventArgs(item, false, CopyingRowClipboardContentEvent, this);
+                        foreach (var cell in rowGroup.OrderBy(c => c.ColumnIndex))
+                        {
+                            object content = cell.Column.GetCellValue(item ?? cell.Item, cell.Column.ClipboardContentBinding);
+                            itemArgs.ClipboardRowContent.Add(new DataGridClipboardCellContent(item, cell.Column, content));
+                        }
+                        OnCopyingRowClipboardContent(itemArgs);
+                        textBuilder.Append(FormatClipboardContent(itemArgs));
+                    }
                 }
 
                 string text = StringBuilderCache.GetStringAndRelease(textBuilder);

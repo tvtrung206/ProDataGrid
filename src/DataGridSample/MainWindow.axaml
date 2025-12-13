@@ -53,6 +53,9 @@
     <TabItem Header="Selection Binding">
       <pages:SelectedItemsPage />
     </TabItem>
+    <TabItem Header="Cell Selection">
+      <pages:CellSelectionPage />
+    </TabItem>
     <TabItem Header="Selection Stability">
       <pages:SelectionModelStabilityPage />
     </TabItem>

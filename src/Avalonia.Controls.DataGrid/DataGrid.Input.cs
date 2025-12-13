@@ -11,6 +11,7 @@ using Avalonia.Interactivity;
 using Avalonia.Utilities;
 using Avalonia.VisualTree;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 
 namespace Avalonia.Controls
@@ -807,6 +808,11 @@ namespace Avalonia.Controls
         {
             using var _ = BeginSelectionChangeScope(DataGridSelectionChangeSource.Pointer, pointerPressedEventArgs);
 
+            if (SelectionUnit != DataGridSelectionUnit.FullRow && columnIndex >= 0)
+            {
+                return UpdateCellSelectionOnMouseLeftButtonDown(pointerPressedEventArgs, columnIndex, slot, allowEdit, shift, ctrl);
+            }
+
             bool beginEdit;
 
             Debug.Assert(slot >= 0);
@@ -888,6 +894,116 @@ namespace Avalonia.Controls
             return true;
         }
 
+        private bool UpdateCellSelectionOnMouseLeftButtonDown(PointerPressedEventArgs pointerPressedEventArgs, int columnIndex, int slot, bool allowEdit, bool shift, bool ctrl)
+        {
+            bool beginEdit;
+
+            Debug.Assert(slot >= 0);
+
+            bool wasInEdit = EditingColumnIndex != -1;
+
+            if (IsSlotOutOfBounds(slot))
+            {
+                return true;
+            }
+
+            if (wasInEdit && (columnIndex != EditingColumnIndex || slot != CurrentSlot) &&
+                WaitForLostFocus(() => UpdateCellSelectionOnMouseLeftButtonDown(pointerPressedEventArgs, columnIndex, slot, allowEdit, shift, ctrl)))
+            {
+                return true;
+            }
+
+            try
+            {
+                _noSelectionChangeCount++;
+
+                beginEdit = allowEdit &&
+                            CurrentSlot == slot &&
+                            columnIndex != -1 &&
+                            (wasInEdit || CurrentColumnIndex == columnIndex) &&
+                            !GetColumnEffectiveReadOnlyState(ColumnsItemsInternal[columnIndex]);
+
+                var added = new List<DataGridCellInfo>();
+                var removed = new List<DataGridCellInfo>();
+
+                if (SelectionMode == DataGridSelectionMode.Single)
+                {
+                    if (_selectedCellsView.Count > 0)
+                    {
+                        removed.AddRange(_selectedCellsView);
+                    }
+
+                    ClearCellSelectionInternal(clearRows: true, raiseEvent: false);
+                    AddSingleCellSelection(columnIndex, slot, added);
+                }
+                else if (SelectionMode == DataGridSelectionMode.Extended && shift && _cellAnchor.Slot != -1)
+                {
+                    int anchorRowIndex = RowIndexFromSlot(_cellAnchor.Slot);
+                    int targetRowIndex = RowIndexFromSlot(slot);
+                    if (anchorRowIndex >= 0 && targetRowIndex >= 0)
+                    {
+                        int startRow = Math.Min(anchorRowIndex, targetRowIndex);
+                        int endRow = Math.Max(anchorRowIndex, targetRowIndex);
+                        int startCol = Math.Min(_cellAnchor.ColumnIndex, columnIndex);
+                        int endCol = Math.Max(_cellAnchor.ColumnIndex, columnIndex);
+
+                        if (!ctrl)
+                        {
+                            removed.AddRange(_selectedCellsView);
+                            ClearCellSelectionInternal(clearRows: true, raiseEvent: false);
+                        }
+
+                        SelectCellRangeInternal(startRow, endRow, startCol, endCol, added);
+                    }
+                }
+                else
+                {
+                    bool alreadySelected = GetCellSelectionFromSlot(slot, columnIndex);
+                    if (!ctrl)
+                    {
+                        if (_selectedCellsView.Count > 0)
+                        {
+                            removed.AddRange(_selectedCellsView);
+                        }
+                        ClearCellSelectionInternal(clearRows: true, raiseEvent: false);
+                    }
+
+                    if (alreadySelected && ctrl)
+                    {
+                        RemoveCellSelectionFromSlot(slot, columnIndex, removed);
+                    }
+                    else
+                    {
+                        AddSingleCellSelection(columnIndex, slot, added);
+                    }
+
+                    _cellAnchor = new DataGridCellCoordinates(columnIndex, slot);
+                }
+
+                if (added.Count > 0 || removed.Count > 0)
+                {
+                    RaiseSelectedCellsChanged(added, removed);
+                }
+
+                _successfullyUpdatedSelection = true;
+                if (CurrentSlot != slot || CurrentColumnIndex != columnIndex)
+                {
+                    SetCurrentCellCore(columnIndex, slot, commitEdit: true, endRowEdit: false);
+                }
+            }
+            finally
+            {
+                NoSelectionChangeCount--;
+            }
+
+            if (_successfullyUpdatedSelection && beginEdit && BeginCellEdit(pointerPressedEventArgs))
+            {
+                FocusEditingCell(setFocus: true);
+            }
+
+            return true;
+        }
+
 
 
 
@@ -897,6 +1013,15 @@ namespace Avalonia.Controls
             using var _ = BeginSelectionChangeScope(DataGridSelectionChangeSource.Pointer, pointerPressedEventArgs);
 
             Debug.Assert(slot >= 0);
+
+            if (SelectionUnit != DataGridSelectionUnit.FullRow && columnIndex >= 0)
+            {
+                if (CurrentSlot != slot || CurrentColumnIndex != columnIndex)
+                {
+                    SetCurrentCellCore(columnIndex, slot, commitEdit: true, endRowEdit: false);
+                }
+                return true;
+            }
 
             if (shift || ctrl)
             {

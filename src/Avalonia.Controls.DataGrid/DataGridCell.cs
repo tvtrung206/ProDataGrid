@@ -244,7 +244,14 @@ namespace Avalonia.Controls
                 return;
             }
 
-            PseudoClassesHelper.Set(PseudoClasses, ":selected", OwningRow.IsSelected);
+            bool rowSelected = OwningRow.IsSelected;
+            bool cellSelected = OwningGrid.SelectionUnit == DataGridSelectionUnit.FullRow
+                ? rowSelected
+                : OwningGrid.GetCellSelectionFromSlot(OwningRow.Slot, ColumnIndex);
+
+            PseudoClassesHelper.Set(PseudoClasses, ":selected", cellSelected);
+            PseudoClassesHelper.Set(PseudoClasses, ":row-selected", rowSelected);
+            PseudoClassesHelper.Set(PseudoClasses, ":cell-selected", cellSelected);
             PseudoClassesHelper.Set(PseudoClasses, ":current", IsCurrent);
             PseudoClassesHelper.Set(PseudoClasses, ":edited", IsEdited);
             PseudoClassesHelper.Set(PseudoClasses, ":invalid", !IsValid);

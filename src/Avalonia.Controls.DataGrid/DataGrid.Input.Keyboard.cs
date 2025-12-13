@@ -26,7 +26,14 @@ namespace Avalonia.Controls
 
             if (ctrl && !shift && !alt && SelectionMode == DataGridSelectionMode.Extended)
             {
-                SelectAll();
+                if (SelectionUnit == DataGridSelectionUnit.FullRow)
+                {
+                    SelectAll();
+                }
+                else
+                {
+                    SelectAllCells();
+                }
                 return true;
             }
             return false;

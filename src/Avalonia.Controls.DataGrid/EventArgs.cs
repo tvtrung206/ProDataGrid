@@ -9,6 +9,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 
@@ -311,6 +312,24 @@ namespace Avalonia.Controls
             get;
             private set;
         }
+    }
+
+#if !DATAGRID_INTERNAL
+    public
+#endif
+    class DataGridSelectedCellsChangedEventArgs : EventArgs
+    {
+        public DataGridSelectedCellsChangedEventArgs(
+            IReadOnlyList<DataGridCellInfo> addedCells,
+            IReadOnlyList<DataGridCellInfo> removedCells)
+        {
+            AddedCells = addedCells;
+            RemovedCells = removedCells;
+        }
+
+        public IReadOnlyList<DataGridCellInfo> AddedCells { get; }
+
+        public IReadOnlyList<DataGridCellInfo> RemovedCells { get; }
     }
 
     /// <summary>

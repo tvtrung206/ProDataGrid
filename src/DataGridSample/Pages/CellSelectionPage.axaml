@@ -1,0 +1,64 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="DataGridSample.Pages.CellSelectionPage">
+
+  <Grid RowDefinitions="Auto,Auto,*" ColumnDefinitions="3*,2*" Margin="12" ColumnSpacing="12" RowSpacing="8">
+    <StackPanel Grid.Row="0" Grid.ColumnSpan="2" Spacing="4">
+      <TextBlock Classes="h2">Cell selection and copy</TextBlock>
+      <TextBlock Text="Switch between row and cell units, bind SelectedCells, and try the preset buttons for common cell-selection patterns. Copy (Ctrl+C) uses the selected cells when SelectionUnit is Cell/CellOrRowHeader."
+                 TextWrapping="Wrap" />
+    </StackPanel>
+
+    <StackPanel Grid.Row="1" Grid.Column="0" Orientation="Horizontal" Spacing="8">
+      <StackPanel Orientation="Horizontal" Spacing="6">
+        <TextBlock VerticalAlignment="Center" Text="SelectionUnit:" />
+        <ComboBox Width="180"
+                  ItemsSource="{Binding SelectionUnits}"
+                  SelectedItem="{Binding ElementName=CellGrid, Path=SelectionUnit, Mode=TwoWay}" />
+      </StackPanel>
+
+      <StackPanel Orientation="Horizontal" Spacing="6">
+        <Button Content="Select first row" Click="SelectFirstRow" />
+        <Button Content="Select diagonal" Click="SelectDiagonal" />
+        <Button Content="Clear selection" Click="ClearSelection" />
+      </StackPanel>
+    </StackPanel>
+
+    <DataGrid x:Name="CellGrid"
+              Grid.Row="2"
+              Grid.Column="0"
+              ItemsSource="{Binding Items}"
+              SelectedCells="{Binding SelectedCells, Mode=TwoWay}"
+              SelectionUnit="Cell"
+              SelectionMode="Extended"
+              AutoGenerateColumns="True"
+              CanUserAddRows="False"
+              HeadersVisibility="All"
+              Height="480" />
+
+    <StackPanel Grid.Row="2" Grid.Column="1" Spacing="8">
+      <TextBlock Classes="h3" Text="Selected cells (bound)" />
+      <Border BorderBrush="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+              BorderThickness="1" CornerRadius="4" Padding="4">
+        <ListBox ItemsSource="{Binding SelectedCells}"
+                 Height="200">
+          <ListBox.ItemTemplate>
+            <DataTemplate>
+              <StackPanel Orientation="Horizontal" Spacing="6">
+                <TextBlock Text="{Binding RowIndex, StringFormat='Row {0}'}" />
+                <TextBlock Text="{Binding Column.Header}" />
+              </StackPanel>
+            </DataTemplate>
+          </ListBox.ItemTemplate>
+        </ListBox>
+      </Border>
+
+      <TextBlock Classes="h3" Text="Change log" />
+      <Border BorderBrush="{DynamicResource SystemControlForegroundBaseMediumBrush}"
+              BorderThickness="1" CornerRadius="4" Padding="4">
+        <ListBox ItemsSource="{Binding SelectionLog}"
+                 Height="200" />
+      </Border>
+    </StackPanel>
+  </Grid>
+</UserControl>
