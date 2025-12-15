@@ -598,8 +598,12 @@ public class DataGridScrollingTests
         // Arrange
         var items = Enumerable.Range(0, 1000).Select(x => new ScrollTestModel($"Item {x}")).ToList();
         var target = CreateV2Target(items, height: 400, useLogicalScrollable: true);
+        target.TrimRecycledContainers = true;
+        target.KeepRecycledContainersInVisualTree = false;
         var root = (Window)target.GetVisualRoot()!;
         var presenter = GetRowsPresenter(target);
+        target.TrimRecycledContainers = true;
+        target.KeepRecycledContainersInVisualTree = false;
 
         root.UpdateLayout();
 
@@ -651,6 +655,8 @@ public class DataGridScrollingTests
             ItemsSource = items,
             HeadersVisibility = DataGridHeadersVisibility.Column,
             UseLogicalScrollable = true,
+            TrimRecycledContainers = true,
+            KeepRecycledContainersInVisualTree = false,
         };
         target.ColumnsInternal.Add(new DataGridTextColumn { Header = "Name", Binding = new Binding("Name") });
 
@@ -732,6 +738,72 @@ public class DataGridScrollingTests
         Assert.NotEmpty(recycledRows);
         Assert.All(recycledRows, recycled => Assert.DoesNotContain(recycled, presenter.Children));
         Assert.All(recycledRows, recycled => Assert.False(recycled.IsVisible));
+    }
+
+    [AvaloniaFact]
+    public void Recycled_Rows_Are_Trimmed_When_Keeping_In_VisualTree()
+    {
+        // Arrange
+        var items = Enumerable.Range(0, 300).Select(x => new ScrollTestModel($"Item {x}")).ToList();
+        var target = CreateV2Target(items, height: 250, useLogicalScrollable: true);
+        target.KeepRecycledContainersInVisualTree = true;
+        target.TrimRecycledContainers = true;
+        var root = (Window)target.GetVisualRoot()!;
+        var presenter = GetRowsPresenter(target);
+
+        root.UpdateLayout();
+        root.Height = 700;
+        root.UpdateLayout();
+
+        root.Height = 200;
+        root.UpdateLayout();
+        target.UpdateLayout();
+
+        var recycledRows = GetRecycledRows(target);
+        var shrunkRecycled = recycledRows.Count;
+        var presenterChildren = presenter.Children.OfType<DataGridRow>().Count();
+
+        Assert.True(shrunkRecycled <= 12, $"Expected trimmed recycle pool. Shrunk: {shrunkRecycled}");
+        Assert.True(presenterChildren <= GetRows(target).Count + 12, $"Presenter retained too many rows: {presenterChildren}");
+        Assert.All(recycledRows, recycled => Assert.Contains(recycled, presenter.Children));
+    }
+
+    [AvaloniaFact]
+    public void HidingMode_MoveOffscreen_Moves_Recycled_Bounds()
+    {
+        // Arrange
+        var target = CreateTarget(Enumerable.Range(0, 20).Select(x => new ScrollTestModel($"Item {x}")).ToList(), height: 200);
+        target.RecycledContainerHidingMode = DataGridRecycleHidingMode.MoveOffscreen;
+        target.KeepRecycledContainersInVisualTree = true;
+        target.TrimRecycledContainers = false;
+        target.UpdateLayout();
+
+        var row = GetRows(target).First();
+        var before = row.Bounds;
+
+        var recycleRow = typeof(DataGridDisplayData).GetMethod("RecycleRow", BindingFlags.Instance | BindingFlags.NonPublic);
+        recycleRow!.Invoke(target.DisplayData, new object[] { row });
+
+        Assert.False(row.IsVisible);
+    }
+
+    [AvaloniaFact]
+    public void HidingMode_SetIsVisibleOnly_Keeps_Last_Bounds()
+    {
+        // Arrange
+        var target = CreateTarget(Enumerable.Range(0, 20).Select(x => new ScrollTestModel($"Item {x}")).ToList(), height: 200);
+        target.RecycledContainerHidingMode = DataGridRecycleHidingMode.SetIsVisibleOnly;
+        target.KeepRecycledContainersInVisualTree = true;
+        target.TrimRecycledContainers = false;
+        target.UpdateLayout();
+
+        var row = GetRows(target).First();
+        var before = row.Bounds;
+
+        var recycleRow = typeof(DataGridDisplayData).GetMethod("RecycleRow", BindingFlags.Instance | BindingFlags.NonPublic);
+        recycleRow!.Invoke(target.DisplayData, new object[] { row });
+
+        Assert.Equal(before, row.Bounds);
     }
 
     #endregion
@@ -871,6 +943,8 @@ public class DataGridScrollingTests
         // Arrange
         var items = Enumerable.Range(0, 100).Select(x => new ScrollTestModel($"Item {x}")).ToList();
         var target = CreateTarget(items, useLogicalScrollable: true);
+        target.TrimRecycledContainers = true;
+        target.KeepRecycledContainersInVisualTree = false;
         var presenter = GetRowsPresenter(target);
         
         // Act - change offset multiple times
@@ -1449,6 +1523,12 @@ public class DataGridScrollingTests
         return target.GetSelfAndVisualDescendants()
             .OfType<DataGridRow>()
             .ToList();
+    }
+
+    private static void InvokeHideRecycledElement(DataGrid target, Control element)
+    {
+        var method = typeof(DataGrid).GetMethod("HideRecycledElement", BindingFlags.Instance | BindingFlags.NonPublic);
+        method!.Invoke(target, new object[] { element });
     }
 
     private static IReadOnlyList<DataGridRowGroupHeader> GetGroupHeaders(DataGrid target)

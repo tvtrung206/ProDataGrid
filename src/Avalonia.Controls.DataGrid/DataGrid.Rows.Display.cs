@@ -308,9 +308,15 @@ namespace Avalonia.Controls
 
             if (RecycledContainerHidingMode == DataGridRecycleHidingMode.MoveOffscreen)
             {
+                var size = element.Bounds.Size;
+                if (size.Width <= 0 || size.Height <= 0)
+                {
+                    size = element.DesiredSize;
+                }
+
                 // Move hidden elements off-screen immediately to avoid stale bounds being picked up
                 // by layout-sensitive logic (e.g., tests that inspect all rows).
-                element.Arrange(new Rect(-10000, -10000, 0, 0));
+                element.Arrange(new Rect(-10000, -10000, size.Width, size.Height));
             }
         }
 
