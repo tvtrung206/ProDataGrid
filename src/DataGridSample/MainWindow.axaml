@@ -74,6 +74,9 @@
     <TabItem Header="Grouping">
       <local:GroupingPage />
     </TabItem>
+    <TabItem Header="Programmatic Grouping">
+      <pages:ProgrammaticGroupingPage />
+    </TabItem>
     <TabItem Header="Editable">
       <local:EditablePage />
     </TabItem>

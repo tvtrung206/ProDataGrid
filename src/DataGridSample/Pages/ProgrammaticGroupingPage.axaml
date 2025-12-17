@@ -1,0 +1,81 @@
+<!--
+  Copyright (c) Wiesław Šoltés. All rights reserved.
+  Licensed under the MIT license. See LICENSE file in the project root for details.
+-->
+<UserControl
+    x:Class="DataGridSample.Pages.ProgrammaticGroupingPage"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:viewModels="clr-namespace:DataGridSample.ViewModels"
+    xmlns:models="clr-namespace:DataGridSample.Models"
+    x:DataType="viewModels:ProgrammaticGroupingViewModel"
+    d:DesignHeight="720"
+    d:DesignWidth="1100"
+    mc:Ignorable="d">
+
+  <UserControl.DataContext>
+    <viewModels:ProgrammaticGroupingViewModel />
+  </UserControl.DataContext>
+
+  <Grid Margin="12"
+        RowDefinitions="Auto,Auto,*">
+    <StackPanel Spacing="4">
+      <TextBlock Text="Programmatic group header handling"
+                 FontWeight="Bold"
+                 FontSize="18" />
+      <TextBlock TextWrapping="Wrap"
+                 Text="This page mirrors the reported issue: group descriptions are added/cleared/reordered in code and headers are expanded/collapsed programmatically. Use the buttons below to try every mutation path." />
+    </StackPanel>
+
+    <WrapPanel Grid.Row="1"
+               Margin="0 8">
+      <Button Content="Category → Group (Add)"
+              Command="{Binding CategoryThenGroupCommand}" />
+      <Button Content="Category then Insert(Group)"
+              Command="{Binding InsertGroupCommand}" />
+      <Button Content="Group → Category (Replace)"
+              Command="{Binding ReplaceTopLevelCommand}" />
+      <Button Content="Locale → Category (GroupKeys)"
+              Command="{Binding LocaleCategoryCommand}" />
+      <Button Content="Category only (single-level)"
+              Command="{Binding SingleGroupCommand}" />
+      <Button Content="Clear groups"
+              Command="{Binding ClearGroupingCommand}" />
+      <Button Content="Add property"
+              Command="{Binding AddPropertyCommand}" />
+    </WrapPanel>
+
+    <DataGrid Grid.Row="2"
+              x:Name="GroupedGrid"
+              AutoGenerateColumns="False"
+              ItemsSource="{Binding View}"
+              AreRowGroupHeadersFrozen="True"
+              HeadersVisibility="All"
+              GridLinesVisibility="Horizontal">
+      <DataGrid.Columns>
+        <DataGridTextColumn Width="2*"
+                            Header="Category"
+                            Binding="{Binding Category}"
+                            x:DataType="models:DocumentProperty" />
+        <DataGridTextColumn Width="2*"
+                            Header="Group"
+                            Binding="{Binding Group}"
+                            x:DataType="models:DocumentProperty" />
+        <DataGridTextColumn Width="3*"
+                            Header="Parameter"
+                            Binding="{Binding Name}"
+                            x:DataType="models:DocumentProperty" />
+        <DataGridTextColumn Width="2*"
+                            Header="Value"
+                            Binding="{Binding Value}"
+                            x:DataType="models:DocumentProperty" />
+        <DataGridTextColumn Width="2*"
+                            Header="Locale"
+                            Binding="{Binding Locale}"
+                            x:DataType="models:DocumentProperty" />
+      </DataGrid.Columns>
+    </DataGrid>
+  </Grid>
+</UserControl>
