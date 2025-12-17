@@ -125,6 +125,12 @@ namespace Avalonia.Controls.DataGridDragDrop
                 return false;
             }
 
+            if (IsScrollBarHit(e.Source) ||
+                IsScrollBarHit(_grid.GetVisualAt(point.Position)))
+            {
+                return false;
+            }
+
             if (_grid.EditingRow != null ||
                 _grid.DataConnection?.EditableCollectionView?.IsAddingNew == true ||
                 _grid.DataConnection?.EditableCollectionView?.IsEditingItem == true)
@@ -133,6 +139,12 @@ namespace Avalonia.Controls.DataGridDragDrop
             }
 
             return true;
+        }
+
+        private static bool IsScrollBarHit(object? source)
+        {
+            return source is Visual visual &&
+                   visual.GetSelfAndVisualAncestors().OfType<ScrollBar>().Any();
         }
 
         private bool TryGetRowFromEvent(Interactive? source, Point gridPoint, out DataGridRow? row)

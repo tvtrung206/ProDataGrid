@@ -14,6 +14,7 @@ using Avalonia.Controls.DataGridDragDrop;
 using Avalonia.Controls.DataGridHierarchical;
 using Avalonia.Controls.Primitives;
 using Avalonia.Data;
+using Avalonia.Layout;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.Markup.Xaml.Styling;
@@ -59,6 +60,44 @@ namespace Avalonia.Controls.DataGridTests.DragDrop;
 
         var dropArgs = InvokeCreateDropArgs(controller, dragInfo, dragEvent, DragDropEffects.Move);
         Assert.NotNull(dropArgs);
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void Pointer_On_ScrollBar_Does_Not_Start_Drag()
+    {
+        var items = Enumerable.Range(0, 100)
+            .Select(i => new RowItem($"Item {i}"))
+            .ToList();
+        var (grid, window) = CreateGrid(items);
+        grid.CanUserReorderRows = true;
+        grid.RowDragHandle = DataGridRowDragHandle.Row;
+        grid.UpdateLayout();
+
+        var scrollBar = grid.GetVisualDescendants().OfType<ScrollBar>()
+            .FirstOrDefault(sb => sb.Orientation == Orientation.Vertical);
+        Assert.NotNull(scrollBar);
+
+        var handler = new DataGridRowReorderHandler();
+        using var controller = new DataGridRowDragDropController(grid, handler, new DataGridRowDragDropOptions());
+
+        var pointer = new Avalonia.Input.Pointer(Avalonia.Input.Pointer.GetNextFreeId(), PointerType.Mouse, isPrimary: true);
+        var properties = new PointerPointProperties(RawInputModifiers.LeftMouseButton, PointerUpdateKind.LeftButtonPressed);
+        var args = new PointerPressedEventArgs(
+            scrollBar!,
+            pointer,
+            window,
+            new Point(1, 1),
+            0,
+            properties,
+            KeyModifiers.None);
+
+        scrollBar!.RaiseEvent(args);
+
+        var pointerIdField = typeof(DataGridRowDragDropController).GetField("_pointerId", BindingFlags.NonPublic | BindingFlags.Instance);
+        var pointerId = (int?)pointerIdField!.GetValue(controller);
+        Assert.Null(pointerId);
+
         window.Close();
     }
 
