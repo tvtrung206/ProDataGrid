@@ -25,6 +25,13 @@ namespace Avalonia.Controls.DataGridHierarchical
 
         void SetRoot(T rootItem);
 
+        /// <summary>
+        /// Sets multiple root items that will be displayed at the top level.
+        /// Creates a virtual root container that holds all items.
+        /// </summary>
+        /// <param name="rootItems">Collection of items to display at root level.</param>
+        void SetRoots(IEnumerable<T> rootItems);
+
         HierarchicalNode<T> GetTypedNode(int index);
 
         HierarchicalNode<T>? FindNode(T item);
@@ -652,6 +659,8 @@ namespace Avalonia.Controls.DataGridHierarchical
         public event EventHandler<FlattenedChangedEventArgs<T>>? FlattenedChangedTyped;
 
         public void SetRoot(T rootItem) => base.SetRoot(rootItem!);
+
+        public void SetRoots(IEnumerable<T> rootItems) => base.SetRoots(rootItems.Cast<object>());
 
         public HierarchicalNode<T> GetTypedNode(int index) => new HierarchicalNode<T>(base.GetNode(index));
 

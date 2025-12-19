@@ -131,6 +131,13 @@ namespace Avalonia.Controls.DataGridDragDrop
                 return false;
             }
 
+            // Don't intercept clicks on expand/collapse toggle buttons (hierarchical expanders)
+            if (IsExpanderButtonHit(e.Source) ||
+                IsExpanderButtonHit(_grid.GetVisualAt(point.Position)))
+            {
+                return false;
+            }
+
             if (_grid.EditingRow != null ||
                 _grid.DataConnection?.EditableCollectionView?.IsAddingNew == true ||
                 _grid.DataConnection?.EditableCollectionView?.IsEditingItem == true)
@@ -145,6 +152,25 @@ namespace Avalonia.Controls.DataGridDragDrop
         {
             return source is Visual visual &&
                    visual.GetSelfAndVisualAncestors().OfType<ScrollBar>().Any();
+        }
+
+        private static bool IsExpanderButtonHit(object? source)
+        {
+            if (source is not Visual visual)
+            {
+                return false;
+            }
+
+            // Check if the click is on a ToggleButton that's part of a DataGridHierarchicalPresenter
+            // (the expand/collapse button for hierarchical rows)
+            var toggleButton = visual.GetSelfAndVisualAncestors().OfType<ToggleButton>().FirstOrDefault();
+            if (toggleButton == null)
+            {
+                return false;
+            }
+
+            // Check if this toggle button is inside a hierarchical presenter (PART_Expander)
+            return toggleButton.GetVisualAncestors().OfType<DataGridHierarchicalPresenter>().Any();
         }
 
         private bool TryGetRowFromEvent(Interactive? source, Point gridPoint, out DataGridRow? row)

@@ -12,16 +12,19 @@ namespace DataGridSample.ViewModels
     {
         private DataGridRowDragHandle _rowDragHandle;
         private bool _showHandle = true;
+        private bool _useMultipleRoots = true;
 
         public HierarchicalRowDragDropViewModel()
         {
-            var root = CreateTree();
             Model = new HierarchicalModel<TreeItem>(new HierarchicalOptions<TreeItem>
             {
                 ChildrenSelector = x => x.Children,
                 AutoExpandRoot = true
             });
-            Model.SetRoot(root);
+
+            // Start with multiple roots to demonstrate the feature
+            RootItems = CreateMultipleRoots();
+            Model.SetRoots(RootItems);
 
             Options = new DataGridRowDragDropOptions
             {
@@ -39,9 +42,12 @@ namespace DataGridSample.ViewModels
 
             ExpandAllCommand = new RelayCommand(_ => Model.ExpandAll());
             CollapseAllCommand = new RelayCommand(_ => Model.CollapseAll());
+            ToggleMultiRootCommand = new RelayCommand(_ => UseMultipleRoots = !UseMultipleRoots);
         }
 
         public HierarchicalModel<TreeItem> Model { get; }
+
+        public ObservableCollection<TreeItem> RootItems { get; }
 
         public DataGridRowDragDropOptions Options { get; }
 
@@ -61,9 +67,37 @@ namespace DataGridSample.ViewModels
             set => SetProperty(ref _showHandle, value);
         }
 
+        public bool UseMultipleRoots
+        {
+            get => _useMultipleRoots;
+            set
+            {
+                if (SetProperty(ref _useMultipleRoots, value))
+                {
+                    if (value)
+                    {
+                        // Switch to multiple roots
+                        RootItems.Clear();
+                        foreach (var item in CreateMultipleRoots())
+                        {
+                            RootItems.Add(item);
+                        }
+                        Model.SetRoots(RootItems);
+                    }
+                    else
+                    {
+                        // Switch back to single root
+                        Model.SetRoot(CreateTree());
+                    }
+                }
+            }
+        }
+
         public RelayCommand ExpandAllCommand { get; }
 
         public RelayCommand CollapseAllCommand { get; }
+
+        public RelayCommand ToggleMultiRootCommand { get; }
 
         private static TreeItem CreateTree()
         {
@@ -102,6 +136,34 @@ namespace DataGridSample.ViewModels
                     new("Accessibility")
                 })
             });
+        }
+
+        private static ObservableCollection<TreeItem> CreateMultipleRoots()
+        {
+            return new ObservableCollection<TreeItem>
+            {
+                new("Project Alpha", new ObservableCollection<TreeItem>
+                {
+                    new("Tasks", new ObservableCollection<TreeItem>
+                    {
+                        new("Setup"),
+                        new("Implementation")
+                    }),
+                    new("Issues")
+                }),
+                new("Project Beta", new ObservableCollection<TreeItem>
+                {
+                    new("Design", new ObservableCollection<TreeItem>
+                    {
+                        new("Wireframes"),
+                        new("Mockups")
+                    })
+                }),
+                new("Project Gamma", new ObservableCollection<TreeItem>
+                {
+                    new("Research")
+                })
+            };
         }
 
         [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties)]

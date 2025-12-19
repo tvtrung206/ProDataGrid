@@ -201,6 +201,26 @@ namespace Avalonia.Controls.DataGridHierarchical
         void SetRoot(object rootItem);
 
         /// <summary>
+        /// Sets multiple root items that will be displayed at the top level.
+        /// Creates a virtual root container that holds all items.
+        /// </summary>
+        /// <param name="rootItems">Collection of items to display at root level.</param>
+        void SetRoots(IEnumerable rootItems);
+
+        /// <summary>
+        /// Gets the collection of items displayed at root level.
+        /// When <see cref="IsVirtualRoot"/> is true, returns the children of the virtual root.
+        /// When false, returns the single root item.
+        /// </summary>
+        IEnumerable? RootItems { get; }
+
+        /// <summary>
+        /// Gets a value indicating whether the model has a virtual root containing multiple top-level items.
+        /// When true, the <see cref="Root"/> node is a container that is not displayed in the grid.
+        /// </summary>
+        bool IsVirtualRoot { get; }
+
+        /// <summary>
         /// Gets configuration options for the model.
         /// </summary>
         HierarchicalOptions Options { get; }
@@ -388,6 +408,8 @@ namespace Avalonia.Controls.DataGridHierarchical
         private readonly HashSet<HierarchicalNode> _pendingCullNodes = new();
         private readonly Dictionary<HierarchicalNode, NodeLoadState> _loadStates = new();
         private int _virtualizationGuardDepth;
+        private IEnumerable? _rootItems;
+        private bool _isVirtualRoot;
 
         public HierarchicalModel(HierarchicalOptions? options = null)
         {
@@ -401,6 +423,10 @@ namespace Avalonia.Controls.DataGridHierarchical
         public HierarchicalOptions Options { get; }
 
         public HierarchicalNode? Root { get; private set; }
+
+        public IEnumerable? RootItems => _rootItems;
+
+        public bool IsVirtualRoot => _isVirtualRoot;
 
         public IReadOnlyList<HierarchicalNode> Flattened => _flattenedView;
 
@@ -448,6 +474,9 @@ namespace Avalonia.Controls.DataGridHierarchical
                 throw new ArgumentNullException(nameof(rootItem));
             }
 
+            _isVirtualRoot = false;
+            _rootItems = null;
+
             var root = new HierarchicalNode(rootItem, parent: null, level: 0, isLeaf: DetermineInitialLeaf(rootItem));
             SetRoot(root);
 
@@ -455,6 +484,70 @@ namespace Avalonia.Controls.DataGridHierarchical
             {
                 AutoExpand(root, 0);
             }
+        }
+
+        public void SetRoots(IEnumerable rootItems)
+        {
+            if (rootItems == null)
+            {
+                throw new ArgumentNullException(nameof(rootItems));
+            }
+
+            _isVirtualRoot = true;
+            _rootItems = rootItems;
+
+            // Create a virtual root node that holds all root items.
+            // The virtual root itself will not be displayed; only its children at level 0.
+            var virtualRootItem = new VirtualRootContainer(rootItems);
+            var virtualRoot = new HierarchicalNode(virtualRootItem, parent: null, level: -1, isLeaf: false);
+
+            // Set the source for children resolution.
+            virtualRoot.ChildrenSource = rootItems;
+            virtualRoot.HasMaterializedChildren = true;
+            virtualRoot.IsExpanded = true;
+
+            SetRoot(virtualRoot, rebuildFlattened: false);
+
+            // Build child nodes for each root item at level 0.
+            var children = new List<HierarchicalNode>();
+            foreach (var item in rootItems)
+            {
+                var childNode = new HierarchicalNode(item, parent: virtualRoot, level: 0, isLeaf: DetermineInitialLeaf(item));
+                virtualRoot.MutableChildren.Add(childNode);
+                children.Add(childNode);
+            }
+
+            // Subscribe to INCC on rootItems if applicable.
+            AttachChildrenNotifier(virtualRoot, rootItems);
+
+            // Flatten: the virtual root is not included, only its children.
+            ReplaceFlattened(BuildFlattenedFromVirtualRoot(virtualRoot));
+
+            // Auto-expand each child if configured.
+            if (Options.AutoExpandRoot)
+            {
+                foreach (var child in virtualRoot.MutableChildren)
+                {
+                    if (WithinAutoExpandDepth(0))
+                    {
+                        AutoExpand(child, 0);
+                    }
+                }
+            }
+        }
+
+        private IEnumerable<HierarchicalNode> BuildFlattenedFromVirtualRoot(HierarchicalNode virtualRoot)
+        {
+            var result = new List<HierarchicalNode>();
+            foreach (var child in virtualRoot.Children)
+            {
+                result.Add(child);
+                if (child.IsExpanded)
+                {
+                    CollectVisibleChildren(child, result);
+                }
+            }
+            return result;
         }
 
         public object? GetItem(int index)
@@ -1076,9 +1169,15 @@ namespace Avalonia.Controls.DataGridHierarchical
             if (parent.IsExpanded)
             {
                 var parentIndex = _flattened.IndexOf(parent);
-                if (parentIndex >= 0)
+                // For virtual root (not in flattened list), children are direct top-level items.
+                var isVirtualRootParent = _isVirtualRoot && ReferenceEquals(parent, Root);
+
+                if (parentIndex >= 0 || isVirtualRootParent)
                 {
-                    var flattenedIndex = parentIndex + 1 + visibleOffset;
+                    var flattenedIndex = isVirtualRootParent
+                        ? visibleOffset
+                        : parentIndex + 1 + visibleOffset;
+
                     var visibleNodes = new List<HierarchicalNode>();
                     foreach (var child in newNodes)
                     {
@@ -1139,7 +1238,9 @@ namespace Avalonia.Controls.DataGridHierarchical
             }
 
             var parentIndex = _flattened.IndexOf(parent);
-            if (parentIndex < 0)
+            var isVirtualRootParent = _isVirtualRoot && ReferenceEquals(parent, Root);
+
+            if (parentIndex < 0 && !isVirtualRootParent)
             {
                 foreach (var removed in removedNodes)
                 {
@@ -1149,7 +1250,10 @@ namespace Avalonia.Controls.DataGridHierarchical
                 return;
             }
 
-            var flattenedIndex = parentIndex + 1 + visibleOffset;
+            var flattenedIndex = isVirtualRootParent
+                ? visibleOffset
+                : parentIndex + 1 + visibleOffset;
+
             var totalRemoved = 0;
             foreach (var child in removedNodes)
             {
@@ -1188,6 +1292,7 @@ namespace Avalonia.Controls.DataGridHierarchical
 
             var removeCount = Math.Min(e.OldItems.Count, parent.MutableChildren.Count - replaceIndex);
             var parentIndex = _flattened.IndexOf(parent);
+            var isVirtualRootParent = _isVirtualRoot && ReferenceEquals(parent, Root);
             var visibleOffset = GetVisibleOffsetForChildIndex(parent, replaceIndex);
             var removedNodes = new List<HierarchicalNode>();
 
@@ -1219,9 +1324,12 @@ namespace Avalonia.Controls.DataGridHierarchical
             parent.MutableChildren.InsertRange(replaceIndex, newNodes);
             parent.IsLeaf = parent.MutableChildren.Count == 0;
 
-            if (parent.IsExpanded && parentIndex >= 0)
+            if (parent.IsExpanded && (parentIndex >= 0 || isVirtualRootParent))
             {
-                var flattenedIndex = parentIndex + 1 + visibleOffset;
+                var flattenedIndex = isVirtualRootParent
+                    ? visibleOffset
+                    : parentIndex + 1 + visibleOffset;
+
                 if (removedVisible > 0)
                 {
                     _flattened.RemoveRange(flattenedIndex, removedVisible);
@@ -1275,7 +1383,8 @@ namespace Avalonia.Controls.DataGridHierarchical
             }
 
             var parentIndex = _flattened.IndexOf(parent);
-            var expandedAndVisible = parent.IsExpanded && parentIndex >= 0;
+            var isVirtualRootParent = _isVirtualRoot && ReferenceEquals(parent, Root);
+            var expandedAndVisible = parent.IsExpanded && (parentIndex >= 0 || isVirtualRootParent);
 
             var removeOffset = GetVisibleOffsetForChildIndex(parent, moveIndex);
             var movedNodes = new List<HierarchicalNode>();
@@ -1294,7 +1403,10 @@ namespace Avalonia.Controls.DataGridHierarchical
 
             if (expandedAndVisible)
             {
-                var removedAt = parentIndex + 1 + removeOffset;
+                var removedAt = isVirtualRootParent
+                    ? removeOffset
+                    : parentIndex + 1 + removeOffset;
+
                 if (removedVisible > 0)
                 {
                     _flattened.RemoveRange(removedAt, removedVisible);
@@ -1312,7 +1424,10 @@ namespace Avalonia.Controls.DataGridHierarchical
                 }
 
                 var insertOffset = GetVisibleOffsetForChildIndex(parent, insertIndex);
-                var insertAt = parentIndex + 1 + insertOffset;
+                var insertAt = isVirtualRootParent
+                    ? insertOffset
+                    : parentIndex + 1 + insertOffset;
+
                 if (visibleNodes.Count > 0)
                 {
                     _flattened.InsertRange(insertAt, visibleNodes);
@@ -1961,5 +2076,21 @@ namespace Avalonia.Controls.DataGridHierarchical
 
             IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
         }
+    }
+
+    /// <summary>
+    /// Marker type used as the item for a virtual root node when multiple root items are set via <see cref="IHierarchicalModel.SetRoots"/>.
+    /// </summary>
+    public sealed class VirtualRootContainer
+    {
+        public VirtualRootContainer(IEnumerable items)
+        {
+            Items = items ?? throw new ArgumentNullException(nameof(items));
+        }
+
+        /// <summary>
+        /// Gets the underlying collection of root items.
+        /// </summary>
+        public IEnumerable Items { get; }
     }
 }

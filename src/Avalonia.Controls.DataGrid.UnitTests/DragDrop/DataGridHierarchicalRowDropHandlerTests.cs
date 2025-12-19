@@ -165,6 +165,159 @@ public class DataGridHierarchicalRowDropHandlerTests
         return node.MutableChildren.Select(x => x.Item).OfType<TreeNode>().Select(x => x.Name).ToList();
     }
 
+    [Fact]
+    public void Execute_MultiRoot_Moves_Node_To_Root_Level()
+    {
+        var (grid, model, items, handler) = CreateMultiRootGrid();
+
+        // Move child "A1" to root level
+        var nodeA = model.Root!.MutableChildren[0];
+        model.Expand(nodeA);
+        var nodeA1 = nodeA.MutableChildren[0];
+        var targetB = model.Root.MutableChildren[1];
+
+        var args = CreateMultiRootArgs(grid, model, new[] { nodeA1 }, targetB, DataGridRowDropPosition.After);
+
+        Assert.True(handler.Execute(args));
+
+        // A1 should now be at root level
+        Assert.Equal(3, items.Count);
+        Assert.Equal("A", items[0].Name);
+        Assert.Equal("B", items[1].Name);
+        Assert.Equal("A1", items[2].Name);
+    }
+
+    [Fact]
+    public void Execute_MultiRoot_Moves_Root_Item_Between_Siblings()
+    {
+        var (grid, model, items, handler) = CreateMultiRootGrid();
+
+        var nodeA = model.Root!.MutableChildren[0];
+        var targetB = model.Root.MutableChildren[1];
+
+        var args = CreateMultiRootArgs(grid, model, new[] { nodeA }, targetB, DataGridRowDropPosition.After);
+
+        Assert.True(handler.Execute(args));
+        Assert.Equal(new[] { "B", "A" }, items.Select(x => x.Name).ToArray());
+    }
+
+    [Fact]
+    public void Execute_MultiRoot_Moves_Node_Into_Another_Root()
+    {
+        var (grid, model, items, handler) = CreateMultiRootGrid();
+
+        var nodeA = model.Root!.MutableChildren[0];
+        model.Expand(nodeA);
+        var nodeA1 = nodeA.MutableChildren[0];
+        var targetB = model.Root.MutableChildren[1];
+
+        // Expand target to materialize its children collection
+        model.Expand(targetB);
+
+        var args = CreateMultiRootArgs(grid, model, new[] { nodeA1 }, targetB, DataGridRowDropPosition.Inside);
+
+        Assert.True(handler.Execute(args));
+
+        Assert.Equal(new[] { "A2" }, nodeA.MutableChildren.Select(x => ((TreeNode)x.Item).Name).ToArray());
+        Assert.Equal(new[] { "A1" }, targetB.MutableChildren.Select(x => ((TreeNode)x.Item).Name).ToArray());
+    }
+
+    [Fact]
+    public void Validate_MultiRoot_Fails_For_VirtualRoot_Drag()
+    {
+        var (grid, model, _, handler) = CreateMultiRootGrid();
+
+        // Attempting to drag the virtual root should fail
+        var args = CreateMultiRootArgs(grid, model, new[] { model.Root! }, model.Root!.MutableChildren[0], DataGridRowDropPosition.After);
+
+        Assert.False(handler.Validate(args));
+    }
+
+    private static (DataGrid Grid, HierarchicalModel Model, ObservableCollection<TreeNode> Items, DataGridHierarchicalRowReorderHandler Handler) CreateMultiRootGrid()
+    {
+        var items = new ObservableCollection<TreeNode>
+        {
+            new("A", new ObservableCollection<TreeNode>
+            {
+                new("A1"),
+                new("A2"),
+            }),
+            new("B")
+        };
+
+        var options = new HierarchicalOptions<TreeNode>
+        {
+            ChildrenSelector = x => x.Children,
+            AutoExpandRoot = false
+        };
+
+        var model = new HierarchicalModel<TreeNode>(options);
+        model.SetRoots(items);
+        HierarchicalModel untyped = model;
+
+        var grid = new DataGrid
+        {
+            HierarchicalModel = model,
+            HierarchicalRowsEnabled = true,
+            CanUserReorderRows = true,
+            AutoGenerateColumns = false
+        };
+
+        grid.ColumnsInternal.Add(new DataGridTextColumn
+        {
+            Header = "Name",
+            Binding = new Binding("Item.Name")
+        });
+
+        var handler = new DataGridHierarchicalRowReorderHandler();
+
+        return (grid, untyped, items, handler);
+    }
+
+    private static DataGridRowDropEventArgs CreateMultiRootArgs(
+        DataGrid grid,
+        HierarchicalModel model,
+        IReadOnlyList<HierarchicalNode> dragNodes,
+        HierarchicalNode target,
+        DataGridRowDropPosition position)
+    {
+        IList? list = grid.ItemsSource as IList;
+        var items = dragNodes.Cast<object>().ToList();
+        var indices = dragNodes.Select(model.IndexOf).ToList();
+        var targetIndex = model.IndexOf(target);
+        var insertIndex = position switch
+        {
+            DataGridRowDropPosition.After => targetIndex + 1,
+            DataGridRowDropPosition.Inside => target.MutableChildren.Count,
+            _ => targetIndex
+        };
+
+        var dragEvent = new DragEventArgs(
+            AvaloniaDragDrop.DropEvent,
+            new DataTransfer(),
+            grid,
+            new Avalonia.Point(),
+            KeyModifiers.None)
+        {
+            RoutedEvent = AvaloniaDragDrop.DropEvent,
+            Source = grid
+        };
+
+        return new DataGridRowDropEventArgs(
+            grid,
+            list,
+            items,
+            indices,
+            target,
+            targetIndex,
+            insertIndex,
+            null,
+            position,
+            isSameGrid: true,
+            DragDropEffects.Move,
+            dragEvent);
+    }
+
     private class TreeNode
     {
         public TreeNode(string name, ObservableCollection<TreeNode>? children = null)

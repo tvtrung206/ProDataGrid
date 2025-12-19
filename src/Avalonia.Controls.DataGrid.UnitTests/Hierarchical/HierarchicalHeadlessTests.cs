@@ -421,6 +421,570 @@ public class HierarchicalHeadlessTests
         updateMethod?.Invoke(grid, null);
     }
 
+    // --- Multi-Root Headless Tests ---
+
+    [AvaloniaFact]
+    public void MultiRoot_Grid_Displays_All_Root_Items()
+    {
+        var items = new ObservableCollection<Item>
+        {
+            new Item("Root1"),
+            new Item("Root2"),
+            new Item("Root3")
+        };
+
+        var model = new HierarchicalModel(new HierarchicalOptions
+        {
+            ChildrenSelector = o => ((Item)o).Children
+        });
+        model.SetRoots(items);
+
+        var grid = new DataGrid
+        {
+            HierarchicalModel = model,
+            HierarchicalRowsEnabled = true,
+            AutoGenerateColumns = false,
+            ItemsSource = model.Flattened
+        };
+
+        grid.ColumnsInternal.Add(new DataGridHierarchicalColumn
+        {
+            Header = "Name",
+            Binding = new Avalonia.Data.Binding("Item.Name")
+        });
+
+        grid.ApplyTemplate();
+        grid.UpdateLayout();
+
+        Assert.Equal(3, model.Count);
+        Assert.True(model.IsVirtualRoot);
+    }
+
+    [AvaloniaFact]
+    public void MultiRoot_Expand_Root_Item_Shows_Children()
+    {
+        var root1 = new Item("Root1");
+        root1.Children.Add(new Item("Child1"));
+        root1.Children.Add(new Item("Child2"));
+        var root2 = new Item("Root2");
+
+        var items = new ObservableCollection<Item> { root1, root2 };
+
+        var model = new HierarchicalModel(new HierarchicalOptions
+        {
+            ChildrenSelector = o => ((Item)o).Children
+        });
+        model.SetRoots(items);
+
+        var grid = new DataGrid
+        {
+            HierarchicalModel = model,
+            HierarchicalRowsEnabled = true,
+            AutoGenerateColumns = false,
+            ItemsSource = model.Flattened
+        };
+
+        grid.ColumnsInternal.Add(new DataGridHierarchicalColumn
+        {
+            Header = "Name",
+            Binding = new Avalonia.Data.Binding("Item.Name")
+        });
+
+        grid.ApplyTemplate();
+        grid.UpdateLayout();
+
+        Assert.Equal(2, model.Count);
+
+        model.Expand(model.GetNode(0));
+
+        Assert.Equal(4, model.Count);
+        Assert.Equal("Child1", ((Item)model.GetItem(1)!).Name);
+        Assert.Equal("Child2", ((Item)model.GetItem(2)!).Name);
+        Assert.Equal("Root2", ((Item)model.GetItem(3)!).Name);
+    }
+
+    [AvaloniaFact]
+    public void MultiRoot_Toggle_Via_Grid_Works()
+    {
+        var root1 = new Item("Root1");
+        root1.Children.Add(new Item("Child1"));
+
+        var items = new ObservableCollection<Item> { root1 };
+
+        var model = new HierarchicalModel(new HierarchicalOptions
+        {
+            ChildrenSelector = o => ((Item)o).Children
+        });
+        model.SetRoots(items);
+
+        var grid = new DataGrid
+        {
+            HierarchicalModel = model,
+            HierarchicalRowsEnabled = true,
+            AutoGenerateColumns = false,
+            ItemsSource = model.Flattened
+        };
+
+        grid.ColumnsInternal.Add(new DataGridHierarchicalColumn
+        {
+            Header = "Name",
+            Binding = new Avalonia.Data.Binding("Item.Name")
+        });
+
+        grid.ApplyTemplate();
+        grid.UpdateLayout();
+
+        var toggleMethod = typeof(DataGrid).GetMethod(
+            "TryToggleHierarchicalAtSlot",
+            BindingFlags.Instance | BindingFlags.NonPublic);
+
+        // Expand
+        var toggled = (bool)toggleMethod!.Invoke(grid, new object[] { 0, false })!;
+        Assert.True(toggled);
+        Assert.True(model.GetNode(0).IsExpanded);
+        Assert.Equal(2, model.Count);
+
+        // Collapse
+        toggled = (bool)toggleMethod!.Invoke(grid, new object[] { 0, false })!;
+        Assert.True(toggled);
+        Assert.False(model.GetNode(0).IsExpanded);
+        Assert.Equal(1, model.Count);
+    }
+
+    [AvaloniaFact]
+    public void MultiRoot_Alt_Toggle_Expands_Subtree()
+    {
+        var root1 = new Item("Root1");
+        var child1 = new Item("Child1");
+        child1.Children.Add(new Item("Grandchild1"));
+        root1.Children.Add(child1);
+
+        var items = new ObservableCollection<Item> { root1 };
+
+        var model = new HierarchicalModel(new HierarchicalOptions
+        {
+            ChildrenSelector = o => ((Item)o).Children
+        });
+        model.SetRoots(items);
+
+        var grid = new DataGrid
+        {
+            HierarchicalModel = model,
+            HierarchicalRowsEnabled = true,
+            AutoGenerateColumns = false,
+            ItemsSource = model.Flattened
+        };
+
+        grid.ColumnsInternal.Add(new DataGridHierarchicalColumn
+        {
+            Header = "Name",
+            Binding = new Avalonia.Data.Binding("Item.Name")
+        });
+
+        grid.ApplyTemplate();
+        grid.UpdateLayout();
+
+        var toggleMethod = typeof(DataGrid).GetMethod(
+            "TryToggleHierarchicalAtSlot",
+            BindingFlags.Instance | BindingFlags.NonPublic);
+
+        // Alt+Toggle expands entire subtree
+        var toggled = (bool)toggleMethod!.Invoke(grid, new object[] { 0, true })!;
+
+        Assert.True(toggled);
+        Assert.True(model.GetNode(0).IsExpanded);
+        Assert.True(model.GetNode(1).IsExpanded);
+        Assert.Equal(3, model.Count);
+    }
+
+    [AvaloniaFact]
+    public void MultiRoot_INCC_Add_Updates_Grid()
+    {
+        var items = new ObservableCollection<Item>
+        {
+            new Item("Root1")
+        };
+
+        var model = new HierarchicalModel(new HierarchicalOptions
+        {
+            ChildrenSelector = o => ((Item)o).Children
+        });
+        model.SetRoots(items);
+
+        var grid = new DataGrid
+        {
+            HierarchicalModel = model,
+            HierarchicalRowsEnabled = true,
+            AutoGenerateColumns = false,
+            ItemsSource = model.Flattened
+        };
+
+        grid.ColumnsInternal.Add(new DataGridHierarchicalColumn
+        {
+            Header = "Name",
+            Binding = new Avalonia.Data.Binding("Item.Name")
+        });
+
+        grid.ApplyTemplate();
+        grid.UpdateLayout();
+
+        Assert.Equal(1, model.Count);
+
+        items.Add(new Item("Root2"));
+
+        Assert.Equal(2, model.Count);
+        Assert.Equal("Root2", ((Item)model.GetItem(1)!).Name);
+    }
+
+    [AvaloniaFact]
+    public void MultiRoot_INCC_Remove_Updates_Grid()
+    {
+        var items = new ObservableCollection<Item>
+        {
+            new Item("Root1"),
+            new Item("Root2")
+        };
+
+        var model = new HierarchicalModel(new HierarchicalOptions
+        {
+            ChildrenSelector = o => ((Item)o).Children
+        });
+        model.SetRoots(items);
+
+        var grid = new DataGrid
+        {
+            HierarchicalModel = model,
+            HierarchicalRowsEnabled = true,
+            AutoGenerateColumns = false,
+            ItemsSource = model.Flattened
+        };
+
+        grid.ColumnsInternal.Add(new DataGridHierarchicalColumn
+        {
+            Header = "Name",
+            Binding = new Avalonia.Data.Binding("Item.Name")
+        });
+
+        grid.ApplyTemplate();
+        grid.UpdateLayout();
+
+        Assert.Equal(2, model.Count);
+
+        items.RemoveAt(0);
+
+        Assert.Equal(1, model.Count);
+        Assert.Equal("Root2", ((Item)model.GetItem(0)!).Name);
+    }
+
+    [AvaloniaFact]
+    public void MultiRoot_Level_Zero_Items_Have_Correct_Indent()
+    {
+        var root1 = new Item("Root1");
+        root1.Children.Add(new Item("Child1"));
+        var root2 = new Item("Root2");
+
+        var items = new ObservableCollection<Item> { root1, root2 };
+
+        var model = new HierarchicalModel(new HierarchicalOptions
+        {
+            ChildrenSelector = o => ((Item)o).Children
+        });
+        model.SetRoots(items);
+
+        var grid = new DataGrid
+        {
+            HierarchicalModel = model,
+            HierarchicalRowsEnabled = true,
+            AutoGenerateColumns = false,
+            ItemsSource = model.Flattened
+        };
+
+        grid.ColumnsInternal.Add(new DataGridHierarchicalColumn
+        {
+            Header = "Name",
+            Binding = new Avalonia.Data.Binding("Item.Name")
+        });
+
+        grid.ApplyTemplate();
+        grid.UpdateLayout();
+
+        model.Expand(model.GetNode(0));
+
+        // Root items should be at level 0
+        Assert.Equal(0, model.GetNode(0).Level);
+        Assert.Equal(3, model.Count); // Root1, Child1, Root2
+
+        // Root2 is now at index 2 (after Root1 and its Child1)
+        Assert.Equal(0, model.GetNode(2).Level);
+
+        // Child should be at level 1
+        Assert.Equal(1, model.GetNode(1).Level);
+    }
+
+    [AvaloniaFact]
+    public void MultiRoot_ExpandAll_Expands_All_Root_Items()
+    {
+        var root1 = new Item("Root1");
+        root1.Children.Add(new Item("Child1"));
+        var root2 = new Item("Root2");
+        root2.Children.Add(new Item("Child2"));
+
+        var items = new ObservableCollection<Item> { root1, root2 };
+
+        var model = new HierarchicalModel(new HierarchicalOptions
+        {
+            ChildrenSelector = o => ((Item)o).Children
+        });
+        model.SetRoots(items);
+
+        var grid = new DataGrid
+        {
+            HierarchicalModel = model,
+            HierarchicalRowsEnabled = true,
+            AutoGenerateColumns = false,
+            ItemsSource = model.Flattened
+        };
+
+        grid.ColumnsInternal.Add(new DataGridHierarchicalColumn
+        {
+            Header = "Name",
+            Binding = new Avalonia.Data.Binding("Item.Name")
+        });
+
+        grid.ApplyTemplate();
+        grid.UpdateLayout();
+
+        Assert.Equal(2, model.Count);
+
+        model.ExpandAll();
+
+        Assert.Equal(4, model.Count);
+        Assert.True(model.GetNode(0).IsExpanded);
+        Assert.True(model.GetNode(2).IsExpanded);
+    }
+
+    [AvaloniaFact]
+    public void MultiRoot_CollapseAll_Collapses_All_Root_Items()
+    {
+        var root1 = new Item("Root1");
+        root1.Children.Add(new Item("Child1"));
+        var root2 = new Item("Root2");
+        root2.Children.Add(new Item("Child2"));
+
+        var items = new ObservableCollection<Item> { root1, root2 };
+
+        var model = new HierarchicalModel(new HierarchicalOptions
+        {
+            ChildrenSelector = o => ((Item)o).Children
+        });
+        model.SetRoots(items);
+
+        var grid = new DataGrid
+        {
+            HierarchicalModel = model,
+            HierarchicalRowsEnabled = true,
+            AutoGenerateColumns = false,
+            ItemsSource = model.Flattened
+        };
+
+        grid.ColumnsInternal.Add(new DataGridHierarchicalColumn
+        {
+            Header = "Name",
+            Binding = new Avalonia.Data.Binding("Item.Name")
+        });
+
+        grid.ApplyTemplate();
+        grid.UpdateLayout();
+
+        // First expand all
+        model.ExpandAll();
+        Assert.Equal(4, model.Count);
+
+        // Collapse each root item individually
+        model.Collapse(model.GetNode(0));
+        // After collapsing root1, we have: Root1, Root2 (with Child2 still inside)
+        // Root2 is now at index 1, still expanded
+        model.Collapse(model.GetNode(1));
+
+        Assert.Equal(2, model.Count);
+        Assert.False(model.GetNode(0).IsExpanded);
+        Assert.False(model.GetNode(1).IsExpanded);
+    }
+
+    [AvaloniaFact]
+    public void MultiRoot_AutoExpandRoot_Expands_All_Root_Items()
+    {
+        var root1 = new Item("Root1");
+        root1.Children.Add(new Item("Child1"));
+        var root2 = new Item("Root2");
+        root2.Children.Add(new Item("Child2"));
+
+        var items = new ObservableCollection<Item> { root1, root2 };
+
+        var model = new HierarchicalModel(new HierarchicalOptions
+        {
+            ChildrenSelector = o => ((Item)o).Children,
+            AutoExpandRoot = true
+        });
+        model.SetRoots(items);
+
+        var grid = new DataGrid
+        {
+            HierarchicalModel = model,
+            HierarchicalRowsEnabled = true,
+            AutoGenerateColumns = false,
+            ItemsSource = model.Flattened
+        };
+
+        grid.ColumnsInternal.Add(new DataGridHierarchicalColumn
+        {
+            Header = "Name",
+            Binding = new Avalonia.Data.Binding("Item.Name")
+        });
+
+        grid.ApplyTemplate();
+        grid.UpdateLayout();
+
+        // All root items should be auto-expanded
+        Assert.Equal(4, model.Count);
+        Assert.True(model.GetNode(0).IsExpanded);
+        Assert.True(model.GetNode(2).IsExpanded);
+    }
+
+    [AvaloniaFact]
+    public void MultiRoot_Switch_Between_Single_And_Multi_Root()
+    {
+        var model = new HierarchicalModel(new HierarchicalOptions
+        {
+            ChildrenSelector = o => ((Item)o).Children
+        });
+
+        // Start with single root
+        var singleRoot = new Item("SingleRoot");
+        singleRoot.Children.Add(new Item("Child"));
+        model.SetRoot(singleRoot);
+
+        var grid = new DataGrid
+        {
+            HierarchicalModel = model,
+            HierarchicalRowsEnabled = true,
+            AutoGenerateColumns = false,
+            ItemsSource = model.Flattened
+        };
+
+        grid.ColumnsInternal.Add(new DataGridHierarchicalColumn
+        {
+            Header = "Name",
+            Binding = new Avalonia.Data.Binding("Item.Name")
+        });
+
+        grid.ApplyTemplate();
+        grid.UpdateLayout();
+
+        Assert.False(model.IsVirtualRoot);
+        Assert.Equal(1, model.Count);
+
+        // Switch to multi-root
+        var multiItems = new ObservableCollection<Item>
+        {
+            new Item("Root1"),
+            new Item("Root2")
+        };
+        model.SetRoots(multiItems);
+
+        Assert.True(model.IsVirtualRoot);
+        Assert.Equal(2, model.Count);
+
+        // Switch back to single root
+        model.SetRoot(new Item("AnotherSingleRoot"));
+
+        Assert.False(model.IsVirtualRoot);
+        Assert.Equal(1, model.Count);
+    }
+
+    [AvaloniaFact]
+    public void MultiRoot_VirtualRoot_Not_Visible_In_Grid()
+    {
+        var items = new ObservableCollection<Item>
+        {
+            new Item("Root1"),
+            new Item("Root2")
+        };
+
+        var model = new HierarchicalModel(new HierarchicalOptions
+        {
+            ChildrenSelector = o => ((Item)o).Children
+        });
+        model.SetRoots(items);
+
+        var grid = new DataGrid
+        {
+            HierarchicalModel = model,
+            HierarchicalRowsEnabled = true,
+            AutoGenerateColumns = false,
+            ItemsSource = model.Flattened
+        };
+
+        grid.ColumnsInternal.Add(new DataGridHierarchicalColumn
+        {
+            Header = "Name",
+            Binding = new Avalonia.Data.Binding("Item.Name")
+        });
+
+        grid.ApplyTemplate();
+        grid.UpdateLayout();
+
+        // Virtual root should not be in the flattened list
+        Assert.DoesNotContain(model.Root, model.Flattened);
+
+        // Only the actual root items should be visible
+        Assert.Equal(2, model.Count);
+        Assert.All(model.Flattened, node => Assert.NotSame(model.Root, node));
+    }
+
+    [AvaloniaFact]
+    public void MultiRoot_Keyboard_Navigation_Works()
+    {
+        var root1 = new Item("Root1");
+        root1.Children.Add(new Item("Child1"));
+        var root2 = new Item("Root2");
+
+        var items = new ObservableCollection<Item> { root1, root2 };
+
+        var model = new HierarchicalModel(new HierarchicalOptions
+        {
+            ChildrenSelector = o => ((Item)o).Children
+        });
+        model.SetRoots(items);
+
+        var grid = new DataGrid
+        {
+            HierarchicalModel = model,
+            HierarchicalRowsEnabled = true,
+            AutoGenerateColumns = false,
+            ItemsSource = model.Flattened
+        };
+
+        grid.ColumnsInternal.Add(new DataGridHierarchicalColumn
+        {
+            Header = "Name",
+            Binding = new Avalonia.Data.Binding("Item.Name")
+        });
+
+        grid.ApplyTemplate();
+        grid.UpdateLayout();
+
+        var toggleMethod = typeof(DataGrid).GetMethod(
+            "TryToggleHierarchicalAtSlot",
+            BindingFlags.Instance | BindingFlags.NonPublic);
+
+        // Expand using the toggle method (simulating keyboard navigation)
+        var toggled = (bool)toggleMethod!.Invoke(grid, new object[] { 0, false })!;
+        Assert.True(toggled);
+        Assert.True(model.GetNode(0).IsExpanded);
+        Assert.Equal(3, model.Count);
+    }
+
     private sealed class HierarchicalSortingAdapterFactory : IDataGridSortingAdapterFactory
     {
         public DataGridSortingAdapter Create(DataGrid grid, ISortingModel model)
