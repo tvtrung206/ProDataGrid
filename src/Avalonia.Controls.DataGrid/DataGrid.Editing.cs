@@ -4,6 +4,7 @@
 
 #nullable disable
 
+using Avalonia.Collections;
 using Avalonia.Controls.Primitives;
 using Avalonia.Controls.Utils;
 using Avalonia.Data;
@@ -62,6 +63,33 @@ namespace Avalonia.Controls
             RoutedEvent.Register<DataGrid, DataGridRowEditEndingEventArgs>(nameof(RowEditEnding), RoutingStrategies.Bubble);
 
         /// <summary>
+        /// Checks if the specified slot is the placeholder row for adding new items.
+        /// </summary>
+        /// <param name="slot">The slot to check.</param>
+        /// <returns>True if the slot is the placeholder row; otherwise, false.</returns>
+        private bool IsSlotPlaceholderRow(int slot)
+        {
+            if (slot < 0 || RowGroupHeadersTable.Contains(slot))
+            {
+                return false;
+            }
+            var rowIndex = RowIndexFromSlot(slot);
+            var dataItem = DataConnection.GetDataItem(rowIndex);
+            return ReferenceEquals(dataItem, DataGridCollectionView.NewItemPlaceholder);
+        }
+
+        /// <summary>
+        /// Checks if the specified slot can be edited. Returns true if the row is selected
+        /// or if it's the placeholder row (for adding new items).
+        /// </summary>
+        /// <param name="slot">The slot to check.</param>
+        /// <returns>True if the slot can be edited; otherwise, false.</returns>
+        private bool CanEditSlot(int slot)
+        {
+            return GetRowSelection(slot) || IsSlotPlaceholderRow(slot);
+        }
+
+        /// <summary>
         /// Enters editing mode for the current cell and current row (if they're not already in editing mode).
         /// </summary>
         /// <returns>True if operation was successful. False otherwise.</returns>
@@ -78,7 +106,7 @@ namespace Avalonia.Controls
         /// <returns>True if operation was successful. False otherwise.</returns>
         public bool BeginEdit(RoutedEventArgs editingEventArgs)
         {
-            if (CurrentColumnIndex == -1 || !GetRowSelection(CurrentSlot))
+            if (CurrentColumnIndex == -1 || !CanEditSlot(CurrentSlot))
             {
                 return false;
             }
@@ -181,7 +209,7 @@ namespace Avalonia.Controls
 
         private bool BeginCellEdit(RoutedEventArgs editingEventArgs)
         {
-            if (CurrentColumnIndex == -1 || !GetRowSelection(CurrentSlot))
+            if (CurrentColumnIndex == -1 || !CanEditSlot(CurrentSlot))
             {
                 return false;
             }
@@ -231,7 +259,7 @@ namespace Avalonia.Controls
             if (e.Cancel
                 || currentRowIndex != CurrentSlot
                 || currentColumnIndex != CurrentColumnIndex
-                || !GetRowSelection(CurrentSlot)
+                || !CanEditSlot(CurrentSlot)
                 || (EditingRow == null && !BeginRowEdit(dataGridRow)))
             {
                 // If either BeginningEdit was canceled, currency/selection was changed in the event handler,
