@@ -1,3 +1,4 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Controls.DataGridTests;
@@ -65,6 +66,47 @@ public class RoutedEventsTests
         dataGrid.RaiseEvent(new DataGridScrollEventArgs(ScrollEventType.SmallIncrement, 1, DataGrid.HorizontalScrollEvent, dataGrid));
 
         Assert.True(clrHit);
+    }
+
+    [AvaloniaFact]
+    public void CellPointerPressed_RoutedEvent_Reaches_CLR_Handler_And_Can_Unsubscribe()
+    {
+        var dataGrid = new DataGrid();
+        var cell = new DataGridCell();
+        var row = new DataGridRow();
+        var column = new DataGridTextColumn();
+        var hit = false;
+
+        void Handler(object? sender, DataGridCellPointerPressedEventArgs e)
+        {
+            hit = true;
+            Assert.Same(cell, e.Cell);
+            Assert.Same(row, e.Row);
+            Assert.Same(column, e.Column);
+        }
+
+        dataGrid.CellPointerPressed += Handler;
+        dataGrid.RaiseEvent(new DataGridCellPointerPressedEventArgs(
+            cell,
+            row,
+            column,
+            CreatePointerArgs(dataGrid),
+            DataGrid.CellPointerPressedEvent,
+            dataGrid));
+
+        Assert.True(hit);
+
+        hit = false;
+        dataGrid.CellPointerPressed -= Handler;
+        dataGrid.RaiseEvent(new DataGridCellPointerPressedEventArgs(
+            cell,
+            row,
+            column,
+            CreatePointerArgs(dataGrid),
+            DataGrid.CellPointerPressedEvent,
+            dataGrid));
+
+        Assert.False(hit);
     }
 
     [AvaloniaFact]
@@ -300,5 +342,12 @@ public class RoutedEventsTests
             dataGrid));
 
         Assert.True(hit);
+    }
+
+    private static PointerPressedEventArgs CreatePointerArgs(Control target)
+    {
+        var pointer = new Pointer(Pointer.GetNextFreeId(), PointerType.Mouse, isPrimary: true);
+        var properties = new PointerPointProperties(RawInputModifiers.LeftMouseButton, PointerUpdateKind.LeftButtonPressed);
+        return new PointerPressedEventArgs(target, pointer, target, new Point(0, 0), 0, properties, KeyModifiers.None);
     }
 }

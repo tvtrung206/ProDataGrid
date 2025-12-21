@@ -211,7 +211,7 @@ namespace Avalonia.Controls
                 NoSelectionChangeCount--;
             }
 
-            if (_successfullyUpdatedSelection && !IsGroupSlot(targetSlot))
+            if (_successfullyUpdatedSelection)
             {
                 BeginCellEdit(e);
             }
@@ -492,7 +492,9 @@ namespace Avalonia.Controls
                     }
                     else if (CurrentColumnIndex == -1)
                     {
-                        int firstVisibleColumnIndex = ColumnsInternal.FirstVisibleColumn == null ? -1 : ColumnsInternal.FirstVisibleColumn.Index;
+                        var firstVisibleColumn = ColumnsInternal.FirstVisibleColumn;
+                        Debug.Assert(firstVisibleColumn != null);
+                        int firstVisibleColumnIndex = firstVisibleColumn.Index;
 
                         UpdateSelectionAndCurrency(
                             firstVisibleColumnIndex,
@@ -615,7 +617,9 @@ namespace Avalonia.Controls
             if (!ctrl)
             {
                 // If Enter was used by a TextBox, we shouldn't handle the key
-                if (FocusManager.GetFocusManager(this)?.GetFocusedElement() is TextBox focusedTextBox
+                var focusManager = FocusManager.GetFocusManager(this);
+                Debug.Assert(focusManager != null);
+                if (focusManager!.GetFocusedElement() is TextBox focusedTextBox
                     && focusedTextBox.AcceptsReturn)
                 {
                     return false;
@@ -790,7 +794,7 @@ namespace Avalonia.Controls
                         forCurrentCellChange: false,
                         forceHorizontalScroll: true);
                 Debug.Assert(success);
-                if (CurrentColumnIndex != -1 && SelectedItem == null)
+                if (SelectedItem == null)
                 {
                     SetRowSelection(CurrentSlot, isSelected: true, setAnchorSlot: true);
                 }

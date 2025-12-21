@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
@@ -12,6 +13,7 @@ using Avalonia.Data;
 using Avalonia.Markup.Xaml.Styling;
 using Avalonia.VisualTree;
 using Xunit;
+using System.Reflection;
 
 namespace Avalonia.Controls.DataGridTests
 {
@@ -638,6 +640,204 @@ namespace Avalonia.Controls.DataGridTests
             Assert.Empty(verticalResult);
         }
 
+        [AvaloniaFact]
+        public void GetIrregularSnapPoints_With_OwningGrid_Covers_Vertical_Alignments()
+        {
+            var grid = new DataGrid { RowHeight = 10 };
+            SetPrivateProperty(grid, "SlotCount", 3);
+
+            var presenter = new DataGridRowsPresenter();
+            SetPrivateProperty(presenter, "OwningGrid", grid);
+
+            var snapInfo = (IScrollSnapPointsInfo)presenter;
+
+            var near = snapInfo.GetIrregularSnapPoints(Orientation.Vertical, SnapPointsAlignment.Near);
+            Assert.Equal(new[] { 0d, 10d, 20d }, near);
+
+            var center = snapInfo.GetIrregularSnapPoints(Orientation.Vertical, SnapPointsAlignment.Center);
+            Assert.Equal(new[] { 5d, 15d, 25d }, center);
+
+            var far = snapInfo.GetIrregularSnapPoints(Orientation.Vertical, SnapPointsAlignment.Far);
+            Assert.Equal(new[] { 10d, 20d, 30d }, far);
+
+            var defaultAlign = snapInfo.GetIrregularSnapPoints(Orientation.Vertical, (SnapPointsAlignment)999);
+            Assert.Equal(new[] { 0d, 10d, 20d }, defaultAlign);
+        }
+
+        [AvaloniaFact]
+        public void GetIrregularSnapPoints_With_OwningGrid_Covers_Horizontal_Alignments()
+        {
+            var grid = new DataGrid();
+            var first = new DataGridTextColumn { Width = new DataGridLength(20) };
+            var second = new DataGridTextColumn { Width = new DataGridLength(30) };
+            grid.ColumnsInternal.Add(first);
+            grid.ColumnsInternal.Add(second);
+            foreach (var column in grid.ColumnsInternal)
+            {
+                column.SetWidthDisplayValue(column.Width.Value);
+            }
+            grid.ColumnsInternal.EnsureVisibleEdgedColumnsWidth();
+
+            var presenter = new DataGridRowsPresenter();
+            SetPrivateProperty(presenter, "OwningGrid", grid);
+            var snapInfo = (IScrollSnapPointsInfo)presenter;
+
+            var near = snapInfo.GetIrregularSnapPoints(Orientation.Horizontal, SnapPointsAlignment.Near);
+            Assert.Equal(new[] { 0d, 20d }, near);
+
+            var center = snapInfo.GetIrregularSnapPoints(Orientation.Horizontal, SnapPointsAlignment.Center);
+            Assert.Equal(new[] { 10d, 35d }, center);
+
+            var far = snapInfo.GetIrregularSnapPoints(Orientation.Horizontal, SnapPointsAlignment.Far);
+            Assert.Equal(new[] { 20d, 50d }, far);
+
+            var defaultAlign = snapInfo.GetIrregularSnapPoints(Orientation.Horizontal, (SnapPointsAlignment)999);
+            Assert.Equal(new[] { 0d, 20d }, defaultAlign);
+        }
+
+        [AvaloniaFact]
+        public void GetRegularSnapPoints_Covers_Vertical_And_Estimates()
+        {
+            var grid = new DataGrid { RowHeight = 12 };
+            var presenter = new DataGridRowsPresenter();
+            SetPrivateProperty(presenter, "OwningGrid", grid);
+            presenter.AreVerticalSnapPointsRegular = true;
+            var snapInfo = (IScrollSnapPointsInfo)presenter;
+
+            var near = snapInfo.GetRegularSnapPoints(Orientation.Vertical, SnapPointsAlignment.Near, out var offsetNear);
+            Assert.Equal(12, near);
+            Assert.Equal(0, offsetNear);
+
+            var center = snapInfo.GetRegularSnapPoints(Orientation.Vertical, SnapPointsAlignment.Center, out var offsetCenter);
+            Assert.Equal(12, center);
+            Assert.Equal(6, offsetCenter);
+
+            var far = snapInfo.GetRegularSnapPoints(Orientation.Vertical, SnapPointsAlignment.Far, out var offsetFar);
+            Assert.Equal(12, far);
+            Assert.Equal(12, offsetFar);
+
+            grid.RowHeight = 0;
+            SetPrivateProperty(grid, "RowHeightEstimate", 20d);
+            var estimated = snapInfo.GetRegularSnapPoints(Orientation.Vertical, SnapPointsAlignment.Near, out var offsetEstimated);
+            Assert.Equal(20, estimated);
+            Assert.Equal(0, offsetEstimated);
+        }
+
+        [AvaloniaFact]
+        public void GetRegularSnapPoints_Covers_Horizontal_And_Empty_Scrolling()
+        {
+            var grid = new DataGrid();
+            var column = new DataGridTextColumn { Width = new DataGridLength(30) };
+            grid.ColumnsInternal.Add(column);
+            column.SetWidthDisplayValue(30);
+            grid.ColumnsInternal.EnsureVisibleEdgedColumnsWidth();
+
+            var presenter = new DataGridRowsPresenter();
+            SetPrivateProperty(presenter, "OwningGrid", grid);
+            presenter.AreHorizontalSnapPointsRegular = true;
+            var snapInfo = (IScrollSnapPointsInfo)presenter;
+
+            var width = snapInfo.GetRegularSnapPoints(Orientation.Horizontal, SnapPointsAlignment.Center, out var offset);
+            Assert.Equal(30, width);
+            Assert.Equal(15, offset);
+
+            var near = snapInfo.GetRegularSnapPoints(Orientation.Horizontal, SnapPointsAlignment.Near, out var offsetNear);
+            Assert.Equal(30, near);
+            Assert.Equal(0, offsetNear);
+
+            var far = snapInfo.GetRegularSnapPoints(Orientation.Horizontal, SnapPointsAlignment.Far, out var offsetFar);
+            Assert.Equal(30, far);
+            Assert.Equal(30, offsetFar);
+
+            var invalid = snapInfo.GetRegularSnapPoints(Orientation.Horizontal, (SnapPointsAlignment)999, out var offsetInvalid);
+            Assert.Equal(30, invalid);
+            Assert.Equal(0, offsetInvalid);
+
+            grid.FrozenColumnCount = 1;
+            var none = snapInfo.GetRegularSnapPoints(Orientation.Horizontal, SnapPointsAlignment.Near, out var offsetNone);
+            Assert.Equal(0, none);
+            Assert.Equal(0, offsetNone);
+        }
+
+        [AvaloniaFact]
+        public void GetRegularSnapPoints_Horizontal_Returns_Zero_When_Not_Regular()
+        {
+            var grid = new DataGrid();
+            var column = new DataGridTextColumn { Width = new DataGridLength(25) };
+            grid.ColumnsInternal.Add(column);
+            column.SetWidthDisplayValue(25);
+            grid.ColumnsInternal.EnsureVisibleEdgedColumnsWidth();
+
+            var presenter = new DataGridRowsPresenter();
+            SetPrivateProperty(presenter, "OwningGrid", grid);
+            presenter.AreHorizontalSnapPointsRegular = false;
+
+            var snapInfo = (IScrollSnapPointsInfo)presenter;
+            var width = snapInfo.GetRegularSnapPoints(Orientation.Horizontal, SnapPointsAlignment.Near, out var offset);
+            Assert.Equal(0, width);
+            Assert.Equal(0, offset);
+        }
+
+        [AvaloniaFact]
+        public void GetRegularSnapPoints_Vertical_Returns_Zero_When_Not_Regular()
+        {
+            var grid = new DataGrid { RowHeight = 10 };
+            var presenter = new DataGridRowsPresenter();
+            SetPrivateProperty(presenter, "OwningGrid", grid);
+            presenter.AreVerticalSnapPointsRegular = false;
+
+            var snapInfo = (IScrollSnapPointsInfo)presenter;
+            var height = snapInfo.GetRegularSnapPoints(Orientation.Vertical, SnapPointsAlignment.Near, out var offset);
+            Assert.Equal(0, height);
+            Assert.Equal(0, offset);
+        }
+
+        [AvaloniaFact]
+        public void GetVerticalSnapPoints_Uses_Estimate_When_RowHeight_Zero()
+        {
+            var grid = new DataGrid { RowHeight = 0 };
+            SetPrivateProperty(grid, "RowHeightEstimate", 18d);
+            SetPrivateProperty(grid, "SlotCount", 2);
+
+            var presenter = new DataGridRowsPresenter();
+            SetPrivateProperty(presenter, "OwningGrid", grid);
+            var snapInfo = (IScrollSnapPointsInfo)presenter;
+
+            var points = snapInfo.GetIrregularSnapPoints(Orientation.Vertical, SnapPointsAlignment.Center);
+            Assert.Equal(new[] { 9d, 27d }, points);
+        }
+
+        [AvaloniaFact]
+        public void GetVerticalSnapPoints_Returns_Empty_When_OwningGrid_Null()
+        {
+            var presenter = new DataGridRowsPresenter();
+            var method = typeof(DataGridRowsPresenter).GetMethod("GetVerticalSnapPoints", BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.NotNull(method);
+
+            var points = (IReadOnlyList<double>)method!.Invoke(presenter, new object[] { SnapPointsAlignment.Near })!;
+            Assert.Empty(points);
+        }
+
+        [AvaloniaFact]
+        public void GetHorizontalSnapPoints_Returns_Empty_When_OwningGrid_Null()
+        {
+            var presenter = new DataGridRowsPresenter();
+            var method = typeof(DataGridRowsPresenter).GetMethod("GetHorizontalSnapPoints", BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.NotNull(method);
+
+            var points = (IReadOnlyList<double>)method!.Invoke(presenter, new object[] { SnapPointsAlignment.Near })!;
+            Assert.Empty(points);
+        }
+
+        [AvaloniaFact]
+        public void SnapPointsChanged_Events_Can_Be_Raised()
+        {
+            var presenter = new DataGridRowsPresenter();
+
+            presenter.RaiseVerticalSnapPointsChanged();
+            presenter.RaiseHorizontalSnapPointsChanged();
+        }
+
         #endregion
 
         #region Pre-fetching Tests
@@ -676,5 +876,32 @@ namespace Avalonia.Controls.DataGridTests
         }
 
         #endregion
+
+        private static void SetPrivateProperty(object target, string name, object? value)
+        {
+            var type = target.GetType();
+            PropertyInfo? property = null;
+            while (type != null)
+            {
+                property = type.GetProperty(name, BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+                if (property != null)
+                {
+                    break;
+                }
+                type = type.BaseType;
+            }
+
+            Assert.NotNull(property);
+            var setter = property!.GetSetMethod(true);
+            if (setter != null)
+            {
+                setter.Invoke(target, new[] { value });
+                return;
+            }
+
+            var field = target.GetType().GetField($"<{property.Name}>k__BackingField", BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.NotNull(field);
+            field!.SetValue(target, value);
+        }
     }
 }
