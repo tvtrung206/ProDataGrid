@@ -137,6 +137,9 @@
     <TabItem Header="Column Types">
       <pages:ColumnTypesPage />
     </TabItem>
+    <TabItem Header="Validation">
+      <pages:ValidationColumnsPage />
+    </TabItem>
     <TabItem Header="DataTable">
       <local:DataTablePage />
     </TabItem>

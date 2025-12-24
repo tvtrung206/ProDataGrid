@@ -135,7 +135,7 @@
       <SolidColorBrush x:Key="DataGridBorderBrush" Color="Transparent" />
       <SolidColorBrush x:Key="DataGridDropLocationIndicatorBackground" Color="{DynamicResource SystemAccentColor}" />
       <StaticResource x:Key="DataGridDropLocationIndicatorBrush" ResourceKey="DataGridDropLocationIndicatorBackground" />
-      <StaticResource x:Key="DataGridCellDataValidationErrorsTheme" ResourceKey="TooltipDataValidationErrors" />
+
     </ResourceDictionary>
   </Styles.Resources>
 </Styles>

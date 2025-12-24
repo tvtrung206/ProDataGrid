@@ -77,12 +77,27 @@ namespace Avalonia.Controls
             ItemsControl.ItemTemplateProperty.AddOwner<DataGridComboBoxColumn>();
 
         /// <summary>
+        /// Defines the <see cref="ComboBox.IsEditable"/> property.
+        /// </summary>
+        public static readonly StyledProperty<bool> IsEditableProperty =
+            ComboBox.IsEditableProperty.AddOwner<DataGridComboBoxColumn>();
+
+        /// <summary>
         /// Gets or sets the template used to display each item in the combo box.
         /// </summary>
         public IDataTemplate ItemTemplate
         {
             get => GetValue(ItemTemplateProperty);
             set => SetValue(ItemTemplateProperty, value);
+        }
+
+        /// <summary>
+        /// Gets or sets whether the generated combo box allows free-form text entry.
+        /// </summary>
+        public bool IsEditable
+        {
+            get => GetValue(IsEditableProperty);
+            set => SetValue(IsEditableProperty, value);
         }
 
         /// <summary>
@@ -408,6 +423,7 @@ namespace Avalonia.Controls
 
             if (change.Property == ItemsSourceProperty ||
                 change.Property == ItemTemplateProperty ||
+                change.Property == IsEditableProperty ||
                 change.Property == HorizontalContentAlignmentProperty ||
                 change.Property == VerticalContentAlignmentProperty ||
                 change.Property == DisplayMemberPathProperty ||
@@ -439,6 +455,7 @@ namespace Avalonia.Controls
         {
             DataGridHelper.SyncColumnProperty(this, comboBox, ItemsSourceProperty);
             DataGridHelper.SyncColumnProperty(this, comboBox, ItemTemplateProperty);
+            DataGridHelper.SyncColumnProperty(this, comboBox, IsEditableProperty);
             DataGridHelper.SyncColumnProperty(this, comboBox, HorizontalContentAlignmentProperty);
             DataGridHelper.SyncColumnProperty(this, comboBox, VerticalContentAlignmentProperty);
             comboBox.DisplayMemberBinding = CreateDisplayMemberBinding();

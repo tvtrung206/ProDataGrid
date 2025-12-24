@@ -14,6 +14,9 @@
       <StreamGeometry x:Key="DataGridRowGroupHeaderIconOpenedPath">M10 4.895 L10 4.895 M15.85 7.65c.2.2.2.5 0 .7l-5.46 5.49a.55.55 0 0 1-.78 0L4.15 8.35a.5.5 0 1 1 .7-.7L10 12.8l5.15-5.16c.2-.2.5-.2.7 0Z M10 16.595 L10 16.595</StreamGeometry>
       <StreamGeometry x:Key="DataGridDragGripIconPath">M4 3 a1 1 0 1 1 0.001 0 M8 3 a1 1 0 1 1 0.001 0 M4 7 a1 1 0 1 1 0.001 0 M8 7 a1 1 0 1 1 0.001 0 M4 11 a1 1 0 1 1 0.001 0 M8 11 a1 1 0 1 1 0.001 0</StreamGeometry>
 
+      <!-- Cell corner radius -->
+      <CornerRadius x:Key="DataGridCellCornerRadius">0</CornerRadius>
+
       <!-- Flyout presenter theme for filter popups -->
       <ControlTheme x:Key="DataGridFilterFlyoutPresenterTheme" TargetType="FlyoutPresenter">
         <Setter Property="Padding" Value="{DynamicResource DataGridFilterFlyoutPadding}" />
@@ -141,6 +144,57 @@
         </Style>
       </ControlTheme>
 
+      <!-- DataGridCellDataValidationErrorsTheme -->
+      <ControlTheme x:Key="DataGridCellDataValidationErrorsTheme"
+                    TargetType="DataValidationErrors">
+        <Setter Property="CornerRadius" Value="{DynamicResource DataGridCellCornerRadius}" />
+        <Setter Property="Template">
+          <ControlTemplate TargetType="DataValidationErrors">
+            <DockPanel LastChildFill="True">
+              <ContentControl Content="{Binding (DataValidationErrors.Errors)}"
+                              ContentTemplate="{TemplateBinding ErrorTemplate}"
+                              DataContext="{TemplateBinding Owner}"
+                              DockPanel.Dock="Right"
+                              IsVisible="{Binding (DataValidationErrors.HasErrors)}" />
+              <ContentPresenter Name="PART_ContentPresenter"
+                                Padding="{TemplateBinding Padding}"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                Content="{TemplateBinding Content}"
+                                ContentTemplate="{TemplateBinding ContentTemplate}"
+                                CornerRadius="{TemplateBinding CornerRadius}" />
+            </DockPanel>
+          </ControlTemplate>
+        </Setter>
+        <Setter Property="ErrorTemplate">
+          <DataTemplate>
+            <Panel Name="PART_InlineErrorTemplatePanel"
+                   Background="Transparent">
+              <Panel.Styles>
+                <Style Selector="Panel#PART_InlineErrorTemplatePanel">
+                  <Setter Property="Margin" Value="8,0" />
+                </Style>
+                <Style Selector="Panel#PART_InlineErrorTemplatePanel ToolTip">
+                  <Setter Property="BorderBrush" Value="{DynamicResource DataGridCellInvalidBrush}" />
+                </Style>
+                <Style Selector="Panel#PART_InlineErrorTemplatePanel ToolTip TextBlock">
+                  <Setter Property="TextWrapping" Value="Wrap" />
+                </Style>
+              </Panel.Styles>
+              <ToolTip.Tip>
+                <ItemsControl ItemsSource="{Binding}" />
+              </ToolTip.Tip>
+              <Path Width="14"
+                    Height="14"
+                    Data="M14,7 A7,7 0 0,0 0,7 M0,7 A7,7 0 1,0 14,7 M7,3l0,5 M7,9l0,2"
+                    Stroke="{DynamicResource DataGridCellInvalidBrush}"
+                    StrokeThickness="2" />
+            </Panel>
+          </DataTemplate>
+        </Setter>
+      </ControlTheme>
+
       <!-- DataGridCellTextBlockTheme -->
       <ControlTheme x:Key="DataGridCellTextBlockTheme" TargetType="TextBlock">
         <Setter Property="Margin" Value="{DynamicResource DataGridCellTextBlockMargin}" />
@@ -153,8 +207,25 @@
                     BasedOn="{StaticResource {x:Type TextBox}}">
         <Setter Property="VerticalAlignment" Value="Stretch" />
         <Setter Property="Background" Value="Transparent" />
+        <Setter Property="CornerRadius" Value="{DynamicResource DataGridCellCornerRadius}" />
         <Style Selector="^ /template/ DataValidationErrors">
           <Setter Property="Theme" Value="{DynamicResource DataGridCellDataValidationErrorsTheme}" />
+        </Style>
+      </ControlTheme>
+
+      <!-- DataGridCellAutoCompleteTextBlockTheme -->
+      <ControlTheme x:Key="DataGridCellAutoCompleteTextBlockTheme"
+                    TargetType="TextBlock"
+                    BasedOn="{StaticResource DataGridCellTextBlockTheme}" />
+
+      <!-- DataGridCellAutoCompleteBoxTheme -->
+      <ControlTheme x:Key="DataGridCellAutoCompleteBoxTheme"
+                    TargetType="AutoCompleteBox"
+                    BasedOn="{StaticResource {x:Type AutoCompleteBox}}">
+        <Setter Property="VerticalAlignment" Value="Stretch" />
+        <Setter Property="CornerRadius" Value="{DynamicResource DataGridCellCornerRadius}" />
+        <Style Selector="^ /template/ TextBox#PART_TextBox">
+          <Setter Property="Theme" Value="{StaticResource DataGridCellTextBoxTheme}" />
         </Style>
       </ControlTheme>
 
@@ -167,6 +238,10 @@
         <Setter Property="Padding" Value="{DynamicResource DataGridCellComboBoxPadding}" />
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="Background" Value="Transparent" />
+        <Setter Property="CornerRadius" Value="{DynamicResource DataGridCellCornerRadius}" />
+        <Style Selector="^ /template/ DataValidationErrors">
+          <Setter Property="Theme" Value="{DynamicResource DataGridCellDataValidationErrorsTheme}" />
+        </Style>
       </ControlTheme>
 
       <!-- DataGridCellComboBoxDisplayTheme -->
@@ -178,8 +253,139 @@
         <Setter Property="Padding" Value="0" />
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="Background" Value="Transparent" />
+        <Setter Property="CornerRadius" Value="{DynamicResource DataGridCellCornerRadius}" />
         <Setter Property="Focusable" Value="False" />
         <Setter Property="IsHitTestVisible" Value="False" />
+      </ControlTheme>
+
+      <!-- DataGridCellMaskedTextBlockTheme -->
+      <ControlTheme x:Key="DataGridCellMaskedTextBlockTheme"
+                    TargetType="TextBlock"
+                    BasedOn="{StaticResource DataGridCellTextBlockTheme}" />
+
+      <!-- DataGridCellMaskedTextBoxTheme -->
+      <ControlTheme x:Key="DataGridCellMaskedTextBoxTheme"
+                    TargetType="MaskedTextBox"
+                    BasedOn="{StaticResource {x:Type MaskedTextBox}}">
+        <Setter Property="VerticalAlignment" Value="Stretch" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="CornerRadius" Value="{DynamicResource DataGridCellCornerRadius}" />
+        <Style Selector="^ /template/ DataValidationErrors">
+          <Setter Property="Theme" Value="{DynamicResource DataGridCellDataValidationErrorsTheme}" />
+        </Style>
+      </ControlTheme>
+
+      <!-- DataGridCellNumericTextBlockTheme -->
+      <ControlTheme x:Key="DataGridCellNumericTextBlockTheme"
+                    TargetType="TextBlock"
+                    BasedOn="{StaticResource DataGridCellTextBlockTheme}" />
+
+      <!-- DataGridCellNumericUpDownTheme -->
+      <ControlTheme x:Key="DataGridCellNumericUpDownTheme"
+                    TargetType="NumericUpDown"
+                    BasedOn="{StaticResource {x:Type NumericUpDown}}">
+        <Setter Property="VerticalAlignment" Value="Stretch" />
+        <Setter Property="CornerRadius" Value="{DynamicResource DataGridCellCornerRadius}" />
+        <Style Selector="^ /template/ DataValidationErrors">
+          <Setter Property="Theme" Value="{DynamicResource DataGridCellDataValidationErrorsTheme}" />
+        </Style>
+      </ControlTheme>
+
+      <!-- DataGridCellDateTextBlockTheme -->
+      <ControlTheme x:Key="DataGridCellDateTextBlockTheme"
+                    TargetType="TextBlock"
+                    BasedOn="{StaticResource DataGridCellTextBlockTheme}" />
+
+      <!-- DataGridCellDatePickerTheme -->
+      <ControlTheme x:Key="DataGridCellDatePickerTheme"
+                    TargetType="CalendarDatePicker"
+                    BasedOn="{StaticResource {x:Type CalendarDatePicker}}">
+        <Setter Property="VerticalAlignment" Value="Stretch" />
+        <Setter Property="CornerRadius" Value="{DynamicResource DataGridCellCornerRadius}" />
+        <Style Selector="^ /template/ DataValidationErrors">
+          <Setter Property="Theme" Value="{DynamicResource DataGridCellDataValidationErrorsTheme}" />
+        </Style>
+      </ControlTheme>
+
+      <!-- DataGridCellTimeTextBlockTheme -->
+      <ControlTheme x:Key="DataGridCellTimeTextBlockTheme"
+                    TargetType="TextBlock"
+                    BasedOn="{StaticResource DataGridCellTextBlockTheme}" />
+
+      <!-- DataGridCellTimePickerTheme -->
+      <ControlTheme x:Key="DataGridCellTimePickerTheme"
+                    TargetType="TimePicker"
+                    BasedOn="{StaticResource {x:Type TimePicker}}">
+        <Setter Property="VerticalAlignment" Value="Stretch" />
+        <Setter Property="CornerRadius" Value="{DynamicResource DataGridCellCornerRadius}" />
+        <Style Selector="^ /template/ DataValidationErrors">
+          <Setter Property="Theme" Value="{DynamicResource DataGridCellDataValidationErrorsTheme}" />
+        </Style>
+      </ControlTheme>
+
+      <!-- DataGridCellSliderTheme -->
+      <ControlTheme x:Key="DataGridCellSliderTheme"
+                    TargetType="Slider"
+                    BasedOn="{StaticResource {x:Type Slider}}">
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="CornerRadius" Value="{DynamicResource DataGridCellCornerRadius}" />
+        <Style Selector="^ /template/ DataValidationErrors">
+          <Setter Property="Theme" Value="{DynamicResource DataGridCellDataValidationErrorsTheme}" />
+        </Style>
+      </ControlTheme>
+
+      <!-- DataGridCellSliderDisplayTheme -->
+      <ControlTheme x:Key="DataGridCellSliderDisplayTheme"
+                    TargetType="Slider"
+                    BasedOn="{StaticResource {x:Type Slider}}">
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="Focusable" Value="False" />
+        <Setter Property="IsHitTestVisible" Value="False" />
+        <Setter Property="CornerRadius" Value="{DynamicResource DataGridCellCornerRadius}" />
+      </ControlTheme>
+
+      <!-- DataGridCellToggleSwitchTheme -->
+      <ControlTheme x:Key="DataGridCellToggleSwitchTheme"
+                    TargetType="ToggleSwitch"
+                    BasedOn="{StaticResource {x:Type ToggleSwitch}}">
+        <Setter Property="HorizontalAlignment" Value="Center" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="CornerRadius" Value="{DynamicResource DataGridCellCornerRadius}" />
+      </ControlTheme>
+
+      <!-- DataGridCellToggleButtonTheme -->
+      <ControlTheme x:Key="DataGridCellToggleButtonTheme"
+                    TargetType="ToggleButton"
+                    BasedOn="{StaticResource {x:Type ToggleButton}}">
+        <Setter Property="HorizontalAlignment" Value="Center" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="CornerRadius" Value="{DynamicResource DataGridCellCornerRadius}" />
+      </ControlTheme>
+
+      <!-- DataGridCellCheckBoxTheme -->
+      <ControlTheme x:Key="DataGridCellCheckBoxTheme"
+                    TargetType="CheckBox"
+                    BasedOn="{StaticResource {x:Type CheckBox}}">
+        <Setter Property="HorizontalAlignment" Value="Center" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="CornerRadius" Value="{DynamicResource DataGridCellCornerRadius}" />
+      </ControlTheme>
+
+      <!-- DataGridCellProgressBarTheme -->
+      <ControlTheme x:Key="DataGridCellProgressBarTheme"
+                    TargetType="ProgressBar"
+                    BasedOn="{StaticResource {x:Type ProgressBar}}">
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="CornerRadius" Value="{DynamicResource DataGridCellCornerRadius}" />
+      </ControlTheme>
+
+      <!-- DataGridCellButtonTheme -->
+      <ControlTheme x:Key="DataGridCellButtonTheme"
+                    TargetType="Button"
+                    BasedOn="{StaticResource {x:Type Button}}">
+        <Setter Property="HorizontalAlignment" Value="Center" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="CornerRadius" Value="{DynamicResource DataGridCellCornerRadius}" />
       </ControlTheme>
 
       <!-- DataGridCellHyperlinkButtonTheme -->
@@ -956,6 +1162,10 @@
       </ControlTheme>
     </ResourceDictionary>
   </Styles.Resources>
+
+  <Style Selector="DataGridCell DataValidationErrors">
+    <Setter Property="Theme" Value="{DynamicResource DataGridCellDataValidationErrorsTheme}" />
+  </Style>
 
   <!-- Drag and Drop Styles -->
   <Style Selector="DataGrid:row-drag-enabled:row-drag-handle-visible DataGridRowHeader">

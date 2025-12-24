@@ -172,11 +172,35 @@ public class DataGridThemeResourceCoverageTests
     {
         AddResourceIfAvailable(resources, baseTheme, typeof(TextBox), variant);
         AddResourceIfAvailable(resources, baseTheme, typeof(ComboBox), variant);
+        AddResourceIfAvailable(resources, baseTheme, typeof(AutoCompleteBox), variant);
+        AddResourceIfAvailable(resources, baseTheme, typeof(MaskedTextBox), variant);
+        AddResourceIfAvailable(resources, baseTheme, typeof(NumericUpDown), variant);
+        AddResourceIfAvailable(resources, baseTheme, typeof(CalendarDatePicker), variant);
+        AddResourceIfAvailable(resources, baseTheme, typeof(TimePicker), variant);
+        AddResourceIfAvailable(resources, baseTheme, typeof(Slider), variant);
+        AddResourceIfAvailable(resources, baseTheme, typeof(ToggleSwitch), variant);
+        AddResourceIfAvailable(resources, baseTheme, typeof(ToggleButton), variant);
+        AddResourceIfAvailable(resources, baseTheme, typeof(CheckBox), variant);
+        AddResourceIfAvailable(resources, baseTheme, typeof(ProgressBar), variant);
+        AddResourceIfAvailable(resources, baseTheme, typeof(Button), variant);
         AddResourceIfAvailable(resources, baseTheme, typeof(HyperlinkButton), variant);
+        AddResourceIfAvailable(resources, baseTheme, typeof(DataValidationErrors), variant);
 
         EnsureControlTheme(resources, typeof(TextBox));
         EnsureControlTheme(resources, typeof(ComboBox));
+        EnsureControlTheme(resources, typeof(AutoCompleteBox));
+        EnsureControlTheme(resources, typeof(MaskedTextBox));
+        EnsureControlTheme(resources, typeof(NumericUpDown));
+        EnsureControlTheme(resources, typeof(CalendarDatePicker));
+        EnsureControlTheme(resources, typeof(TimePicker));
+        EnsureControlTheme(resources, typeof(Slider));
+        EnsureControlTheme(resources, typeof(ToggleSwitch));
+        EnsureControlTheme(resources, typeof(ToggleButton));
+        EnsureControlTheme(resources, typeof(CheckBox));
+        EnsureControlTheme(resources, typeof(ProgressBar));
+        EnsureControlTheme(resources, typeof(Button));
         EnsureControlTheme(resources, typeof(HyperlinkButton));
+        EnsureControlTheme(resources, typeof(DataValidationErrors));
 
         if (includeHighlightBrush)
         {
@@ -336,10 +360,28 @@ public class DataGridThemeResourceCoverageTests
         new("DataGridFilterFlyoutPresenterTheme", typeof(FlyoutPresenter)),
         new("DataGridFilterButtonTheme", typeof(Button)),
         new("DataGridFilterButtonFilteredTheme", typeof(Button)),
+        new("DataGridCellDataValidationErrorsTheme", typeof(DataValidationErrors)),
         new("DataGridCellTextBlockTheme", typeof(TextBlock)),
         new("DataGridCellTextBoxTheme", typeof(TextBox)),
+        new("DataGridCellAutoCompleteTextBlockTheme", typeof(TextBlock)),
+        new("DataGridCellAutoCompleteBoxTheme", typeof(AutoCompleteBox)),
         new("DataGridCellComboBoxTheme", typeof(ComboBox)),
         new("DataGridCellComboBoxDisplayTheme", typeof(ComboBox)),
+        new("DataGridCellMaskedTextBlockTheme", typeof(TextBlock)),
+        new("DataGridCellMaskedTextBoxTheme", typeof(MaskedTextBox)),
+        new("DataGridCellNumericTextBlockTheme", typeof(TextBlock)),
+        new("DataGridCellNumericUpDownTheme", typeof(NumericUpDown)),
+        new("DataGridCellDateTextBlockTheme", typeof(TextBlock)),
+        new("DataGridCellDatePickerTheme", typeof(CalendarDatePicker)),
+        new("DataGridCellTimeTextBlockTheme", typeof(TextBlock)),
+        new("DataGridCellTimePickerTheme", typeof(TimePicker)),
+        new("DataGridCellSliderTheme", typeof(Slider)),
+        new("DataGridCellSliderDisplayTheme", typeof(Slider)),
+        new("DataGridCellToggleSwitchTheme", typeof(ToggleSwitch)),
+        new("DataGridCellToggleButtonTheme", typeof(ToggleButton)),
+        new("DataGridCellCheckBoxTheme", typeof(CheckBox)),
+        new("DataGridCellProgressBarTheme", typeof(ProgressBar)),
+        new("DataGridCellButtonTheme", typeof(Button)),
         new("DataGridCellHyperlinkButtonTheme", typeof(HyperlinkButton)),
         new("DataGridHierarchicalExpanderTheme", typeof(ToggleButton)),
         new(typeof(DataGridHierarchicalPresenter), typeof(DataGridHierarchicalPresenter)),
@@ -455,7 +497,8 @@ public class DataGridThemeResourceCoverageTests
 
     private static readonly string[] SimpleCornerRadiusKeys =
     {
-        "DataGridFilterFlyoutCornerRadius"
+        "DataGridFilterFlyoutCornerRadius",
+        "DataGridCellCornerRadius"
     };
 
     private static readonly string[] FluentThemeBrushKeys =
@@ -552,7 +595,8 @@ public class DataGridThemeResourceCoverageTests
 
     private static readonly string[] FluentCornerRadiusKeys =
     {
-        "DataGridFilterFlyoutCornerRadius"
+        "DataGridFilterFlyoutCornerRadius",
+        "DataGridCellCornerRadius"
     };
 }
 

@@ -396,6 +396,11 @@ namespace Avalonia.Controls
                     }
                     else
                     {
+                        if (IsValid)
+                        {
+                            IsValid = false;
+                        }
+
                         if (editingRow != null)
                         {
                             if (editingCell.IsValid)

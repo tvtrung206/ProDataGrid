@@ -1,0 +1,143 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:viewModels="clr-namespace:DataGridSample.ViewModels"
+             x:Class="DataGridSample.Pages.ValidationColumnsPage"
+             x:Name="Root"
+             x:DataType="viewModels:ValidationColumnsViewModel">
+  <UserControl.DataContext>
+    <viewModels:ValidationColumnsViewModel />
+  </UserControl.DataContext>
+
+  <Grid RowDefinitions="Auto,Auto,*" RowSpacing="12" Margin="12">
+    <StackPanel Spacing="4">
+      <TextBlock Classes="h2">Validation</TextBlock>
+      <TextBlock Text="Every editable column type below is wired for data validation. Try clearing required fields, typing unknown options, or picking out-of-policy values to see inline errors and cell/row invalid states."
+                 TextWrapping="Wrap" />
+      <TextBlock Text="Tips: set Price to 12, pick a weekend date, move Rating below 1.0, or toggle any required switch off."
+                 TextWrapping="Wrap" Foreground="Gray" FontStyle="Italic" />
+    </StackPanel>
+
+    <StackPanel Grid.Row="1"
+                Orientation="Horizontal"
+                Spacing="8">
+      <TextBlock Text="Fix uses the button column to reset a row to valid defaults. Image and Progress columns are read-only." />
+    </StackPanel>
+
+    <DataGrid Grid.Row="2"
+              ItemsSource="{Binding Items}"
+              AutoGenerateColumns="False"
+              IsReadOnly="False"
+              CanUserAddRows="False"
+              CanUserDeleteRows="False"
+              HeadersVisibility="All"
+              GridLinesVisibility="All"
+              RowHeight="40">
+      <DataGrid.Columns>
+        <DataGridTextColumn Header="Name"
+                            Binding="{Binding Name}"
+                            Width="140"
+                            x:DataType="viewModels:ValidationSampleItem" />
+
+        <DataGridAutoCompleteColumn Header="Category"
+                                    Binding="{Binding Category}"
+                                    ItemsSource="{Binding #Root.((viewModels:ValidationColumnsViewModel)DataContext).Categories}"
+                                    FilterMode="Contains"
+                                    MinimumPrefixLength="1"
+                                    Watermark="Pick..."
+                                    Width="140"
+                                    x:DataType="viewModels:ValidationSampleItem" />
+
+        <DataGridComboBoxColumn Header="Status"
+                                ItemsSource="{Binding #Root.((viewModels:ValidationColumnsViewModel)DataContext).Statuses}"
+                                IsEditable="True"
+                                TextBinding="{Binding Status}"
+                                Width="120"
+                                x:DataType="viewModels:ValidationSampleItem" />
+
+        <DataGridMaskedTextColumn Header="Phone"
+                                  Binding="{Binding Phone}"
+                                  Mask="(000) 000-0000"
+                                  Width="140"
+                                  x:DataType="viewModels:ValidationSampleItem" />
+
+        <DataGridNumericColumn Header="Price"
+                               Binding="{Binding Price}"
+                               FormatString="C2"
+                               Minimum="0"
+                               Maximum="500"
+                               Increment="1"
+                               Width="110"
+                               x:DataType="viewModels:ValidationSampleItem" />
+
+        <DataGridDatePickerColumn Header="Due"
+                                  Binding="{Binding DueDate}"
+                                  SelectedDateFormat="Short"
+                                  Width="120"
+                                  x:DataType="viewModels:ValidationSampleItem" />
+
+        <DataGridTimePickerColumn Header="Start"
+                                  Binding="{Binding StartTime}"
+                                  ClockIdentifier="24HourClock"
+                                  MinuteIncrement="15"
+                                  Width="100"
+                                  x:DataType="viewModels:ValidationSampleItem" />
+
+        <DataGridSliderColumn Header="Rating"
+                              Binding="{Binding Rating}"
+                              Minimum="0"
+                              Maximum="5"
+                              TickFrequency="0.5"
+                              IsSnapToTickEnabled="True"
+                              Width="140"
+                              x:DataType="viewModels:ValidationSampleItem" />
+
+        <DataGridToggleSwitchColumn Header="Active"
+                                    Binding="{Binding IsActive}"
+                                    OnContent="Yes"
+                                    OffContent="No"
+                                    Width="90"
+                                    x:DataType="viewModels:ValidationSampleItem" />
+
+        <DataGridToggleButtonColumn Header="Pinned"
+                                    Binding="{Binding IsPinned}"
+                                    Content="Pin"
+                                    Width="80"
+                                    x:DataType="viewModels:ValidationSampleItem" />
+
+        <DataGridCheckBoxColumn Header="Approved"
+                                Binding="{Binding IsApproved}"
+                                Width="90"
+                                x:DataType="viewModels:ValidationSampleItem" />
+
+        <DataGridHyperlinkColumn Header="Website"
+                                 Binding="{Binding Website}"
+                                 ContentBinding="{Binding Website}"
+                                 Width="180"
+                                 x:DataType="viewModels:ValidationSampleItem" />
+
+        <DataGridImageColumn Header="Icon"
+                             Binding="{Binding Thumbnail}"
+                             ImageWidth="24"
+                             ImageHeight="24"
+                             Width="70"
+                             x:DataType="viewModels:ValidationSampleItem" />
+
+        <DataGridProgressBarColumn Header="Progress"
+                                   Binding="{Binding Progress}"
+                                   Minimum="0"
+                                   Maximum="100"
+                                   ShowProgressText="True"
+                                   ProgressTextFormat="{}{0:0}%"
+                                   Width="120"
+                                   x:DataType="viewModels:ValidationSampleItem" />
+
+        <DataGridButtonColumn Header="Fix"
+                              Content="Fix"
+                              Command="{Binding #Root.((viewModels:ValidationColumnsViewModel)DataContext).FixRowCommand}"
+                              CommandParameter="{Binding}"
+                              Width="70"
+                              x:DataType="viewModels:ValidationSampleItem" />
+      </DataGrid.Columns>
+    </DataGrid>
+  </Grid>
+</UserControl>
