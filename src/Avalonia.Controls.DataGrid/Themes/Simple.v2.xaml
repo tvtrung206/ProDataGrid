@@ -56,7 +56,7 @@
                       IsHitTestVisible="False"
                       HorizontalAlignment="Stretch"
                       VerticalAlignment="Stretch"
-                      CornerRadius="2"
+                      CornerRadius="{TemplateBinding CornerRadius}"
                       Background="{DynamicResource DataGridDisabledVisualElementBackground}"
                       IsVisible="{Binding !$parent[DataGrid].IsEnabled}" />
             </Grid>

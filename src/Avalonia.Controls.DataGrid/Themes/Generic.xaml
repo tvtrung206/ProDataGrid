@@ -14,18 +14,10 @@
       <StreamGeometry x:Key="DataGridRowGroupHeaderIconOpenedPath">M10 4.895 L10 4.895 M15.85 7.65c.2.2.2.5 0 .7l-5.46 5.49a.55.55 0 0 1-.78 0L4.15 8.35a.5.5 0 1 1 .7-.7L10 12.8l5.15-5.16c.2-.2.5-.2.7 0Z M10 16.595 L10 16.595</StreamGeometry>
       <StreamGeometry x:Key="DataGridDragGripIconPath">M4 3 a1 1 0 1 1 0.001 0 M8 3 a1 1 0 1 1 0.001 0 M4 7 a1 1 0 1 1 0.001 0 M8 7 a1 1 0 1 1 0.001 0 M4 11 a1 1 0 1 1 0.001 0 M8 11 a1 1 0 1 1 0.001 0</StreamGeometry>
 
-      <!-- Filter Resources (merged from DataGridFilterResources.xaml) -->
-      <SolidColorBrush x:Key="DataGridFilterFlyoutBackgroundBrush" Color="#F8F8F8" />
-
-      <!-- Search highlight resources -->
-      <SolidColorBrush x:Key="DataGridSearchMatchBrush" Color="#FFF2B6" />
-      <SolidColorBrush x:Key="DataGridSearchCurrentBrush" Color="#FFD37A" />
-      <SolidColorBrush x:Key="DataGridSearchMatchForegroundBrush" Color="#202020" />
-
       <!-- Flyout presenter theme for filter popups -->
       <ControlTheme x:Key="DataGridFilterFlyoutPresenterTheme" TargetType="FlyoutPresenter">
-        <Setter Property="Padding" Value="12" />
-        <Setter Property="CornerRadius" Value="4" />
+        <Setter Property="Padding" Value="{DynamicResource DataGridFilterFlyoutPadding}" />
+        <Setter Property="CornerRadius" Value="{DynamicResource DataGridFilterFlyoutCornerRadius}" />
         <Setter Property="Background" Value="{DynamicResource DataGridFilterFlyoutBackgroundBrush}" />
       </ControlTheme>
 
@@ -229,8 +221,8 @@
           </ControlTemplate>
         </Setter>
         <Style Selector="^ /template/ Path#PART_Glyph">
-          <Setter Property="Width" Value="10" />
-          <Setter Property="Height" Value="10" />
+          <Setter Property="Width" Value="{DynamicResource DataGridHierarchicalExpanderGlyphSize}" />
+          <Setter Property="Height" Value="{DynamicResource DataGridHierarchicalExpanderGlyphSize}" />
           <Setter Property="HorizontalAlignment" Value="Center" />
           <Setter Property="VerticalAlignment" Value="Center" />
         </Style>
@@ -253,26 +245,16 @@
             <Border Padding="{TemplateBinding Padding}">
               <Grid ColumnDefinitions="Auto,*">
                 <ToggleButton x:Name="PART_Expander"
-                              Width="28"
-                              Height="28"
+                              Width="{DynamicResource DataGridHierarchicalExpanderSize}"
+                              Height="{DynamicResource DataGridHierarchicalExpanderSize}"
                               Theme="{StaticResource DataGridHierarchicalExpanderTheme}"
-                              Background="Transparent"
-                              BorderBrush="Transparent"
-                              BorderThickness="0"
                               IsEnabled="{TemplateBinding IsExpandable}"
                               HorizontalAlignment="Center"
                               VerticalAlignment="Center"
-                              IsChecked="{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}}">
-                  <Path x:Name="PART_Glyph"
-                        Width="10"
-                        Height="10"
-                        Stretch="Uniform"
-                        Fill="{TemplateBinding Foreground}"
-                        Data="{DynamicResource DataGridRowGroupHeaderIconClosedPath}" />
-                </ToggleButton>
+                              IsChecked="{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}}" />
 
                 <ContentPresenter Grid.Column="1"
-                                  Margin="6,0,0,0"
+                                  Margin="{DynamicResource DataGridHierarchicalPresenterContentMargin}"
                                   HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
                                   VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
                                   ContentTemplate="{TemplateBinding ContentTemplate}"
@@ -422,7 +404,7 @@
 
                     <StackPanel Grid.Column="1"
                                 Orientation="Horizontal"
-                                Spacing="4"
+                                Spacing="{DynamicResource DataGridColumnHeaderIconSpacing}"
                                 HorizontalAlignment="Center"
                                 VerticalAlignment="Center">
                       <Button Name="PART_FilterButton"
@@ -430,16 +412,16 @@
                               FlyoutBase.AttachedFlyout="{TemplateBinding FilterFlyout}"
                               IsVisible="{TemplateBinding ShowFilterButton}" />
                       <Path Name="SortIcon"
-                            Margin="0,0,4,0"
+                            Margin="{DynamicResource DataGridColumnHeaderSortIconMargin}"
                             IsVisible="False"
-                            Height="12"
+                            Height="{DynamicResource DataGridColumnHeaderIconSize}"
                             HorizontalAlignment="Center"
                             VerticalAlignment="Center"
                             Fill="{TemplateBinding Foreground}"
                             Stretch="Uniform" />
                       <Path Name="FilterIcon"
                             IsVisible="False"
-                            Height="12"
+                            Height="{DynamicResource DataGridColumnHeaderIconSize}"
                             HorizontalAlignment="Center"
                             VerticalAlignment="Center"
                             Fill="{TemplateBinding Foreground}"
@@ -538,8 +520,11 @@
         <Setter Property="Template">
           <ControlTemplate>
             <Grid x:Name="PART_Root"
-                  RowDefinitions="*,*,Auto"
-                  ColumnDefinitions="16,*">
+                  RowDefinitions="*,*,Auto">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="{DynamicResource DataGridRowHeaderIndicatorWidth}" />
+                <ColumnDefinition Width="*" />
+              </Grid.ColumnDefinitions>
               <Border Grid.RowSpan="3"
                       Grid.ColumnSpan="2"
                       BorderBrush="{TemplateBinding SeparatorBrush}"
@@ -567,8 +552,8 @@
                     Grid.RowSpan="2"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
-                    Width="12"
-                    Height="12"
+                    Width="{DynamicResource DataGridRowHeaderDragGripSize}"
+                    Height="{DynamicResource DataGridRowHeaderDragGripSize}"
                     Stretch="Uniform"
                     Fill="{TemplateBinding Foreground}"
                     StrokeThickness="0"
@@ -683,11 +668,14 @@
 
       <!-- DataGridRowGroupExpanderButtonTheme -->
       <ControlTheme x:Key="DataGridRowGroupExpanderButtonTheme" TargetType="ToggleButton">
+        <Setter Property="Width" Value="{DynamicResource DataGridRowGroupHeaderExpanderSize}" />
+        <Setter Property="Height" Value="{DynamicResource DataGridRowGroupHeaderExpanderSize}" />
+        <Setter Property="Background" Value="Transparent" />
         <Setter Property="Template">
           <ControlTemplate>
-            <Border Width="12"
-                    Height="12"
-                    Background="Transparent"
+            <Border Width="{TemplateBinding Width}"
+                    Height="{TemplateBinding Height}"
+                    Background="{TemplateBinding Background}"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center">
               <Path Fill="{TemplateBinding Foreground}"
@@ -721,8 +709,6 @@
                          Grid.Column="1" />
               <ToggleButton Name="PART_ExpanderButton"
                             Grid.Column="2"
-                            Width="12"
-                            Height="12"
                             Margin="{DynamicResource DataGridRowGroupHeaderExpanderMargin}"
                             VerticalAlignment="{TemplateBinding ContentVerticalAlignment}"
                             Theme="{StaticResource DataGridRowGroupExpanderButtonTheme}"
@@ -738,14 +724,14 @@
                           VerticalAlignment="{TemplateBinding ContentVerticalAlignment}"
                           Margin="{DynamicResource DataGridRowGroupHeaderContentMargin}">
                 <TextBlock Name="PART_PropertyNameElement"
-                           Margin="4,0,0,0"
+                           Margin="{DynamicResource DataGridRowGroupHeaderTextMargin}"
                            IsVisible="{TemplateBinding IsPropertyNameVisible}"
                            Foreground="{TemplateBinding Foreground}" />
-                <TextBlock Margin="4,0,0,0"
+                <TextBlock Margin="{DynamicResource DataGridRowGroupHeaderTextMargin}"
                            Text="{Binding Key}"
                            Foreground="{TemplateBinding Foreground}" />
                 <TextBlock Name="PART_ItemCountElement"
-                           Margin="4,0,0,0"
+                           Margin="{DynamicResource DataGridRowGroupHeaderTextMargin}"
                            IsVisible="{TemplateBinding IsItemCountVisible}"
                            Foreground="{TemplateBinding Foreground}" />
               </StackPanel>
@@ -874,7 +860,7 @@
         <Setter Property="DropLocationIndicatorTemplate">
           <Template>
             <Rectangle Fill="{DynamicResource DataGridDropLocationIndicatorBrush}"
-                       Width="2" />
+                       Width="{DynamicResource DataGridDropLocationIndicatorWidth}" />
           </Template>
         </Setter>
         <Setter Property="Template">
@@ -940,7 +926,7 @@
                         IsHitTestVisible="False"
                         HorizontalAlignment="Stretch"
                         VerticalAlignment="Stretch"
-                        CornerRadius="2"
+                        CornerRadius="{TemplateBinding CornerRadius}"
                         Background="{DynamicResource DataGridDisabledVisualElementBackground}"
                         IsVisible="{Binding !$parent[DataGrid].IsEnabled}" />
               </Grid>
