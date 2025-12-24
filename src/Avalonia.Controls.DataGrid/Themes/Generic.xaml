@@ -479,12 +479,12 @@
 
         <Style Selector="^:sortascending /template/ Path#SortIcon">
           <Setter Property="IsVisible" Value="True" />
-          <Setter Property="Data" Value="{StaticResource DataGridSortIconAscendingPath}" />
+          <Setter Property="Data" Value="{DynamicResource DataGridSortIconAscendingPath}" />
         </Style>
 
         <Style Selector="^:sortdescending /template/ Path#SortIcon">
           <Setter Property="IsVisible" Value="True" />
-          <Setter Property="Data" Value="{StaticResource DataGridSortIconDescendingPath}" />
+          <Setter Property="Data" Value="{DynamicResource DataGridSortIconDescendingPath}" />
         </Style>
 
         <Style Selector="^:filtered">
@@ -558,7 +558,7 @@
                     Fill="{TemplateBinding Foreground}"
                     StrokeThickness="0"
                     IsVisible="False"
-                    Data="{StaticResource DataGridDragGripIconPath}" />
+                    Data="{DynamicResource DataGridDragGripIconPath}" />
 
               <ContentPresenter Grid.RowSpan="2"
                                 Grid.Column="1"
@@ -679,7 +679,7 @@
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center">
               <Path Fill="{TemplateBinding Foreground}"
-                    Data="{StaticResource DataGridRowGroupHeaderIconClosedPath}"
+                    Data="{DynamicResource DataGridRowGroupHeaderIconClosedPath}"
                     HorizontalAlignment="Right"
                     VerticalAlignment="Center"
                     Stretch="Uniform" />
@@ -687,7 +687,7 @@
           </ControlTemplate>
         </Setter>
         <Style Selector="^:checked /template/ Path">
-          <Setter Property="Data" Value="{StaticResource DataGridRowGroupHeaderIconOpenedPath}" />
+          <Setter Property="Data" Value="{DynamicResource DataGridRowGroupHeaderIconOpenedPath}" />
         </Style>
       </ControlTheme>
 
