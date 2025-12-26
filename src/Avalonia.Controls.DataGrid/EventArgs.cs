@@ -19,7 +19,9 @@ namespace Avalonia.Controls
     /// Provides data for the <see cref="E:Avalonia.Controls.DataGrid.AutoGeneratingColumn" /> event. 
     /// </summary>
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     class DataGridAutoGeneratingColumnEventArgs : CancelRoutedEventArgs
     {
@@ -71,7 +73,9 @@ namespace Avalonia.Controls
     /// Provides data for the <see cref="E:Avalonia.Controls.DataGrid.BeginningEdit" /> event.
     /// </summary>
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     class DataGridBeginningEditEventArgs : CancelRoutedEventArgs
     {
@@ -129,7 +133,9 @@ namespace Avalonia.Controls
     /// Provides information just after a cell has exited editing mode.
     /// </summary>
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     class DataGridCellEditEndedEventArgs : RoutedEventArgs
     {
@@ -182,7 +188,9 @@ namespace Avalonia.Controls
     /// Provides information after the cell has been pressed.
     /// </summary>
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     class DataGridCellPointerPressedEventArgs : RoutedEventArgs
     {
@@ -234,7 +242,9 @@ namespace Avalonia.Controls
     /// Provides information just before a cell exits editing mode.
     /// </summary>
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     class DataGridCellEditEndingEventArgs : CancelRoutedEventArgs
     {
@@ -315,7 +325,9 @@ namespace Avalonia.Controls
     }
 
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     class DataGridSelectedCellsChangedEventArgs : EventArgs
     {
@@ -336,7 +348,9 @@ namespace Avalonia.Controls
     /// Provides data for <see cref="T:Avalonia.Controls.DataGrid" /> column-related events.
     /// </summary>
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     class DataGridColumnEventArgs : RoutedEventArgs
     {
@@ -366,7 +380,9 @@ namespace Avalonia.Controls
     /// Provides data for the <see cref="E:Avalonia.Controls.DataGrid.ColumnReordering" /> event.
     /// </summary>
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     class DataGridColumnReorderingEventArgs : CancelRoutedEventArgs
     {
@@ -414,7 +430,9 @@ namespace Avalonia.Controls
     /// Provides data for <see cref="T:Avalonia.Controls.DataGrid" /> row-related events.
     /// </summary>
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     class DataGridRowEventArgs : RoutedEventArgs
     {
@@ -444,7 +462,9 @@ namespace Avalonia.Controls
     /// Provides information just before a row exits editing mode.
     /// </summary>
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     class DataGridRowEditEndingEventArgs : CancelRoutedEventArgs
     {
@@ -485,7 +505,9 @@ namespace Avalonia.Controls
     /// Provides information just after a row has exited edit mode.
     /// </summary>
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     class DataGridRowEditEndedEventArgs : RoutedEventArgs
     {
@@ -526,7 +548,9 @@ namespace Avalonia.Controls
     /// Provides data for the <see cref="E:Avalonia.Controls.DataGrid.PreparingCellForEdit" /> event.
     /// </summary>
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     class DataGridPreparingCellForEditEventArgs : RoutedEventArgs
     {
@@ -595,7 +619,9 @@ namespace Avalonia.Controls
     /// EventArgs used for the DataGrid's LoadingRowGroup and UnloadingRowGroup events
     /// </summary>
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     class DataGridRowGroupHeaderEventArgs : RoutedEventArgs
     {
@@ -626,7 +652,9 @@ namespace Avalonia.Controls
     /// and <see cref="E:Avalonia.Controls.DataGrid.RowDetailsVisibilityChanged" /> events.
     /// </summary>
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     class DataGridRowDetailsEventArgs : RoutedEventArgs
     {
@@ -667,7 +695,9 @@ namespace Avalonia.Controls
     /// Provides data when the current cell changes.
     /// </summary>
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     class DataGridCurrentCellChangedEventArgs : RoutedEventArgs
     {
@@ -693,7 +723,9 @@ namespace Avalonia.Controls
     /// Provides data for DataGrid scroll routed events.
     /// </summary>
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     class DataGridScrollEventArgs : RoutedEventArgs
     {
@@ -713,7 +745,9 @@ namespace Avalonia.Controls
     /// Provides data for DataGrid column header click events.
     /// </summary>
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     class DataGridColumnHeaderClickEventArgs : RoutedEventArgs
     {
@@ -726,7 +760,12 @@ namespace Avalonia.Controls
         public KeyModifiers KeyModifiers { get; }
     }
 
-    public class DataGridRowDragStartingEventArgs : RoutedEventArgs
+    #if !DATAGRID_INTERNAL
+    public
+    #else
+    internal
+    #endif
+    class DataGridRowDragStartingEventArgs : RoutedEventArgs
     {
         public DataGridRowDragStartingEventArgs(
             IReadOnlyList<object> items,
@@ -754,7 +793,12 @@ namespace Avalonia.Controls
         public bool Cancel { get; set; }
     }
 
-    public class DataGridRowDragCompletedEventArgs : RoutedEventArgs
+    #if !DATAGRID_INTERNAL
+    public
+    #else
+    internal
+    #endif
+    class DataGridRowDragCompletedEventArgs : RoutedEventArgs
     {
         public DataGridRowDragCompletedEventArgs(
             IReadOnlyList<object> items,

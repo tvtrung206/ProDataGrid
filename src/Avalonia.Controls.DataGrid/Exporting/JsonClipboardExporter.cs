@@ -12,7 +12,9 @@ namespace Avalonia.Controls
     /// Example exporter that adds a JSON payload alongside the standard tab-delimited text.
     /// </summary>
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     sealed class JsonClipboardExporter : IDataGridClipboardExporter
     {
@@ -20,7 +22,9 @@ namespace Avalonia.Controls
         /// Gets the default JSON data format (<c>application/json</c>).
         /// </summary>
 #if !DATAGRID_INTERNAL
-        public
+public
+#else
+internal
 #endif
         static DataFormat<string> DefaultJsonFormat { get; } = DataFormat.CreateStringPlatformFormat("application/json");
 
@@ -28,7 +32,9 @@ namespace Avalonia.Controls
         /// Gets the data format used for the JSON payload.
         /// </summary>
 #if !DATAGRID_INTERNAL
-        public
+public
+#else
+internal
 #endif
         DataFormat<string> JsonFormat { get; }
 

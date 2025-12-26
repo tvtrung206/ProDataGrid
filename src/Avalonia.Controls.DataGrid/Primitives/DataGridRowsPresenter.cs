@@ -25,7 +25,9 @@ namespace Avalonia.Controls.Primitives
     /// DataGridRowsPresenter.Scrollable.cs for clean separation of concerns.
     /// </remarks>
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     sealed partial class DataGridRowsPresenter : Panel, IChildIndexProvider
     {

@@ -23,7 +23,9 @@ using Avalonia.Styling;
 namespace Avalonia.Controls
 {
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     partial class DataGrid
     {
@@ -1231,7 +1233,12 @@ namespace Avalonia.Controls
             }
         }
 
-        protected virtual void OnLoadingRow(DataGridRowEventArgs e)
+#if !DATAGRID_INTERNAL
+        protected
+#else
+        internal
+#endif
+        virtual void OnLoadingRow(DataGridRowEventArgs e)
         {
             Debug.Assert(!_loadedRows.Contains(e.Row));
             _loadedRows.Add(e.Row);
@@ -1244,7 +1251,12 @@ namespace Avalonia.Controls
             _loadedRows.Remove(e.Row);
         }
 
-        protected virtual void OnUnloadingRow(DataGridRowEventArgs e)
+#if !DATAGRID_INTERNAL
+        protected
+#else
+        internal
+#endif
+        virtual void OnUnloadingRow(DataGridRowEventArgs e)
         {
             LoadingOrUnloadingRow = true;
             e.RoutedEvent ??= UnloadingRowEvent;

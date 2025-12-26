@@ -7,7 +7,9 @@ namespace Avalonia.Controls
     /// Specifies the scope of a column summary calculation.
     /// </summary>
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     enum DataGridSummaryScope
     {
@@ -31,7 +33,9 @@ namespace Avalonia.Controls
     /// Specifies the type of aggregate function for a column summary.
     /// </summary>
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     enum DataGridAggregateType
     {
@@ -90,7 +94,9 @@ namespace Avalonia.Controls
     /// Specifies the position of the total summary row.
     /// </summary>
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     enum DataGridSummaryRowPosition
     {
@@ -109,7 +115,9 @@ namespace Avalonia.Controls
     /// Specifies the position of group summary rows.
     /// </summary>
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     enum DataGridGroupSummaryPosition
     {

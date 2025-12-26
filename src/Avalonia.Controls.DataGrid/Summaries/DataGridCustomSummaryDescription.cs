@@ -10,7 +10,9 @@ namespace Avalonia.Controls
     /// Summary description with custom calculation logic.
     /// </summary>
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     class DataGridCustomSummaryDescription : DataGridSummaryDescription
     {

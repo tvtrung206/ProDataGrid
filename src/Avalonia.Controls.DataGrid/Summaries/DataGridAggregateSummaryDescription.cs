@@ -12,7 +12,9 @@ namespace Avalonia.Controls
     /// Summary description using built-in aggregate functions.
     /// </summary>
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     class DataGridAggregateSummaryDescription : DataGridSummaryDescription
     {

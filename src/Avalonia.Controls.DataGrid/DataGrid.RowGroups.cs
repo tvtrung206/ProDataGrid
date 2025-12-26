@@ -15,20 +15,32 @@ namespace Avalonia.Controls
     /// Row grouping functionality
     /// </summary>
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     partial class DataGrid
     {
         /// <summary>
         /// Identifies the <see cref="LoadingRowGroup"/> routed event.
         /// </summary>
-        public static readonly RoutedEvent<DataGridRowGroupHeaderEventArgs> LoadingRowGroupEvent =
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        static readonly RoutedEvent<DataGridRowGroupHeaderEventArgs> LoadingRowGroupEvent =
             RoutedEvent.Register<DataGrid, DataGridRowGroupHeaderEventArgs>(nameof(LoadingRowGroup), RoutingStrategies.Bubble);
 
         /// <summary>
         /// Identifies the <see cref="UnloadingRowGroup"/> routed event.
         /// </summary>
-        public static readonly RoutedEvent<DataGridRowGroupHeaderEventArgs> UnloadingRowGroupEvent =
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        static readonly RoutedEvent<DataGridRowGroupHeaderEventArgs> UnloadingRowGroupEvent =
             RoutedEvent.Register<DataGrid, DataGridRowGroupHeaderEventArgs>(nameof(UnloadingRowGroup), RoutingStrategies.Bubble);
 
         /// <summary>
@@ -37,7 +49,12 @@ namespace Avalonia.Controls
         /// <param name="item">item</param>
         /// <param name="groupLevel">groupLevel</param>
         /// <returns>The group the given item falls under or null if the item is not in the ItemsSource</returns>
-        public DataGridCollectionViewGroup GetGroupFromItem(object item, int groupLevel)
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        DataGridCollectionViewGroup GetGroupFromItem(object item, int groupLevel)
         {
             int itemIndex = DataConnection.IndexOf(item);
             if (itemIndex == -1)
@@ -59,7 +76,12 @@ namespace Avalonia.Controls
         /// Raises the LoadingRowGroup event
         /// </summary>
         /// <param name="e">EventArgs</param>
-        protected virtual void OnLoadingRowGroup(DataGridRowGroupHeaderEventArgs e)
+#if !DATAGRID_INTERNAL
+        protected
+#else
+        internal
+#endif
+        virtual void OnLoadingRowGroup(DataGridRowGroupHeaderEventArgs e)
         {
             LoadingOrUnloadingRow = true;
             e.RoutedEvent ??= LoadingRowGroupEvent;
@@ -73,7 +95,12 @@ namespace Avalonia.Controls
         /// Raises the UnLoadingRowGroup event
         /// </summary>
         /// <param name="e">EventArgs</param>
-        protected virtual void OnUnloadingRowGroup(DataGridRowGroupHeaderEventArgs e)
+#if !DATAGRID_INTERNAL
+        protected
+#else
+        internal
+#endif
+        virtual void OnUnloadingRowGroup(DataGridRowGroupHeaderEventArgs e)
         {
             LoadingOrUnloadingRow = true;
             e.RoutedEvent ??= UnloadingRowGroupEvent;
@@ -120,7 +147,12 @@ namespace Avalonia.Controls
         /// <summary>
         /// Occurs before a DataGridRowGroupHeader header is used.
         /// </summary>
-        public event EventHandler<DataGridRowGroupHeaderEventArgs> LoadingRowGroup
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        event EventHandler<DataGridRowGroupHeaderEventArgs> LoadingRowGroup
         {
             add => AddHandler(LoadingRowGroupEvent, value);
             remove => RemoveHandler(LoadingRowGroupEvent, value);
@@ -130,7 +162,12 @@ namespace Avalonia.Controls
         /// <summary>
         /// Occurs when the DataGridRowGroupHeader is available for reuse.
         /// </summary>
-        public event EventHandler<DataGridRowGroupHeaderEventArgs> UnloadingRowGroup
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        event EventHandler<DataGridRowGroupHeaderEventArgs> UnloadingRowGroup
         {
             add => AddHandler(UnloadingRowGroupEvent, value);
             remove => RemoveHandler(UnloadingRowGroupEvent, value);

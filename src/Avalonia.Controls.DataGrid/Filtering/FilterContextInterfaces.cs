@@ -9,7 +9,12 @@ namespace Avalonia.Controls.DataGridFiltering;
 /// <summary>
 /// Minimal contract for text-based filter contexts consumed by the shared filter templates.
 /// </summary>
-public interface IFilterTextContext
+#if !DATAGRID_INTERNAL
+public
+#else
+internal
+#endif
+interface IFilterTextContext
 {
     string Label { get; }
     string? Text { get; set; }
@@ -20,7 +25,12 @@ public interface IFilterTextContext
 /// <summary>
 /// Minimal contract for numeric range filter contexts.
 /// </summary>
-public interface IFilterNumberContext
+#if !DATAGRID_INTERNAL
+public
+#else
+internal
+#endif
+interface IFilterNumberContext
 {
     string Label { get; }
     double Minimum { get; }
@@ -34,7 +44,12 @@ public interface IFilterNumberContext
 /// <summary>
 /// Minimal contract for date range filter contexts.
 /// </summary>
-public interface IFilterDateContext
+#if !DATAGRID_INTERNAL
+public
+#else
+internal
+#endif
+interface IFilterDateContext
 {
     string Label { get; }
     System.DateTimeOffset? From { get; set; }
@@ -46,7 +61,12 @@ public interface IFilterDateContext
 /// <summary>
 /// Minimal contract for enum/multi-select filter contexts.
 /// </summary>
-public interface IFilterEnumContext
+#if !DATAGRID_INTERNAL
+public
+#else
+internal
+#endif
+interface IFilterEnumContext
 {
     string Label { get; }
     ObservableCollection<IEnumOption> Options { get; }
@@ -57,7 +77,12 @@ public interface IFilterEnumContext
 /// <summary>
 /// Option contract for enum/multi-select filter items.
 /// </summary>
-public interface IEnumOption
+#if !DATAGRID_INTERNAL
+public
+#else
+internal
+#endif
+interface IEnumOption
 {
     string Display { get; }
     bool IsSelected { get; set; }

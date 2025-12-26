@@ -22,7 +22,9 @@ namespace Avalonia.Controls
     /// for editing numeric values (decimal, double, int) with optional formatting and spinner controls.
     /// </summary>
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     class DataGridNumericColumn : DataGridBoundColumn
     {

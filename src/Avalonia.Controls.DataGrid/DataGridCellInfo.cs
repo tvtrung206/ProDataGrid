@@ -7,7 +7,9 @@ using System;
 namespace Avalonia.Controls
 {
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     readonly struct DataGridCellInfo : IEquatable<DataGridCellInfo>
     {

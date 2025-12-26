@@ -19,7 +19,9 @@ namespace Avalonia.Controls
     /// bind to a property in the grid's data source.
     /// </summary>
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     abstract class DataGridBoundColumn : DataGridColumn
     {

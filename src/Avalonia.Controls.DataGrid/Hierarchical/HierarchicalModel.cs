@@ -19,7 +19,12 @@ namespace Avalonia.Controls.DataGridHierarchical
     /// <summary>
     /// Represents a change in the flattened list of visible nodes.
     /// </summary>
-    public sealed class FlattenedChange
+    #if !DATAGRID_INTERNAL
+    public
+    #else
+    internal
+    #endif
+    sealed class FlattenedChange
     {
         public FlattenedChange(int index, int oldCount, int newCount)
         {
@@ -53,7 +58,12 @@ namespace Avalonia.Controls.DataGridHierarchical
     /// <summary>
     /// Represents a mapping between the previous flattened list and the current one.
     /// </summary>
-    public sealed class FlattenedIndexMap
+    #if !DATAGRID_INTERNAL
+    public
+    #else
+    internal
+    #endif
+    sealed class FlattenedIndexMap
     {
         private readonly IReadOnlyList<FlattenedChange> _changes;
         private readonly IReadOnlyDictionary<int, int>? _explicitMap;
@@ -118,7 +128,12 @@ namespace Avalonia.Controls.DataGridHierarchical
         }
     }
 
-    public class FlattenedChangedEventArgs : EventArgs
+    #if !DATAGRID_INTERNAL
+    public
+    #else
+    internal
+    #endif
+    class FlattenedChangedEventArgs : EventArgs
     {
         public FlattenedChangedEventArgs(
             IReadOnlyList<FlattenedChange> changes,
@@ -147,7 +162,12 @@ namespace Avalonia.Controls.DataGridHierarchical
         public FlattenedIndexMap IndexMap { get; }
     }
 
-    public class HierarchicalNodeEventArgs : EventArgs
+    #if !DATAGRID_INTERNAL
+    public
+    #else
+    internal
+    #endif
+    class HierarchicalNodeEventArgs : EventArgs
     {
         public HierarchicalNodeEventArgs(HierarchicalNode node)
         {
@@ -157,7 +177,12 @@ namespace Avalonia.Controls.DataGridHierarchical
         public HierarchicalNode Node { get; }
     }
 
-    public class HierarchicalNodeLoadFailedEventArgs : HierarchicalNodeEventArgs
+    #if !DATAGRID_INTERNAL
+    public
+    #else
+    internal
+    #endif
+    class HierarchicalNodeLoadFailedEventArgs : HierarchicalNodeEventArgs
     {
         public HierarchicalNodeLoadFailedEventArgs(HierarchicalNode node, Exception error)
             : base(node)
@@ -168,7 +193,12 @@ namespace Avalonia.Controls.DataGridHierarchical
         public Exception Error { get; }
     }
 
-    public class HierarchicalNodeRetryEventArgs : HierarchicalNodeEventArgs
+    #if !DATAGRID_INTERNAL
+    public
+    #else
+    internal
+    #endif
+    class HierarchicalNodeRetryEventArgs : HierarchicalNodeEventArgs
     {
         public HierarchicalNodeRetryEventArgs(HierarchicalNode node, TimeSpan delay)
             : base(node)
@@ -179,7 +209,12 @@ namespace Avalonia.Controls.DataGridHierarchical
         public TimeSpan Delay { get; }
     }
 
-    public class HierarchyChangedEventArgs : HierarchicalNodeEventArgs
+    #if !DATAGRID_INTERNAL
+    public
+    #else
+    internal
+    #endif
+    class HierarchyChangedEventArgs : HierarchicalNodeEventArgs
     {
         public HierarchyChangedEventArgs(HierarchicalNode node, NotifyCollectionChangedAction action)
             : base(node)
@@ -193,7 +228,12 @@ namespace Avalonia.Controls.DataGridHierarchical
     /// <summary>
     /// Core contract for hierarchical models powering ProDataGrid.
     /// </summary>
-    public interface IHierarchicalModel
+    #if !DATAGRID_INTERNAL
+    public
+    #else
+    internal
+    #endif
+    interface IHierarchicalModel
     {
         /// <summary>
         /// Sets the root item that will act as the entry point for the hierarchy.
@@ -391,7 +431,12 @@ namespace Avalonia.Controls.DataGridHierarchical
     /// <summary>
     /// Optional interface for models that can expand to a specific item on demand.
     /// </summary>
-    public interface IHierarchicalModelExpander
+    #if !DATAGRID_INTERNAL
+    public
+    #else
+    internal
+    #endif
+    interface IHierarchicalModelExpander
     {
         /// <summary>
         /// Expands ancestors so the specified item becomes visible, if possible.
@@ -405,7 +450,12 @@ namespace Avalonia.Controls.DataGridHierarchical
     /// <summary>
     /// Factory hook to allow replacing the default hierarchical model.
     /// </summary>
-    public interface IDataGridHierarchicalModelFactory
+    #if !DATAGRID_INTERNAL
+    public
+    #else
+    internal
+    #endif
+    interface IDataGridHierarchicalModelFactory
     {
         IHierarchicalModel Create();
     }
@@ -414,7 +464,12 @@ namespace Avalonia.Controls.DataGridHierarchical
     /// Default hierarchical model implementation (initial scaffolding).
     /// </summary>
     [RequiresUnreferencedCode("HierarchicalModel uses reflection to access property paths and is not compatible with trimming.")]
-    public class HierarchicalModel : IHierarchicalModel, IHierarchicalModelExpander
+    #if !DATAGRID_INTERNAL
+    public
+    #else
+    internal
+    #endif
+    class HierarchicalModel : IHierarchicalModel, IHierarchicalModelExpander
     {
         private readonly ObservableRangeCollection<HierarchicalNode> _flattened;
         private readonly ReadOnlyObservableCollection<HierarchicalNode> _flattenedObservableView;
@@ -2999,7 +3054,12 @@ namespace Avalonia.Controls.DataGridHierarchical
     /// <summary>
     /// Marker type used as the item for a virtual root node when multiple root items are set via <see cref="IHierarchicalModel.SetRoots"/>.
     /// </summary>
-    public sealed class VirtualRootContainer
+    #if !DATAGRID_INTERNAL
+    public
+    #else
+    internal
+    #endif
+    sealed class VirtualRootContainer
     {
         public VirtualRootContainer(IEnumerable items)
         {

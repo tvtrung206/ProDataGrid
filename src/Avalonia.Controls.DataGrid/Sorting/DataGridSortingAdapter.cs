@@ -21,7 +21,12 @@ namespace Avalonia.Controls.DataGridSorting
     /// <summary>
     /// Bridges sorting gestures/model to the view's SortDescriptions.
     /// </summary>
-    public class DataGridSortingAdapter : IDisposable
+#if !DATAGRID_INTERNAL
+    public
+#else
+    internal
+#endif
+    class DataGridSortingAdapter : IDisposable
     {
         private readonly ISortingModel _model;
         private readonly Func<IEnumerable<DataGridColumn>> _columnProvider;
@@ -31,7 +36,12 @@ namespace Avalonia.Controls.DataGridSorting
         private Action _beforeViewRefresh;
         private Action _afterViewRefresh;
 
-        public DataGridSortingAdapter(
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        DataGridSortingAdapter(
             ISortingModel model,
             Func<IEnumerable<DataGridColumn>> columnProvider,
             Action beforeViewRefresh = null,
@@ -51,9 +61,19 @@ namespace Avalonia.Controls.DataGridSorting
             _afterViewRefresh = afterViewRefresh;
         }
 
-        public IDataGridCollectionView View => _view;
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        IDataGridCollectionView View => _view;
 
-        public void AttachView(IDataGridCollectionView view)
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        void AttachView(IDataGridCollectionView view)
         {
             if (ReferenceEquals(_view, view))
             {
@@ -78,7 +98,12 @@ namespace Avalonia.Controls.DataGridSorting
             }
         }
 
-        public void HandleHeaderClick(DataGridColumn column, KeyModifiers modifiers, ListSortDirection? forcedDirection = null)
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        void HandleHeaderClick(DataGridColumn column, KeyModifiers modifiers, ListSortDirection? forcedDirection = null)
         {
             if (column == null)
             {

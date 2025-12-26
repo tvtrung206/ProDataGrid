@@ -15,7 +15,9 @@ namespace Avalonia.Controls
     [TemplatePart(DATAGRID_GROUPFOOTER_elementSummaryRow, typeof(DataGridSummaryRow))]
     [PseudoClasses(":current")]
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     class DataGridRowGroupFooter : TemplatedControl
     {

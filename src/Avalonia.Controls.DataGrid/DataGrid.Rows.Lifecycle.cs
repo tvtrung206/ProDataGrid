@@ -9,7 +9,12 @@ using Avalonia.Media;
 
 namespace Avalonia.Controls
 {
-    public partial class DataGrid
+    #if !DATAGRID_INTERNAL
+    public
+    #else
+    internal
+    #endif
+    partial class DataGrid
     {
 
         private void InsertElement(int slot, Control element, bool updateVerticalScrollBarOnly, bool isCollapsed, bool isRow)

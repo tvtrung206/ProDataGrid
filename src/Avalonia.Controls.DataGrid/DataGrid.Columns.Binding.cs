@@ -15,7 +15,9 @@ using System.Linq;
 namespace Avalonia.Controls
 {
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     partial class DataGrid
     {

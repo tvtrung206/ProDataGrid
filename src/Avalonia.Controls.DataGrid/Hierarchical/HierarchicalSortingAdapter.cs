@@ -16,12 +16,22 @@ namespace Avalonia.Controls.DataGridHierarchical
     /// Sorting adapter that routes sorting descriptors into hierarchical sibling ordering.
     /// </summary>
     [RequiresUnreferencedCode("HierarchicalSortingAdapter uses reflection to walk property paths and is not compatible with trimming.")]
-    public sealed class HierarchicalSortingAdapter : DataGridSortingAdapter
+#if !DATAGRID_INTERNAL
+    public
+#else
+    internal
+#endif
+    sealed class HierarchicalSortingAdapter : DataGridSortingAdapter
     {
         private readonly IHierarchicalModel _model;
         private readonly IComparer<object>? _defaultComparer;
 
-        public HierarchicalSortingAdapter(
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        HierarchicalSortingAdapter(
             IHierarchicalModel model,
             ISortingModel sortingModel,
             Func<IEnumerable<DataGridColumn>> columnProvider,

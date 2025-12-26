@@ -15,7 +15,12 @@ using System.Diagnostics;
 
 namespace Avalonia.Controls
 {
-    public partial class DataGrid
+    #if !DATAGRID_INTERNAL
+    public
+    #else
+    internal
+    #endif
+    partial class DataGrid
     {
 
         private void CollectionViewGroup_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
@@ -872,7 +877,12 @@ namespace Avalonia.Controls
         /// </summary>
         /// <param name="collectionViewGroup">CollectionViewGroup</param>
         /// <param name="collapseAllSubgroups">Set to true to collapse all Subgroups</param>
-        public void CollapseRowGroup(DataGridCollectionViewGroup collectionViewGroup, bool collapseAllSubgroups)
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        void CollapseRowGroup(DataGridCollectionViewGroup collectionViewGroup, bool collapseAllSubgroups)
         {
             if (WaitForLostFocus(delegate { CollapseRowGroup(collectionViewGroup, collapseAllSubgroups); }) ||
             collectionViewGroup == null || !CommitEdit())
@@ -901,7 +911,12 @@ namespace Avalonia.Controls
         /// </summary>
         /// <param name="collectionViewGroup">CollectionViewGroup</param>
         /// <param name="expandAllSubgroups">Set to true to expand all Subgroups</param>
-        public void ExpandRowGroup(DataGridCollectionViewGroup collectionViewGroup, bool expandAllSubgroups)
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        void ExpandRowGroup(DataGridCollectionViewGroup collectionViewGroup, bool expandAllSubgroups)
         {
             if (WaitForLostFocus(delegate { ExpandRowGroup(collectionViewGroup, expandAllSubgroups); }) ||
             collectionViewGroup == null || !CommitEdit())

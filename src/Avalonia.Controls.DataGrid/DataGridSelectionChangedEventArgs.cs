@@ -15,7 +15,9 @@ namespace Avalonia.Controls
     /// </summary>
     [Flags]
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     enum DataGridSelectionChangeSource
     {
@@ -32,7 +34,9 @@ namespace Avalonia.Controls
     /// Provides additional context for DataGrid selection changes.
     /// </summary>
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     class DataGridSelectionChangedEventArgs : SelectionChangedEventArgs
     {

@@ -4,6 +4,8 @@ namespace Avalonia.Controls.Automation.Peers;
 
 #if !DATAGRID_INTERNAL
 public
+#else
+internal
 #endif
 class DataGridColumnHeaderAutomationPeer : ContentControlAutomationPeer
 {

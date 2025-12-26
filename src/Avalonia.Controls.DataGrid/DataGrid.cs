@@ -63,7 +63,9 @@ namespace Avalonia.Controls
     [PseudoClasses(":invalid", ":empty-rows", ":empty-columns")]
     [RequiresUnreferencedCode("DataGrid inspects data items via reflection and is not compatible with trimming.")]
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     partial class DataGrid : TemplatedControl
     {
@@ -107,7 +109,12 @@ namespace Avalonia.Controls
         /// Invoked when preparing a row container for an item.
         /// Mirrors ItemsControl naming while using the DataGrid row pipeline.
         /// </summary>
-        protected virtual void PrepareContainerForItemOverride(DataGridRow element, object item)
+#if !DATAGRID_INTERNAL
+        protected
+#else
+        internal
+#endif
+        virtual void PrepareContainerForItemOverride(DataGridRow element, object item)
         {
             element.DataContext = item;
             element.IsPlaceholder = ReferenceEquals(item, DataGridCollectionView.NewItemPlaceholder);
@@ -118,7 +125,12 @@ namespace Avalonia.Controls
         /// <summary>
         /// Invoked when clearing a row container for reuse or removal.
         /// </summary>
-        protected virtual void ClearContainerForItemOverride(DataGridRow element, object item)
+#if !DATAGRID_INTERNAL
+        protected
+#else
+        internal
+#endif
+        virtual void ClearContainerForItemOverride(DataGridRow element, object item)
         {
             var previousSuppress = _suppressSelectionUpdatesFromRows;
             _suppressSelectionUpdatesFromRows = true;
@@ -144,7 +156,12 @@ namespace Avalonia.Controls
         /// <summary>
         /// Invoked when a row container is being virtualized/recycled.
         /// </summary>
-        protected virtual void OnCleanUpVirtualizedItem(DataGridRow element)
+#if !DATAGRID_INTERNAL
+        protected
+#else
+        internal
+#endif
+        virtual void OnCleanUpVirtualizedItem(DataGridRow element)
         {
         }
 
@@ -341,22 +358,42 @@ namespace Avalonia.Controls
         /// <summary>
         /// Identifies the <see cref="HorizontalScroll"/> routed event.
         /// </summary>
-        public static readonly RoutedEvent<DataGridScrollEventArgs> HorizontalScrollEvent =
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        static readonly RoutedEvent<DataGridScrollEventArgs> HorizontalScrollEvent =
             RoutedEvent.Register<DataGrid, DataGridScrollEventArgs>(nameof(HorizontalScroll), RoutingStrategies.Bubble);
 
         /// <summary>
         /// Identifies the <see cref="VerticalScroll"/> routed event.
         /// </summary>
-        public static readonly RoutedEvent<DataGridScrollEventArgs> VerticalScrollEvent =
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        static readonly RoutedEvent<DataGridScrollEventArgs> VerticalScrollEvent =
             RoutedEvent.Register<DataGrid, DataGridScrollEventArgs>(nameof(VerticalScroll), RoutingStrategies.Bubble);
 
-        public event EventHandler<DataGridScrollEventArgs> HorizontalScroll
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        event EventHandler<DataGridScrollEventArgs> HorizontalScroll
         {
             add => AddHandler(HorizontalScrollEvent, value);
             remove => RemoveHandler(HorizontalScrollEvent, value);
         }
 
-        public event EventHandler<DataGridScrollEventArgs> VerticalScroll
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        event EventHandler<DataGridScrollEventArgs> VerticalScroll
         {
             add => AddHandler(VerticalScrollEvent, value);
             remove => RemoveHandler(VerticalScrollEvent, value);
@@ -366,7 +403,12 @@ namespace Avalonia.Controls
         /// Raises the <see cref="HorizontalScroll"/> event.
         /// </summary>
         /// <param name="e">Scroll event data.</param>
-        protected virtual void OnHorizontalScroll(DataGridScrollEventArgs e)
+#if !DATAGRID_INTERNAL
+        protected
+#else
+        internal
+#endif
+        virtual void OnHorizontalScroll(DataGridScrollEventArgs e)
         {
             e.RoutedEvent ??= HorizontalScrollEvent;
             e.Source ??= this;
@@ -377,7 +419,12 @@ namespace Avalonia.Controls
         /// Raises the <see cref="VerticalScroll"/> event.
         /// </summary>
         /// <param name="e">Scroll event data.</param>
-        protected virtual void OnVerticalScroll(DataGridScrollEventArgs e)
+#if !DATAGRID_INTERNAL
+        protected
+#else
+        internal
+#endif
+        virtual void OnVerticalScroll(DataGridScrollEventArgs e)
         {
             e.RoutedEvent ??= VerticalScrollEvent;
             e.Source ??= this;
@@ -542,7 +589,12 @@ namespace Avalonia.Controls
         /// <summary>
         /// Gets or sets the bound columns source (IList + INotifyCollectionChanged enables TwoWay sync).
         /// </summary>
-        public IList<DataGridColumn> Columns
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        IList<DataGridColumn> Columns
         {
             get => _boundColumns ?? ColumnsInternal;
             set => SetColumnsBindingValue(value);
@@ -551,7 +603,12 @@ namespace Avalonia.Controls
         /// <summary>
         /// Gets the columns collection used for inline or programmatic column definitions.
         /// </summary>
-        public IReadOnlyList<DataGridColumn> ColumnDefinitions => ColumnsInternal;
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        IReadOnlyList<DataGridColumn> ColumnDefinitions => ColumnsInternal;
 
         /// <summary>
         /// Gets a list that contains the data items corresponding to the selected rows.
@@ -578,7 +635,12 @@ namespace Avalonia.Controls
         /// <summary>
         /// Gets or sets the collection of selected cells.
         /// </summary>
-        public IList<DataGridCellInfo> SelectedCells
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        IList<DataGridCellInfo> SelectedCells
         {
             get
             {
@@ -595,7 +657,12 @@ namespace Avalonia.Controls
         /// <summary>
         /// Raised when the set of selected cells changes.
         /// </summary>
-        public event EventHandler<DataGridSelectedCellsChangedEventArgs> SelectedCellsChanged;
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        event EventHandler<DataGridSelectedCellsChangedEventArgs> SelectedCellsChanged;
 
         /// <summary>
         /// Gets or sets the selection model that drives row selection.
@@ -1368,7 +1435,12 @@ namespace Avalonia.Controls
         /// <summary>
         /// Comparator class so we can sort list by the display index
         /// </summary>
-        public class DisplayIndexComparer : IComparer<DataGridColumn>
+        #if !DATAGRID_INTERNAL
+        public
+        #else
+        internal
+        #endif
+        class DisplayIndexComparer : IComparer<DataGridColumn>
         {
             int IComparer<DataGridColumn>.Compare(DataGridColumn x, DataGridColumn y)
             {
@@ -1573,7 +1645,12 @@ namespace Avalonia.Controls
         /// Optional factory for creating the sorting adapter. Use this to plug in a custom adapter
         /// (e.g., DynamicData/server-side sorting) without subclassing <see cref="DataGrid"/>.
         /// </summary>
-        public IDataGridSortingAdapterFactory SortingAdapterFactory
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        IDataGridSortingAdapterFactory SortingAdapterFactory
         {
             get => _sortingAdapterFactory;
             set
@@ -1598,7 +1675,12 @@ namespace Avalonia.Controls
         /// Optional factory for creating the filtering adapter. Use this to plug in a custom adapter
         /// (e.g., DynamicData/server-side filtering) without subclassing <see cref="DataGrid"/>.
         /// </summary>
-        public Avalonia.Controls.DataGridFiltering.IDataGridFilteringAdapterFactory FilteringAdapterFactory
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        Avalonia.Controls.DataGridFiltering.IDataGridFilteringAdapterFactory FilteringAdapterFactory
         {
             get => _filteringAdapterFactory;
             set => _filteringAdapterFactory = value;
@@ -1608,7 +1690,12 @@ namespace Avalonia.Controls
         /// Optional factory for creating the search adapter. Use this to plug in a custom adapter
         /// (e.g., DynamicData/server-side search) without subclassing <see cref="DataGrid"/>.
         /// </summary>
-        public IDataGridSearchAdapterFactory SearchAdapterFactory
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        IDataGridSearchAdapterFactory SearchAdapterFactory
         {
             get => _searchAdapterFactory;
             set
@@ -1726,7 +1813,12 @@ namespace Avalonia.Controls
         /// </summary>
         /// <param name="model">Sorting model instance.</param>
         /// <returns>Adapter that will bridge the model to the collection view and grid.</returns>
-        protected virtual DataGridSortingAdapter CreateSortingAdapter(ISortingModel model)
+#if !DATAGRID_INTERNAL
+        protected
+#else
+        internal
+#endif
+        virtual DataGridSortingAdapter CreateSortingAdapter(ISortingModel model)
         {
             var adapter = _sortingAdapterFactory?.Create(this, model);
 
@@ -1766,7 +1858,12 @@ namespace Avalonia.Controls
         /// </summary>
         /// <param name="model">Filtering model instance.</param>
         /// <returns>Adapter that will bridge the model to the collection view and grid.</returns>
-        protected virtual Avalonia.Controls.DataGridFiltering.DataGridFilteringAdapter CreateFilteringAdapter(Avalonia.Controls.DataGridFiltering.IFilteringModel model)
+#if !DATAGRID_INTERNAL
+        protected
+#else
+        internal
+#endif
+        virtual Avalonia.Controls.DataGridFiltering.DataGridFilteringAdapter CreateFilteringAdapter(Avalonia.Controls.DataGridFiltering.IFilteringModel model)
         {
             var adapter = _filteringAdapterFactory?.Create(this, model)
                 ?? new Avalonia.Controls.DataGridFiltering.DataGridFilteringAdapter(
@@ -1789,7 +1886,12 @@ namespace Avalonia.Controls
         /// </summary>
         /// <param name="model">Search model instance.</param>
         /// <returns>Adapter that will compute search results for the view.</returns>
-        protected virtual DataGridSearchAdapter CreateSearchAdapter(ISearchModel model)
+#if !DATAGRID_INTERNAL
+        protected
+#else
+        internal
+#endif
+        virtual DataGridSearchAdapter CreateSearchAdapter(ISearchModel model)
         {
             var adapter = _searchAdapterFactory?.Create(this, model)
                 ?? new DataGridSearchAdapter(

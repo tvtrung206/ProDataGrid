@@ -18,7 +18,9 @@ namespace Avalonia.Controls
     /// for editing time values.
     /// </summary>
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     class DataGridTimePickerColumn : DataGridBoundColumn
     {

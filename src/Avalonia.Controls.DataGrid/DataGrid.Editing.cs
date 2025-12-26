@@ -22,44 +22,76 @@ namespace Avalonia.Controls
     /// Cell and row editing functionality
     /// </summary>
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     partial class DataGrid
     {
         /// <summary>
         /// Identifies the <see cref="BeginningEdit"/> routed event.
         /// </summary>
-        public static readonly RoutedEvent<DataGridBeginningEditEventArgs> BeginningEditEvent =
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        static readonly RoutedEvent<DataGridBeginningEditEventArgs> BeginningEditEvent =
             RoutedEvent.Register<DataGrid, DataGridBeginningEditEventArgs>(nameof(BeginningEdit), RoutingStrategies.Bubble);
 
         /// <summary>
         /// Identifies the <see cref="CellEditEnded"/> routed event.
         /// </summary>
-        public static readonly RoutedEvent<DataGridCellEditEndedEventArgs> CellEditEndedEvent =
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        static readonly RoutedEvent<DataGridCellEditEndedEventArgs> CellEditEndedEvent =
             RoutedEvent.Register<DataGrid, DataGridCellEditEndedEventArgs>(nameof(CellEditEnded), RoutingStrategies.Bubble);
 
         /// <summary>
         /// Identifies the <see cref="CellEditEnding"/> routed event.
         /// </summary>
-        public static readonly RoutedEvent<DataGridCellEditEndingEventArgs> CellEditEndingEvent =
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        static readonly RoutedEvent<DataGridCellEditEndingEventArgs> CellEditEndingEvent =
             RoutedEvent.Register<DataGrid, DataGridCellEditEndingEventArgs>(nameof(CellEditEnding), RoutingStrategies.Bubble);
 
         /// <summary>
         /// Identifies the <see cref="PreparingCellForEdit"/> routed event.
         /// </summary>
-        public static readonly RoutedEvent<DataGridPreparingCellForEditEventArgs> PreparingCellForEditEvent =
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        static readonly RoutedEvent<DataGridPreparingCellForEditEventArgs> PreparingCellForEditEvent =
             RoutedEvent.Register<DataGrid, DataGridPreparingCellForEditEventArgs>(nameof(PreparingCellForEdit), RoutingStrategies.Bubble);
 
         /// <summary>
         /// Identifies the <see cref="RowEditEnded"/> routed event.
         /// </summary>
-        public static readonly RoutedEvent<DataGridRowEditEndedEventArgs> RowEditEndedEvent =
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        static readonly RoutedEvent<DataGridRowEditEndedEventArgs> RowEditEndedEvent =
             RoutedEvent.Register<DataGrid, DataGridRowEditEndedEventArgs>(nameof(RowEditEnded), RoutingStrategies.Bubble);
 
         /// <summary>
         /// Identifies the <see cref="RowEditEnding"/> routed event.
         /// </summary>
-        public static readonly RoutedEvent<DataGridRowEditEndingEventArgs> RowEditEndingEvent =
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        static readonly RoutedEvent<DataGridRowEditEndingEventArgs> RowEditEndingEvent =
             RoutedEvent.Register<DataGrid, DataGridRowEditEndingEventArgs>(nameof(RowEditEnding), RoutingStrategies.Bubble);
 
         /// <summary>
@@ -130,7 +162,12 @@ namespace Avalonia.Controls
         /// Cancels editing mode and restores the original value.
         /// </summary>
         /// <returns>True if operation was successful. False otherwise.</returns>
-        public bool CancelEdit()
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        bool CancelEdit()
         {
             return CancelEdit(DataGridEditingUnit.Row);
         }
@@ -141,7 +178,12 @@ namespace Avalonia.Controls
         /// </summary>
         /// <param name="editingUnit">Specifies whether to cancel edit for a Cell or Row.</param>
         /// <returns>True if operation was successful. False otherwise.</returns>
-        public bool CancelEdit(DataGridEditingUnit editingUnit)
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        bool CancelEdit(DataGridEditingUnit editingUnit)
         {
             return CancelEdit(editingUnit, raiseEvents: true);
         }
@@ -177,7 +219,12 @@ namespace Avalonia.Controls
         /// Commits editing mode and pushes changes to the backend.
         /// </summary>
         /// <returns>True if operation was successful. False otherwise.</returns>
-        public bool CommitEdit()
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        bool CommitEdit()
         {
             return CommitEdit(DataGridEditingUnit.Row, true);
         }
@@ -189,7 +236,12 @@ namespace Avalonia.Controls
         /// <param name="editingUnit">Specifies whether to commit edit for a Cell or Row.</param>
         /// <param name="exitEditingMode">Editing mode is left if True.</param>
         /// <returns>True if operation was successful. False otherwise.</returns>
-        public bool CommitEdit(DataGridEditingUnit editingUnit, bool exitEditingMode)
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        bool CommitEdit(DataGridEditingUnit editingUnit, bool exitEditingMode)
         {
             if (!EndCellEdit(
                     editAction: DataGridEditAction.Commit,
@@ -905,7 +957,12 @@ namespace Avalonia.Controls
         /// <summary>
         /// Raises the BeginningEdit event.
         /// </summary>
-        protected virtual void OnBeginningEdit(DataGridBeginningEditEventArgs e)
+#if !DATAGRID_INTERNAL
+        protected
+#else
+        internal
+#endif
+        virtual void OnBeginningEdit(DataGridBeginningEditEventArgs e)
         {
             e.RoutedEvent ??= BeginningEditEvent;
             e.Source ??= this;
@@ -916,7 +973,12 @@ namespace Avalonia.Controls
         /// <summary>
         /// Raises the CellEditEnded event.
         /// </summary>
-        protected virtual void OnCellEditEnded(DataGridCellEditEndedEventArgs e)
+#if !DATAGRID_INTERNAL
+        protected
+#else
+        internal
+#endif
+        virtual void OnCellEditEnded(DataGridCellEditEndedEventArgs e)
         {
             e.RoutedEvent ??= CellEditEndedEvent;
             e.Source ??= this;
@@ -927,7 +989,12 @@ namespace Avalonia.Controls
         /// <summary>
         /// Raises the CellEditEnding event.
         /// </summary>
-        protected virtual void OnCellEditEnding(DataGridCellEditEndingEventArgs e)
+#if !DATAGRID_INTERNAL
+        protected
+#else
+        internal
+#endif
+        virtual void OnCellEditEnding(DataGridCellEditEndingEventArgs e)
         {
             e.RoutedEvent ??= CellEditEndingEvent;
             e.Source ??= this;
@@ -938,7 +1005,12 @@ namespace Avalonia.Controls
         /// <summary>
         /// Raises the PreparingCellForEdit event.
         /// </summary>
-        protected virtual void OnPreparingCellForEdit(DataGridPreparingCellForEditEventArgs e)
+#if !DATAGRID_INTERNAL
+        protected
+#else
+        internal
+#endif
+        virtual void OnPreparingCellForEdit(DataGridPreparingCellForEditEventArgs e)
         {
             e.RoutedEvent ??= PreparingCellForEditEvent;
             e.Source ??= this;
@@ -949,7 +1021,12 @@ namespace Avalonia.Controls
         /// <summary>
         /// Raises the RowEditEnded event.
         /// </summary>
-        protected virtual void OnRowEditEnded(DataGridRowEditEndedEventArgs e)
+#if !DATAGRID_INTERNAL
+        protected
+#else
+        internal
+#endif
+        virtual void OnRowEditEnded(DataGridRowEditEndedEventArgs e)
         {
             e.RoutedEvent ??= RowEditEndedEvent;
             e.Source ??= this;
@@ -960,7 +1037,12 @@ namespace Avalonia.Controls
         /// <summary>
         /// Raises the RowEditEnding event.
         /// </summary>
-        protected virtual void OnRowEditEnding(DataGridRowEditEndingEventArgs e)
+#if !DATAGRID_INTERNAL
+        protected
+#else
+        internal
+#endif
+        virtual void OnRowEditEnding(DataGridRowEditEndingEventArgs e)
         {
             e.RoutedEvent ??= RowEditEndingEvent;
             e.Source ??= this;
@@ -979,7 +1061,12 @@ namespace Avalonia.Controls
         /// <summary>
         /// Occurs before a cell or row enters editing mode.
         /// </summary>
-        public event EventHandler<DataGridBeginningEditEventArgs> BeginningEdit
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        event EventHandler<DataGridBeginningEditEventArgs> BeginningEdit
         {
             add => AddHandler(BeginningEditEvent, value);
             remove => RemoveHandler(BeginningEditEvent, value);
@@ -989,7 +1076,12 @@ namespace Avalonia.Controls
         /// <summary>
         /// Occurs after cell editing has ended.
         /// </summary>
-        public event EventHandler<DataGridCellEditEndedEventArgs> CellEditEnded
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        event EventHandler<DataGridCellEditEndedEventArgs> CellEditEnded
         {
             add => AddHandler(CellEditEndedEvent, value);
             remove => RemoveHandler(CellEditEndedEvent, value);
@@ -999,7 +1091,12 @@ namespace Avalonia.Controls
         /// <summary>
         /// Occurs immediately before cell editing has ended.
         /// </summary>
-        public event EventHandler<DataGridCellEditEndingEventArgs> CellEditEnding
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        event EventHandler<DataGridCellEditEndingEventArgs> CellEditEnding
         {
             add => AddHandler(CellEditEndingEvent, value);
             remove => RemoveHandler(CellEditEndingEvent, value);
@@ -1010,7 +1107,12 @@ namespace Avalonia.Controls
         /// Occurs when a cell in a <see cref="T:Avalonia.Controls.DataGridTemplateColumn" /> enters editing mode.
         ///
         /// </summary>
-        public event EventHandler<DataGridPreparingCellForEditEventArgs> PreparingCellForEdit
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        event EventHandler<DataGridPreparingCellForEditEventArgs> PreparingCellForEdit
         {
             add => AddHandler(PreparingCellForEditEvent, value);
             remove => RemoveHandler(PreparingCellForEditEvent, value);
@@ -1020,7 +1122,12 @@ namespace Avalonia.Controls
         /// <summary>
         /// Occurs when the row has been successfully committed or cancelled.
         /// </summary>
-        public event EventHandler<DataGridRowEditEndedEventArgs> RowEditEnded
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        event EventHandler<DataGridRowEditEndedEventArgs> RowEditEnded
         {
             add => AddHandler(RowEditEndedEvent, value);
             remove => RemoveHandler(RowEditEndedEvent, value);
@@ -1030,7 +1137,12 @@ namespace Avalonia.Controls
         /// <summary>
         /// Occurs immediately before the row has been successfully committed or cancelled.
         /// </summary>
-        public event EventHandler<DataGridRowEditEndingEventArgs> RowEditEnding
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        event EventHandler<DataGridRowEditEndingEventArgs> RowEditEnding
         {
             add => AddHandler(RowEditEndingEvent, value);
             remove => RemoveHandler(RowEditEndingEvent, value);

@@ -18,7 +18,9 @@ namespace Avalonia.Controls
     /// Layout and measurement
     /// </summary>
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     partial class DataGrid
     {

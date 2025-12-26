@@ -16,14 +16,21 @@ namespace Avalonia.Controls
     /// Current cell management
     /// </summary>
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     partial class DataGrid
     {
         /// <summary>
         /// Identifies the <see cref="CurrentCellChanged"/> routed event.
         /// </summary>
-        public static readonly RoutedEvent<DataGridCurrentCellChangedEventArgs> CurrentCellChangedEvent =
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        static readonly RoutedEvent<DataGridCurrentCellChangedEventArgs> CurrentCellChangedEvent =
             RoutedEvent.Register<DataGrid, DataGridCurrentCellChangedEventArgs>(nameof(CurrentCellChanged), RoutingStrategies.Bubble);
 
         // Convenient overload that commits the current edit.
@@ -239,7 +246,12 @@ namespace Avalonia.Controls
         /// <summary>
         /// Raises the CurrentCellChanged event.
         /// </summary>
-        protected virtual void OnCurrentCellChanged(DataGridCurrentCellChangedEventArgs e)
+#if !DATAGRID_INTERNAL
+        protected
+#else
+        internal
+#endif
+        virtual void OnCurrentCellChanged(DataGridCurrentCellChangedEventArgs e)
         {
             e.RoutedEvent ??= CurrentCellChangedEvent;
             e.Source ??= this;
@@ -264,7 +276,12 @@ namespace Avalonia.Controls
         /// <summary>
         /// Occurs when a different cell becomes the current cell.
         /// </summary>
-        public event EventHandler<DataGridCurrentCellChangedEventArgs> CurrentCellChanged
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        event EventHandler<DataGridCurrentCellChangedEventArgs> CurrentCellChanged
         {
             add => AddHandler(CurrentCellChangedEvent, value);
             remove => RemoveHandler(CurrentCellChangedEvent, value);
@@ -440,7 +457,12 @@ namespace Avalonia.Controls
         /// <summary>
         /// Gets or sets the column that contains the current cell.
         /// </summary>
-        public DataGridColumn CurrentColumn
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        DataGridColumn CurrentColumn
         {
             get
             {

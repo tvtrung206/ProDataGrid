@@ -17,7 +17,9 @@ using Avalonia.Utilities;
 namespace Avalonia.Controls
 {
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     class DataGridTemplateColumn : DataGridColumn
     {

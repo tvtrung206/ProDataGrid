@@ -11,7 +11,12 @@ using System.Linq;
 
 namespace Avalonia.Controls.DataGridSearching
 {
-    public enum SearchMatchMode
+    #if !DATAGRID_INTERNAL
+    public
+    #else
+    internal
+    #endif
+    enum SearchMatchMode
     {
         Contains,
         StartsWith,
@@ -21,27 +26,47 @@ namespace Avalonia.Controls.DataGridSearching
         Wildcard
     }
 
-    public enum SearchTermCombineMode
+    #if !DATAGRID_INTERNAL
+    public
+    #else
+    internal
+    #endif
+    enum SearchTermCombineMode
     {
         Any,
         All
     }
 
-    public enum SearchScope
+    #if !DATAGRID_INTERNAL
+    public
+    #else
+    internal
+    #endif
+    enum SearchScope
     {
         AllColumns,
         VisibleColumns,
         ExplicitColumns
     }
 
-    public enum SearchHighlightMode
+    #if !DATAGRID_INTERNAL
+    public
+    #else
+    internal
+    #endif
+    enum SearchHighlightMode
     {
         None,
         Cell,
         TextAndCell
     }
 
-    public sealed class SearchDescriptor : IEquatable<SearchDescriptor>
+    #if !DATAGRID_INTERNAL
+    public
+    #else
+    internal
+    #endif
+    sealed class SearchDescriptor : IEquatable<SearchDescriptor>
     {
         public SearchDescriptor(
             string query,
@@ -210,7 +235,12 @@ namespace Avalonia.Controls.DataGridSearching
         }
     }
 
-    public sealed class SearchMatch
+    #if !DATAGRID_INTERNAL
+    public
+    #else
+    internal
+    #endif
+    sealed class SearchMatch
     {
         public SearchMatch(int start, int length)
         {
@@ -233,7 +263,12 @@ namespace Avalonia.Controls.DataGridSearching
         public int Length { get; }
     }
 
-    public sealed class SearchResult
+    #if !DATAGRID_INTERNAL
+    public
+    #else
+    internal
+    #endif
+    sealed class SearchResult
     {
         public SearchResult(
             object item,
@@ -264,7 +299,12 @@ namespace Avalonia.Controls.DataGridSearching
         public IReadOnlyList<SearchMatch> Matches { get; }
     }
 
-    public class SearchChangedEventArgs : EventArgs
+    #if !DATAGRID_INTERNAL
+    public
+    #else
+    internal
+    #endif
+    class SearchChangedEventArgs : EventArgs
     {
         public SearchChangedEventArgs(IReadOnlyList<SearchDescriptor> oldDescriptors, IReadOnlyList<SearchDescriptor> newDescriptors)
         {
@@ -277,7 +317,12 @@ namespace Avalonia.Controls.DataGridSearching
         public IReadOnlyList<SearchDescriptor> NewDescriptors { get; }
     }
 
-    public class SearchResultsChangedEventArgs : EventArgs
+    #if !DATAGRID_INTERNAL
+    public
+    #else
+    internal
+    #endif
+    class SearchResultsChangedEventArgs : EventArgs
     {
         public SearchResultsChangedEventArgs(IReadOnlyList<SearchResult> oldResults, IReadOnlyList<SearchResult> newResults)
         {
@@ -290,7 +335,12 @@ namespace Avalonia.Controls.DataGridSearching
         public IReadOnlyList<SearchResult> NewResults { get; }
     }
 
-    public class SearchCurrentChangedEventArgs : EventArgs
+    #if !DATAGRID_INTERNAL
+    public
+    #else
+    internal
+    #endif
+    class SearchCurrentChangedEventArgs : EventArgs
     {
         public SearchCurrentChangedEventArgs(int oldIndex, int newIndex, SearchResult oldResult, SearchResult newResult)
         {
@@ -309,7 +359,12 @@ namespace Avalonia.Controls.DataGridSearching
         public SearchResult NewResult { get; }
     }
 
-    public interface ISearchModel : INotifyPropertyChanged
+    #if !DATAGRID_INTERNAL
+    public
+    #else
+    internal
+    #endif
+    interface ISearchModel : INotifyPropertyChanged
     {
         IReadOnlyList<SearchDescriptor> Descriptors { get; }
 
@@ -354,12 +409,22 @@ namespace Avalonia.Controls.DataGridSearching
         IDisposable DeferRefresh();
     }
 
-    public interface IDataGridSearchModelFactory
+    #if !DATAGRID_INTERNAL
+    public
+    #else
+    internal
+    #endif
+    interface IDataGridSearchModelFactory
     {
         ISearchModel Create();
     }
 
-    public sealed class SearchModel : ISearchModel
+    #if !DATAGRID_INTERNAL
+    public
+    #else
+    internal
+    #endif
+    sealed class SearchModel : ISearchModel
     {
         private readonly List<SearchDescriptor> _descriptors = new();
         private readonly List<SearchResult> _results = new();

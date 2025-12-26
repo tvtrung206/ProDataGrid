@@ -12,7 +12,9 @@ using Avalonia.Controls.Utils;
 namespace Avalonia.Collections
 {
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     abstract class DataGridSortDescription
     {
@@ -297,7 +299,9 @@ namespace Avalonia.Collections
     }
 
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     class DataGridComparerSortDescription : DataGridSortDescription
     {
@@ -332,7 +336,9 @@ namespace Avalonia.Collections
     }
 
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     class DataGridSortDescriptionCollection : AvaloniaList<DataGridSortDescription>
     { }

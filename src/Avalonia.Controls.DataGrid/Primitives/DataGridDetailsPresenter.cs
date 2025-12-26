@@ -18,7 +18,9 @@ namespace Avalonia.Controls.Primitives
     /// where the row details are to be added.
     /// </summary>
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     sealed class DataGridDetailsPresenter : Panel
     {

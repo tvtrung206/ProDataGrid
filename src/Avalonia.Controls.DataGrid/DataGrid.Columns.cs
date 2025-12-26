@@ -19,19 +19,31 @@ using Avalonia.Layout;
 namespace Avalonia.Controls
 {
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
         partial class DataGrid
     {
 
-        protected virtual void OnColumnDisplayIndexChanged(DataGridColumnEventArgs e)
+#if !DATAGRID_INTERNAL
+        protected
+#else
+        internal
+#endif
+        virtual void OnColumnDisplayIndexChanged(DataGridColumnEventArgs e)
         {
             e.RoutedEvent ??= ColumnDisplayIndexChangedEvent;
             e.Source ??= this;
             RaiseEvent(e);
         }
 
-        protected internal virtual void OnColumnReordered(DataGridColumnEventArgs e)
+#if !DATAGRID_INTERNAL
+        protected internal
+#else
+        internal
+#endif
+        virtual void OnColumnReordered(DataGridColumnEventArgs e)
         {
             EnsureVerticalGridLines();
             e.RoutedEvent ??= ColumnReorderedEvent;
@@ -39,14 +51,24 @@ namespace Avalonia.Controls
             RaiseEvent(e);
         }
 
-        protected internal virtual void OnColumnReordering(DataGridColumnReorderingEventArgs e)
+#if !DATAGRID_INTERNAL
+        protected internal
+#else
+        internal
+#endif
+        virtual void OnColumnReordering(DataGridColumnReorderingEventArgs e)
         {
             e.RoutedEvent ??= ColumnReorderingEvent;
             e.Source ??= this;
             RaiseEvent(e);
         }
 
-        protected internal virtual void OnColumnSorting(DataGridColumnEventArgs e)
+#if !DATAGRID_INTERNAL
+        protected internal
+#else
+        internal
+#endif
+        virtual void OnColumnSorting(DataGridColumnEventArgs e)
         {
             e.RoutedEvent ??= SortingEvent;
             e.Source ??= this;

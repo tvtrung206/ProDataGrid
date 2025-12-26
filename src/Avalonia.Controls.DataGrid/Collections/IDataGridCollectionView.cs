@@ -14,7 +14,9 @@ namespace Avalonia.Collections
 {
     /// <summary>Provides data for the <see cref="E:Avalonia.Collections.ICollectionView.CurrentChanging" /> event.</summary>
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     class DataGridCurrentChangingEventArgs : EventArgs
     {
@@ -70,7 +72,9 @@ namespace Avalonia.Collections
 
     /// <summary>Enables collections to have the functionalities of current record management, custom sorting, filtering, and grouping.</summary>
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     interface IDataGridCollectionView : IEnumerable, INotifyCollectionChanged
     {

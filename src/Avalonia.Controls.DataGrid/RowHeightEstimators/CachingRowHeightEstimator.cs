@@ -11,7 +11,12 @@ namespace Avalonia.Controls
     /// Advanced implementation of <see cref="IDataGridRowHeightEstimator"/> that caches
     /// individual row heights for more accurate scrolling with variable height rows.
     /// </summary>
-    public class CachingRowHeightEstimator : IDataGridRowHeightEstimator, IDataGridRowHeightEstimatorStateful
+    #if !DATAGRID_INTERNAL
+    public
+    #else
+    internal
+    #endif
+    class CachingRowHeightEstimator : IDataGridRowHeightEstimator, IDataGridRowHeightEstimatorStateful
     {
         private const double DefaultHeight = 22.0;
         private const int MaxRowGroupLevels = 10;

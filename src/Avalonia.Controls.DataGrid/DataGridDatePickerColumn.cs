@@ -19,7 +19,9 @@ namespace Avalonia.Controls
     /// for editing date values.
     /// </summary>
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     class DataGridDatePickerColumn : DataGridBoundColumn
     {

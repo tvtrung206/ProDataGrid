@@ -25,7 +25,9 @@ namespace Avalonia.Controls
     /// Represents a <see cref="DataGrid" /> column that hosts <see cref="ComboBox" /> controls in its cells.
     /// </summary>
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     class DataGridComboBoxColumn : DataGridColumn
     {

@@ -26,7 +26,12 @@ namespace Avalonia.Controls.DataGridSearching
     /// Computes search results from descriptors against the view.
     /// </summary>
     [RequiresUnreferencedCode("DataGridSearchAdapter uses reflection to access item properties and is not compatible with trimming.")]
-    public class DataGridSearchAdapter : IDisposable
+#if !DATAGRID_INTERNAL
+    public
+#else
+    internal
+#endif
+    class DataGridSearchAdapter : IDisposable
     {
         private readonly ISearchModel _model;
         private readonly Func<IEnumerable<DataGridColumn>> _columnProvider;
@@ -34,7 +39,12 @@ namespace Avalonia.Controls.DataGridSearching
         private readonly HashSet<INotifyPropertyChanged> _itemSubscriptions = new();
         private IDataGridCollectionView _view;
 
-        public DataGridSearchAdapter(
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        DataGridSearchAdapter(
             ISearchModel model,
             Func<IEnumerable<DataGridColumn>> columnProvider)
         {
@@ -44,9 +54,19 @@ namespace Avalonia.Controls.DataGridSearching
             _model.SearchChanged += OnModelSearchChanged;
         }
 
-        public IDataGridCollectionView View => _view;
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        IDataGridCollectionView View => _view;
 
-        public void AttachView(IDataGridCollectionView view)
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        void AttachView(IDataGridCollectionView view)
         {
             if (ReferenceEquals(_view, view))
             {

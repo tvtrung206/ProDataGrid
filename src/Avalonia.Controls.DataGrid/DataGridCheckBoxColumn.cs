@@ -20,7 +20,9 @@ namespace Avalonia.Controls
     /// <see cref="T:System.Windows.Controls.CheckBox" /> controls in its cells.
     /// </summary>
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     class DataGridCheckBoxColumn : DataGridBoundColumn
     {

@@ -10,7 +10,12 @@ using System.Globalization;
 
 namespace Avalonia.Controls.DataGridFiltering
 {
-    public enum FilteringOperator
+    #if !DATAGRID_INTERNAL
+    public
+    #else
+    internal
+    #endif
+    enum FilteringOperator
     {
         Equals,
         NotEquals,
@@ -26,7 +31,12 @@ namespace Avalonia.Controls.DataGridFiltering
         Custom
     }
 
-    public sealed class FilteringDescriptor : IEquatable<FilteringDescriptor>
+    #if !DATAGRID_INTERNAL
+    public
+    #else
+    internal
+    #endif
+    sealed class FilteringDescriptor : IEquatable<FilteringDescriptor>
     {
         public FilteringDescriptor(
             object columnId,
@@ -195,7 +205,12 @@ namespace Avalonia.Controls.DataGridFiltering
         }
     }
 
-    public class FilteringChangedEventArgs : EventArgs
+    #if !DATAGRID_INTERNAL
+    public
+    #else
+    internal
+    #endif
+    class FilteringChangedEventArgs : EventArgs
     {
         public FilteringChangedEventArgs(IReadOnlyList<FilteringDescriptor> oldDescriptors, IReadOnlyList<FilteringDescriptor> newDescriptors)
         {
@@ -208,7 +223,12 @@ namespace Avalonia.Controls.DataGridFiltering
         public IReadOnlyList<FilteringDescriptor> NewDescriptors { get; }
     }
 
-    public class FilteringChangingEventArgs : CancelEventArgs
+    #if !DATAGRID_INTERNAL
+    public
+    #else
+    internal
+    #endif
+    class FilteringChangingEventArgs : CancelEventArgs
     {
         public FilteringChangingEventArgs(IReadOnlyList<FilteringDescriptor> oldDescriptors, IReadOnlyList<FilteringDescriptor> newDescriptors)
         {
@@ -221,7 +241,12 @@ namespace Avalonia.Controls.DataGridFiltering
         public IReadOnlyList<FilteringDescriptor> NewDescriptors { get; }
     }
 
-    public interface IFilteringModel : INotifyPropertyChanged
+    #if !DATAGRID_INTERNAL
+    public
+    #else
+    internal
+    #endif
+    interface IFilteringModel : INotifyPropertyChanged
     {
         IReadOnlyList<FilteringDescriptor> Descriptors { get; }
 
@@ -248,12 +273,22 @@ namespace Avalonia.Controls.DataGridFiltering
         IDisposable DeferRefresh();
     }
 
-    public interface IDataGridFilteringModelFactory
+    #if !DATAGRID_INTERNAL
+    public
+    #else
+    internal
+    #endif
+    interface IDataGridFilteringModelFactory
     {
         IFilteringModel Create();
     }
 
-    public sealed class FilteringModel : IFilteringModel
+    #if !DATAGRID_INTERNAL
+    public
+    #else
+    internal
+    #endif
+    sealed class FilteringModel : IFilteringModel
     {
         private readonly List<FilteringDescriptor> _descriptors = new();
         private readonly IReadOnlyList<FilteringDescriptor> _readOnlyView;

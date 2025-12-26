@@ -18,7 +18,12 @@ namespace Avalonia.Controls
     /// <item><description>Bidirectional estimation updates</description></item>
     /// </list>
     /// </summary>
-    public class AdvancedRowHeightEstimator : IDataGridRowHeightEstimator, IDataGridRowHeightEstimatorStateful
+    #if !DATAGRID_INTERNAL
+    public
+    #else
+    internal
+    #endif
+    class AdvancedRowHeightEstimator : IDataGridRowHeightEstimator, IDataGridRowHeightEstimatorStateful
     {
         private const double DefaultHeight = 22.0;
         private const int MaxRowGroupLevels = 10;

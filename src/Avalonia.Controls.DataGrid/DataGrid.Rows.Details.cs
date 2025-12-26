@@ -8,7 +8,12 @@ using Avalonia.Interactivity;
 
 namespace Avalonia.Controls
 {
-    public partial class DataGrid
+    #if !DATAGRID_INTERNAL
+    public
+    #else
+    internal
+    #endif
+    partial class DataGrid
     {
         private int GetDetailsCountInclusive(int lowerBound, int upperBound)
         {
@@ -136,7 +141,12 @@ namespace Avalonia.Controls
         /// Raises the <see cref="E:Avalonia.Controls.DataGrid.RowDetailsVisibilityChanged" /> event.
         /// </summary>
         /// <param name="e">The event data.</param>
-        protected internal virtual void OnRowDetailsVisibilityChanged(DataGridRowDetailsEventArgs e)
+#if !DATAGRID_INTERNAL
+        protected internal
+#else
+        internal
+#endif
+        virtual void OnRowDetailsVisibilityChanged(DataGridRowDetailsEventArgs e)
         {
             e.RoutedEvent ??= RowDetailsVisibilityChangedEvent;
             e.Source ??= this;

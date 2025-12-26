@@ -8,7 +8,12 @@ namespace Avalonia.Controls.DataGridSorting
     /// <summary>
     /// Factory for creating a <see cref="DataGridSortingAdapter"/> without subclassing <see cref="DataGrid"/>.
     /// </summary>
-    public interface IDataGridSortingAdapterFactory
+#if !DATAGRID_INTERNAL
+    public
+#else
+    internal
+#endif
+    interface IDataGridSortingAdapterFactory
     {
         /// <summary>
         /// Creates a sorting adapter for the given grid and model.

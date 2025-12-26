@@ -16,7 +16,9 @@ namespace Avalonia.Controls
     /// Column that renders hierarchical rows with an expander and indentation.
     /// </summary>
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     class DataGridHierarchicalColumn : DataGridBoundColumn
     {

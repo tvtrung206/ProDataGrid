@@ -22,7 +22,9 @@ namespace Avalonia.Controls
     /// for editing boolean values with a compact toggle button (alternative to ToggleSwitch).
     /// </summary>
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     class DataGridToggleButtonColumn : DataGridBoundColumn
     {

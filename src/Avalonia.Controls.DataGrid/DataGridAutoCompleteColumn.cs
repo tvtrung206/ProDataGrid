@@ -20,7 +20,9 @@ namespace Avalonia.Controls
     /// for editing text values with auto-completion support.
     /// </summary>
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     class DataGridAutoCompleteColumn : DataGridBoundColumn
     {

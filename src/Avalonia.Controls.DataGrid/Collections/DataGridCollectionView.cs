@@ -26,7 +26,9 @@ namespace Avalonia.Collections
     /// can be canceled by setting e.Cancel to True.
     /// </summary>
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     sealed class PageChangingEventArgs : CancelEventArgs
     {
@@ -51,7 +53,9 @@ namespace Avalonia.Collections
 
     /// <summary>Defines a method that enables a collection to provide a custom view for specialized sorting, filtering, grouping, and currency.</summary>
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     interface IDataGridCollectionViewFactory
     {
@@ -65,7 +69,9 @@ namespace Avalonia.Collections
     /// </summary>
     [RequiresUnreferencedCode("DataGridCollectionView uses reflection and TypeDescriptor to inspect data items and is not compatible with trimming.")]
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     sealed partial class DataGridCollectionView : IDataGridCollectionView, IDataGridEditableCollectionView, IList, INotifyPropertyChanged, ITypedList
     {

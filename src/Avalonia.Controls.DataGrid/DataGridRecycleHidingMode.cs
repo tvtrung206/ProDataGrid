@@ -6,7 +6,12 @@ namespace Avalonia.Controls
     /// <summary>
     /// Controls how recycled containers are hidden when removed from the viewport.
     /// </summary>
-    public enum DataGridRecycleHidingMode
+    #if !DATAGRID_INTERNAL
+    public
+    #else
+    internal
+    #endif
+    enum DataGridRecycleHidingMode
     {
         /// <summary>
         /// Move recycled containers far offscreen to avoid stale layout bounds (default).

@@ -15,26 +15,43 @@ namespace Avalonia.Controls
     /// Row details functionality
     /// </summary>
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     partial class DataGrid
     {
         /// <summary>
         /// Identifies the <see cref="LoadingRowDetails"/> routed event.
         /// </summary>
-        public static readonly RoutedEvent<DataGridRowDetailsEventArgs> LoadingRowDetailsEvent =
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        static readonly RoutedEvent<DataGridRowDetailsEventArgs> LoadingRowDetailsEvent =
             RoutedEvent.Register<DataGrid, DataGridRowDetailsEventArgs>(nameof(LoadingRowDetails), RoutingStrategies.Bubble);
 
         /// <summary>
         /// Identifies the <see cref="UnloadingRowDetails"/> routed event.
         /// </summary>
-        public static readonly RoutedEvent<DataGridRowDetailsEventArgs> UnloadingRowDetailsEvent =
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        static readonly RoutedEvent<DataGridRowDetailsEventArgs> UnloadingRowDetailsEvent =
             RoutedEvent.Register<DataGrid, DataGridRowDetailsEventArgs>(nameof(UnloadingRowDetails), RoutingStrategies.Bubble);
 
         /// <summary>
         /// Identifies the <see cref="RowDetailsVisibilityChanged"/> routed event.
         /// </summary>
-        public static readonly RoutedEvent<DataGridRowDetailsEventArgs> RowDetailsVisibilityChangedEvent =
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        static readonly RoutedEvent<DataGridRowDetailsEventArgs> RowDetailsVisibilityChangedEvent =
             RoutedEvent.Register<DataGrid, DataGridRowDetailsEventArgs>(nameof(RowDetailsVisibilityChanged), RoutingStrategies.Bubble);
 
         internal void OnRowDetailsChanged()
@@ -51,7 +68,12 @@ namespace Avalonia.Controls
         /// <summary>
         /// Raises the LoadingRowDetails for row details preparation
         /// </summary>
-        protected virtual void OnLoadingRowDetails(DataGridRowDetailsEventArgs e)
+#if !DATAGRID_INTERNAL
+        protected
+#else
+        internal
+#endif
+        virtual void OnLoadingRowDetails(DataGridRowDetailsEventArgs e)
         {
             LoadingOrUnloadingRow = true;
             e.RoutedEvent ??= LoadingRowDetailsEvent;
@@ -64,7 +86,12 @@ namespace Avalonia.Controls
         /// <summary>
         /// Raises the UnloadingRowDetails event
         /// </summary>
-        protected virtual void OnUnloadingRowDetails(DataGridRowDetailsEventArgs e)
+#if !DATAGRID_INTERNAL
+        protected
+#else
+        internal
+#endif
+        virtual void OnUnloadingRowDetails(DataGridRowDetailsEventArgs e)
         {
             LoadingOrUnloadingRow = true;
             e.RoutedEvent ??= UnloadingRowDetailsEvent;
@@ -153,7 +180,12 @@ namespace Avalonia.Controls
         /// Occurs when a new row details template is applied to a row, so that you can customize
         /// the details section before it is used.
         /// </summary>
-        public event EventHandler<DataGridRowDetailsEventArgs> LoadingRowDetails
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        event EventHandler<DataGridRowDetailsEventArgs> LoadingRowDetails
         {
             add => AddHandler(LoadingRowDetailsEvent, value);
             remove => RemoveHandler(LoadingRowDetailsEvent, value);
@@ -163,7 +195,12 @@ namespace Avalonia.Controls
         /// <summary>
         /// Occurs when a row details element becomes available for reuse.
         /// </summary>
-        public event EventHandler<DataGridRowDetailsEventArgs> UnloadingRowDetails
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        event EventHandler<DataGridRowDetailsEventArgs> UnloadingRowDetails
         {
             add => AddHandler(UnloadingRowDetailsEvent, value);
             remove => RemoveHandler(UnloadingRowDetailsEvent, value);
@@ -174,7 +211,12 @@ namespace Avalonia.Controls
         /// Occurs when the <see cref="P:Avalonia.Controls.DataGrid.RowDetailsVisibilityMode" />
         /// property value changes.
         /// </summary>
-        public event EventHandler<DataGridRowDetailsEventArgs> RowDetailsVisibilityChanged
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        event EventHandler<DataGridRowDetailsEventArgs> RowDetailsVisibilityChanged
         {
             add => AddHandler(RowDetailsVisibilityChangedEvent, value);
             remove => RemoveHandler(RowDetailsVisibilityChangedEvent, value);

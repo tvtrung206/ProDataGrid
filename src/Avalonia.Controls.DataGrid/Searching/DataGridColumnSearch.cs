@@ -12,7 +12,12 @@ namespace Avalonia.Controls.DataGridSearching
     /// <summary>
     /// Attached properties for search configuration on <see cref="DataGridColumn"/>.
     /// </summary>
-    public static class DataGridColumnSearch
+    #if !DATAGRID_INTERNAL
+    public
+    #else
+    internal
+    #endif
+    static class DataGridColumnSearch
     {
         public static readonly AttachedProperty<bool> IsSearchableProperty =
             AvaloniaProperty.RegisterAttached<DataGridColumn, bool>(

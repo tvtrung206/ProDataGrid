@@ -3,12 +3,22 @@
 
 namespace Avalonia.Controls.DataGridDragDrop
 {
-    public interface IDataGridRowDragDropController : System.IDisposable
+#if !DATAGRID_INTERNAL
+    public
+#else
+    internal
+#endif
+    interface IDataGridRowDragDropController : System.IDisposable
     {
         DataGrid Grid { get; }
     }
 
-    public interface IDataGridRowDragDropControllerFactory
+#if !DATAGRID_INTERNAL
+    public
+#else
+    internal
+#endif
+    interface IDataGridRowDragDropControllerFactory
     {
         IDataGridRowDragDropController Create(
             DataGrid grid,

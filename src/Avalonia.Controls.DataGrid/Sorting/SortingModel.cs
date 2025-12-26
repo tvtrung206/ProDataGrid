@@ -13,20 +13,35 @@ using Avalonia.Controls;
 namespace Avalonia.Controls.DataGridSorting
 {
     [Flags]
-    public enum SortingModifiers
+    #if !DATAGRID_INTERNAL
+    public
+    #else
+    internal
+    #endif
+    enum SortingModifiers
     {
         None = 0,
         Multi = 1,
         Clear = 2
     }
 
-    public enum SortCycleMode
+    #if !DATAGRID_INTERNAL
+    public
+    #else
+    internal
+    #endif
+    enum SortCycleMode
     {
         AscendingDescending,
         AscendingDescendingNone
     }
 
-    public sealed class SortingDescriptor : IEquatable<SortingDescriptor>
+    #if !DATAGRID_INTERNAL
+    public
+    #else
+    internal
+    #endif
+    sealed class SortingDescriptor : IEquatable<SortingDescriptor>
     {
         public SortingDescriptor(object columnId, ListSortDirection direction, string propertyPath = null, IComparer comparer = null, CultureInfo culture = null)
         {
@@ -100,7 +115,12 @@ namespace Avalonia.Controls.DataGridSorting
         }
     }
 
-    public class SortingChangedEventArgs : EventArgs
+    #if !DATAGRID_INTERNAL
+    public
+    #else
+    internal
+    #endif
+    class SortingChangedEventArgs : EventArgs
     {
         public SortingChangedEventArgs(IReadOnlyList<SortingDescriptor> oldDescriptors, IReadOnlyList<SortingDescriptor> newDescriptors)
         {
@@ -113,7 +133,12 @@ namespace Avalonia.Controls.DataGridSorting
         public IReadOnlyList<SortingDescriptor> NewDescriptors { get; }
     }
 
-    public class SortingChangingEventArgs : CancelEventArgs
+    #if !DATAGRID_INTERNAL
+    public
+    #else
+    internal
+    #endif
+    class SortingChangingEventArgs : CancelEventArgs
     {
         public SortingChangingEventArgs(IReadOnlyList<SortingDescriptor> oldDescriptors, IReadOnlyList<SortingDescriptor> newDescriptors)
         {
@@ -126,7 +151,12 @@ namespace Avalonia.Controls.DataGridSorting
         public IReadOnlyList<SortingDescriptor> NewDescriptors { get; }
     }
 
-    public interface ISortingModel
+    #if !DATAGRID_INTERNAL
+    public
+    #else
+    internal
+    #endif
+    interface ISortingModel
     {
         IReadOnlyList<SortingDescriptor> Descriptors { get; }
 
@@ -159,12 +189,22 @@ namespace Avalonia.Controls.DataGridSorting
         IDisposable DeferRefresh();
     }
 
-    public interface IDataGridSortingModelFactory
+    #if !DATAGRID_INTERNAL
+    public
+    #else
+    internal
+    #endif
+    interface IDataGridSortingModelFactory
     {
         ISortingModel Create();
     }
 
-    public sealed class SortingModel : ISortingModel
+    #if !DATAGRID_INTERNAL
+    public
+    #else
+    internal
+    #endif
+    sealed class SortingModel : ISortingModel
     {
         private readonly List<SortingDescriptor> _descriptors = new();
         private readonly IReadOnlyList<SortingDescriptor> _readOnlyView;

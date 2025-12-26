@@ -9,9 +9,19 @@ using Avalonia.Controls.DataGridDragDrop;
 
 namespace Avalonia.Controls.DataGridDragDrop
 {
-    public sealed class DataGridRowDropEventArgs
+#if !DATAGRID_INTERNAL
+    public
+#else
+    internal
+#endif
+    sealed class DataGridRowDropEventArgs
     {
-        public DataGridRowDropEventArgs(
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        DataGridRowDropEventArgs(
             DataGrid grid,
             IList? targetList,
             IReadOnlyList<object> items,
@@ -39,32 +49,97 @@ namespace Avalonia.Controls.DataGridDragDrop
             DragEventArgs = dragEventArgs;
         }
 
-        public DataGrid Grid { get; }
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        DataGrid Grid { get; }
 
-        public IList? TargetList { get; }
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        IList? TargetList { get; }
 
-        public IReadOnlyList<object> Items { get; }
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        IReadOnlyList<object> Items { get; }
 
-        public IReadOnlyList<int> SourceIndices { get; }
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        IReadOnlyList<int> SourceIndices { get; }
 
-        public object? TargetItem { get; }
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        object? TargetItem { get; }
 
-        public int TargetIndex { get; }
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        int TargetIndex { get; }
 
-        public int InsertIndex { get; }
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        int InsertIndex { get; }
 
-        public DataGridRow? TargetRow { get; }
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        DataGridRow? TargetRow { get; }
 
-        public DataGridRowDropPosition Position { get; }
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        DataGridRowDropPosition Position { get; }
 
-        public bool IsSameGrid { get; }
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        bool IsSameGrid { get; }
 
-        public DragDropEffects RequestedEffect { get; set; }
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        DragDropEffects RequestedEffect { get; set; }
 
-        public DragEventArgs DragEventArgs { get; }
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        DragEventArgs DragEventArgs { get; }
     }
 
-    public interface IDataGridRowDropHandler
+#if !DATAGRID_INTERNAL
+    public
+#else
+    internal
+#endif
+    interface IDataGridRowDropHandler
     {
         bool Validate(DataGridRowDropEventArgs args);
 

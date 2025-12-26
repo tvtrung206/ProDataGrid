@@ -1,0 +1,48 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net6.0;net8.0;net10.0;netstandard2.0</TargetFrameworks>
+    <Nullable>enable</Nullable>
+    <DefineConstants>$(DefineConstants);DATAGRID_INTERNAL</DefineConstants>
+    <AssemblyName>Avalonia.Diagnostics</AssemblyName>
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>../../build/avalonia.snk</AssemblyOriginatorKeyFile>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+    <PackageId>ProDiagnostics</PackageId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Update="**/*.xaml.cs"
+             DependentUpon="%(Filename)" />
+    <Compile Include="../Avalonia.Controls.DataGrid/**/*.cs"
+             Exclude="../Avalonia.Controls.DataGrid/bin/**;../Avalonia.Controls.DataGrid/obj/**"
+             LinkBase="DataGrid" />
+    <AvaloniaXaml Include="../Avalonia.Controls.DataGrid/Themes/Generic.xaml"
+                  Link="Themes/Generic.xaml" />
+    <AvaloniaXaml Include="../Avalonia.Controls.DataGrid/Themes/Simple.xaml"
+                  Link="Themes/Simple.xaml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="../Avalonia.Controls.DataGrid/bin/**;../Avalonia.Controls.DataGrid/obj/**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" />
+    <PackageReference Include="Avalonia.Controls.ColorPicker" />
+    <PackageReference Include="Avalonia.Themes.Simple" />
+  </ItemGroup>
+
+  <Import Project="../../build/SharedVersion.props" />
+
+  <ItemGroup>
+    <Compile Update="**\*.xaml.cs">
+      <DependentUpon>%(Filename)</DependentUpon>
+    </Compile>
+    <None Remove="**\*.xaml"/>
+    <AvaloniaResource Include="**\*.xaml">
+      <SubType>Designer</SubType>
+    </AvaloniaResource>
+  </ItemGroup>
+
+</Project>

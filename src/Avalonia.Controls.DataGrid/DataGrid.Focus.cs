@@ -17,7 +17,9 @@ namespace Avalonia.Controls
     /// Focus handling
     /// </summary>
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     partial class DataGrid
     {

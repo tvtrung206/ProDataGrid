@@ -23,7 +23,12 @@ namespace Avalonia.Controls
         bool TryRestore();
     }
 
-    public partial class DataGrid
+    #if !DATAGRID_INTERNAL
+    public
+    #else
+    internal
+    #endif
+    partial class DataGrid
     {
         private sealed class ScrollStateManager : IDataGridScrollStateManager
         {

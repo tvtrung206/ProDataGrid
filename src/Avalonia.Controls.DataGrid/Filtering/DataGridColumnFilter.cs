@@ -10,7 +10,12 @@ namespace Avalonia.Controls.DataGridFiltering
     /// <summary>
     /// Attached properties for filtering configuration on <see cref="DataGridColumn"/>.
     /// </summary>
-    public static class DataGridColumnFilter
+    #if !DATAGRID_INTERNAL
+    public
+    #else
+    internal
+    #endif
+    static class DataGridColumnFilter
     {
         /// <summary>
         /// Allows a column to supply a predicate factory for descriptors targeting that column.

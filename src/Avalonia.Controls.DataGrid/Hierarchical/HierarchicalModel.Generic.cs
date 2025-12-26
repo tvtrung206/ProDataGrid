@@ -13,7 +13,12 @@ using System.Threading.Tasks;
 
 namespace Avalonia.Controls.DataGridHierarchical
 {
-    public interface IHierarchicalModel<T> : IHierarchicalModel
+    #if !DATAGRID_INTERNAL
+    public
+    #else
+    internal
+    #endif
+    interface IHierarchicalModel<T> : IHierarchicalModel
     {
         HierarchicalOptions<T> TypedOptions { get; }
 
@@ -77,7 +82,12 @@ namespace Avalonia.Controls.DataGridHierarchical
         event EventHandler<FlattenedChangedEventArgs<T>>? FlattenedChangedTyped;
     }
 
-    public class HierarchicalNodeEventArgs<T> : EventArgs
+    #if !DATAGRID_INTERNAL
+    public
+    #else
+    internal
+    #endif
+    class HierarchicalNodeEventArgs<T> : EventArgs
     {
         public HierarchicalNodeEventArgs(HierarchicalNode<T> node)
         {
@@ -87,7 +97,12 @@ namespace Avalonia.Controls.DataGridHierarchical
         public HierarchicalNode<T> Node { get; }
     }
 
-    public class HierarchicalNodeLoadFailedEventArgs<T> : HierarchicalNodeEventArgs<T>
+    #if !DATAGRID_INTERNAL
+    public
+    #else
+    internal
+    #endif
+    class HierarchicalNodeLoadFailedEventArgs<T> : HierarchicalNodeEventArgs<T>
     {
         public HierarchicalNodeLoadFailedEventArgs(HierarchicalNode<T> node, Exception error)
             : base(node)
@@ -98,7 +113,12 @@ namespace Avalonia.Controls.DataGridHierarchical
         public Exception Error { get; }
     }
 
-    public class HierarchicalNodeRetryEventArgs<T> : HierarchicalNodeEventArgs<T>
+    #if !DATAGRID_INTERNAL
+    public
+    #else
+    internal
+    #endif
+    class HierarchicalNodeRetryEventArgs<T> : HierarchicalNodeEventArgs<T>
     {
         public HierarchicalNodeRetryEventArgs(HierarchicalNode<T> node, TimeSpan delay)
             : base(node)
@@ -109,7 +129,12 @@ namespace Avalonia.Controls.DataGridHierarchical
         public TimeSpan Delay { get; }
     }
 
-    public class HierarchyChangedEventArgs<T> : HierarchicalNodeEventArgs<T>
+    #if !DATAGRID_INTERNAL
+    public
+    #else
+    internal
+    #endif
+    class HierarchyChangedEventArgs<T> : HierarchicalNodeEventArgs<T>
     {
         public HierarchyChangedEventArgs(HierarchicalNode<T> node, NotifyCollectionChangedAction action)
             : base(node)
@@ -120,7 +145,12 @@ namespace Avalonia.Controls.DataGridHierarchical
         public NotifyCollectionChangedAction Action { get; }
     }
 
-    public class FlattenedChangedEventArgs<T> : EventArgs
+    #if !DATAGRID_INTERNAL
+    public
+    #else
+    internal
+    #endif
+    class FlattenedChangedEventArgs<T> : EventArgs
     {
         public FlattenedChangedEventArgs(FlattenedChangedEventArgs untyped, IReadOnlyList<HierarchicalNode<T>> flattened)
         {
@@ -143,7 +173,12 @@ namespace Avalonia.Controls.DataGridHierarchical
     /// Strongly-typed options wrapper to avoid reflection when working with hierarchical data.
     /// </summary>
     /// <typeparam name="T">Item type.</typeparam>
-    public class HierarchicalOptions<T>
+    #if !DATAGRID_INTERNAL
+    public
+    #else
+    internal
+    #endif
+    class HierarchicalOptions<T>
     {
         private Func<T, IEnumerable<T>?>? _childrenSelector;
         private Func<T, CancellationToken, Task<IEnumerable<T>?>>? _childrenSelectorAsync;
@@ -699,7 +734,12 @@ namespace Avalonia.Controls.DataGridHierarchical
     /// Strongly-typed hierarchical model wrapper to make MVVM/DynamicData pipelines easier.
     /// </summary>
     /// <typeparam name="T">Item type.</typeparam>
-    public class HierarchicalModel<T> : HierarchicalModel, IHierarchicalModel<T>
+    #if !DATAGRID_INTERNAL
+    public
+    #else
+    internal
+    #endif
+    class HierarchicalModel<T> : HierarchicalModel, IHierarchicalModel<T>
     {
         public HierarchicalModel(HierarchicalOptions<T>? options = null)
             : base(PrepareOptions(options ??= new HierarchicalOptions<T>()))
@@ -862,7 +902,12 @@ namespace Avalonia.Controls.DataGridHierarchical
     /// Typed view over an existing hierarchical node.
     /// </summary>
     /// <typeparam name="T">Item type.</typeparam>
-    public readonly struct HierarchicalNode<T>
+    #if !DATAGRID_INTERNAL
+    public
+    #else
+    internal
+    #endif
+    readonly struct HierarchicalNode<T>
     {
         internal HierarchicalNode(HierarchicalNode inner)
         {

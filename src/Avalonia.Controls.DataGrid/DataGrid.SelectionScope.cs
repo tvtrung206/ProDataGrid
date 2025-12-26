@@ -13,7 +13,9 @@ namespace Avalonia.Controls
     /// Selection origin scoping helpers.
     /// </summary>
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     partial class DataGrid
     {

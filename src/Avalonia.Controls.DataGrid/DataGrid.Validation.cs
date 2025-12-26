@@ -14,7 +14,9 @@ namespace Avalonia.Controls
     /// Validation handling
     /// </summary>
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     partial class DataGrid
     {

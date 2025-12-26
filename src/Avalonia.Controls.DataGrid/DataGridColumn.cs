@@ -26,7 +26,9 @@ using System.Collections.Specialized;
 namespace Avalonia.Controls
 {
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     abstract partial class DataGridColumn : AvaloniaObject
     {

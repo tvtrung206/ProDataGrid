@@ -8,7 +8,12 @@ namespace Avalonia.Controls.DataGridFiltering
     /// <summary>
     /// Factory for creating a <see cref="DataGridFilteringAdapter"/> without subclassing <see cref="DataGrid"/>.
     /// </summary>
-    public interface IDataGridFilteringAdapterFactory
+#if !DATAGRID_INTERNAL
+    public
+#else
+    internal
+#endif
+    interface IDataGridFilteringAdapterFactory
     {
         /// <summary>
         /// Creates a filtering adapter for the given grid and model.

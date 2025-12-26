@@ -12,7 +12,9 @@ using System.Linq;
 namespace Avalonia.Controls
 {
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     partial class DataGrid
     {
@@ -46,7 +48,12 @@ namespace Avalonia.Controls
         /// <summary>
         /// Identifies the <see cref="TotalSummaryPosition"/> property.
         /// </summary>
-        public static readonly DirectProperty<DataGrid, DataGridSummaryRowPosition> TotalSummaryPositionProperty =
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        static readonly DirectProperty<DataGrid, DataGridSummaryRowPosition> TotalSummaryPositionProperty =
             AvaloniaProperty.RegisterDirect<DataGrid, DataGridSummaryRowPosition>(
                 nameof(TotalSummaryPosition),
                 o => o.TotalSummaryPosition,
@@ -55,7 +62,12 @@ namespace Avalonia.Controls
         /// <summary>
         /// Identifies the <see cref="GroupSummaryPosition"/> property.
         /// </summary>
-        public static readonly DirectProperty<DataGrid, DataGridGroupSummaryPosition> GroupSummaryPositionProperty =
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        static readonly DirectProperty<DataGrid, DataGridGroupSummaryPosition> GroupSummaryPositionProperty =
             AvaloniaProperty.RegisterDirect<DataGrid, DataGridGroupSummaryPosition>(
                 nameof(GroupSummaryPosition),
                 o => o.GroupSummaryPosition,
@@ -112,7 +124,12 @@ namespace Avalonia.Controls
         /// <summary>
         /// Gets or sets the position of the total summary row.
         /// </summary>
-        public DataGridSummaryRowPosition TotalSummaryPosition
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        DataGridSummaryRowPosition TotalSummaryPosition
         {
             get => _totalSummaryPosition;
             set
@@ -127,7 +144,12 @@ namespace Avalonia.Controls
         /// <summary>
         /// Gets or sets the position of group summary rows.
         /// </summary>
-        public DataGridGroupSummaryPosition GroupSummaryPosition
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        DataGridGroupSummaryPosition GroupSummaryPosition
         {
             get => _groupSummaryPosition;
             set
@@ -175,7 +197,12 @@ namespace Avalonia.Controls
         /// <summary>
         /// Gets the total summary row instance.
         /// </summary>
-        public DataGridSummaryRow TotalSummaryRow => _totalSummaryRow;
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        DataGridSummaryRow TotalSummaryRow => _totalSummaryRow;
 
         /// <summary>
         /// Gets the summary service.
@@ -185,7 +212,12 @@ namespace Avalonia.Controls
         /// <summary>
         /// Event raised when summary values are recalculated.
         /// </summary>
-        public event EventHandler<DataGridSummaryRecalculatedEventArgs> SummaryRecalculated;
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        event EventHandler<DataGridSummaryRecalculatedEventArgs> SummaryRecalculated;
 
         /// <summary>
         /// Initializes the summary service.
@@ -532,7 +564,12 @@ namespace Avalonia.Controls
         /// <param name="scope">The scope.</param>
         /// <param name="group">The group (for group scope).</param>
         /// <returns>The calculated value.</returns>
-        public object GetSummaryValue(DataGridColumn column, DataGridSummaryDescription description, DataGridSummaryScope scope, DataGridCollectionViewGroup group = null)
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        object GetSummaryValue(DataGridColumn column, DataGridSummaryDescription description, DataGridSummaryScope scope, DataGridCollectionViewGroup group = null)
         {
             if (_summaryService == null) return null;
 

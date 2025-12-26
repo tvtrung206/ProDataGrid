@@ -19,7 +19,9 @@ namespace Avalonia.Controls
     /// for displaying images. This column is read-only by default.
     /// </summary>
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     class DataGridImageColumn : DataGridBoundColumn
     {

@@ -9,7 +9,9 @@ namespace Avalonia.Controls
     /// Contract for building clipboard payloads for a DataGrid copy operation.
     /// </summary>
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     interface IDataGridClipboardExporter
     {

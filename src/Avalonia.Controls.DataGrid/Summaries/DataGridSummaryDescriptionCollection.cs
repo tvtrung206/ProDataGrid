@@ -10,7 +10,9 @@ namespace Avalonia.Controls
     /// A collection of <see cref="DataGridSummaryDescription"/> objects.
     /// </summary>
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     class DataGridSummaryDescriptionCollection : ObservableCollection<DataGridSummaryDescription>
     {

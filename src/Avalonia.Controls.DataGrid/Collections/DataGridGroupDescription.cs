@@ -23,7 +23,9 @@ using Avalonia.Utilities;
 namespace Avalonia.Collections
 {
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
 
     abstract class DataGridGroupDescription : INotifyPropertyChanged
@@ -64,7 +66,9 @@ namespace Avalonia.Collections
 
     [RequiresUnreferencedCode("Grouping by property path uses reflection and is not compatible with trimming.")]
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     class DataGridPathGroupDescription : DataGridGroupDescription
     {
@@ -130,7 +134,9 @@ namespace Avalonia.Collections
     }
 
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     abstract class DataGridCollectionViewGroup : INotifyPropertyChanged
     {

@@ -6,7 +6,9 @@ using Avalonia.Input;
 namespace Avalonia.Controls
 {
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     interface IDataGridClipboardFormatExporter
     {

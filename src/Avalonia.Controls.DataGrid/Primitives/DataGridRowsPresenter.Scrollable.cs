@@ -15,7 +15,9 @@ namespace Avalonia.Controls.Primitives
     /// with Avalonia's virtualized scrolling contract.
     /// </summary>
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     sealed partial class DataGridRowsPresenter : ILogicalScrollable
     {

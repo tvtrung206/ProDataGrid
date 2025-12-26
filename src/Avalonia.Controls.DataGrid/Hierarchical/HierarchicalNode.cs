@@ -16,7 +16,12 @@ namespace Avalonia.Controls.DataGridHierarchical
     /// Represents a single node in the hierarchical data model.
     /// </summary>
     [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors | DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)]
-    public class HierarchicalNode : INotifyPropertyChanged
+    #if !DATAGRID_INTERNAL
+    public
+    #else
+    internal
+    #endif
+    class HierarchicalNode : INotifyPropertyChanged
     {
         private readonly List<HierarchicalNode> _children;
         private bool _isExpanded;

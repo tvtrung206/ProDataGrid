@@ -9,7 +9,12 @@ namespace Avalonia.Controls
     /// Defines the contract for row height estimation and scroll position calculation in DataGrid.
     /// Implementations can provide different algorithms for handling variable row heights.
     /// </summary>
-    public interface IDataGridRowHeightEstimator
+    #if !DATAGRID_INTERNAL
+    public
+    #else
+    internal
+    #endif
+    interface IDataGridRowHeightEstimator
     {
         /// <summary>
         /// Gets or sets the default row height used as initial estimate.
@@ -132,7 +137,12 @@ namespace Avalonia.Controls
     /// <summary>
     /// Extends <see cref="IDataGridRowHeightEstimator"/> with state capture/restore support.
     /// </summary>
-    public interface IDataGridRowHeightEstimatorStateful
+    #if !DATAGRID_INTERNAL
+    public
+    #else
+    internal
+    #endif
+    interface IDataGridRowHeightEstimatorStateful
     {
         /// <summary>
         /// Captures the current internal estimator state.
@@ -151,7 +161,12 @@ namespace Avalonia.Controls
     /// <summary>
     /// Base class for row height estimator state snapshots.
     /// </summary>
-    public abstract class RowHeightEstimatorState
+    #if !DATAGRID_INTERNAL
+    public
+    #else
+    internal
+    #endif
+    abstract class RowHeightEstimatorState
     {
         protected RowHeightEstimatorState(string estimatorType)
         {
@@ -167,7 +182,12 @@ namespace Avalonia.Controls
     /// <summary>
     /// Diagnostic information about the row height estimator state.
     /// </summary>
-    public class RowHeightEstimatorDiagnostics
+    #if !DATAGRID_INTERNAL
+    public
+    #else
+    internal
+    #endif
+    class RowHeightEstimatorDiagnostics
     {
         /// <summary>
         /// Gets or sets the name of the estimator algorithm.

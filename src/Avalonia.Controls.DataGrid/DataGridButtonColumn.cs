@@ -21,7 +21,9 @@ namespace Avalonia.Controls
     /// for triggering actions (e.g., Delete, Edit, View) per row.
     /// </summary>
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     class DataGridButtonColumn : DataGridColumn
     {

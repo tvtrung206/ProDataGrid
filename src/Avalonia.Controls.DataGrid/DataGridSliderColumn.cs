@@ -19,7 +19,9 @@ namespace Avalonia.Controls
     /// for editing numeric values with a slider.
     /// </summary>
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     class DataGridSliderColumn : DataGridBoundColumn
     {

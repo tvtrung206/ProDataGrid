@@ -3,7 +3,9 @@
 namespace Avalonia.Automation.Peers
 {
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     class DataGridRowAutomationPeer : ControlAutomationPeer
     {

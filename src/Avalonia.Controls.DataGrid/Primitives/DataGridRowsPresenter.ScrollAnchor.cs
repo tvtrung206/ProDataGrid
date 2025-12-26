@@ -11,7 +11,9 @@ namespace Avalonia.Controls.Primitives
     /// during layout changes by tracking an anchor element.
     /// </summary>
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     sealed partial class DataGridRowsPresenter : IScrollAnchorProvider
     {

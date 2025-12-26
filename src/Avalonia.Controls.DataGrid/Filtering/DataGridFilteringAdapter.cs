@@ -18,7 +18,12 @@ namespace Avalonia.Controls.DataGridFiltering
     /// Bridges filtering descriptors to the view's Filter predicate.
     /// </summary>
     [RequiresUnreferencedCode("DataGridFilteringAdapter uses reflection to access item properties and is not compatible with trimming.")]
-    public class DataGridFilteringAdapter : IDisposable
+#if !DATAGRID_INTERNAL
+    public
+#else
+    internal
+#endif
+    class DataGridFilteringAdapter : IDisposable
     {
         private static readonly object s_externalFilterColumnId = new();
 
@@ -29,7 +34,12 @@ namespace Avalonia.Controls.DataGridFiltering
         private readonly Dictionary<(Type type, string property), Func<object, object>> _getterCache = new();
         private IDataGridCollectionView _view;
 
-        public DataGridFilteringAdapter(
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        DataGridFilteringAdapter(
             IFilteringModel model,
             Func<IEnumerable<DataGridColumn>> columnProvider,
             Action beforeViewRefresh = null,
@@ -49,9 +59,19 @@ namespace Avalonia.Controls.DataGridFiltering
             _afterViewRefresh = afterViewRefresh;
         }
 
-        public IDataGridCollectionView View => _view;
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        IDataGridCollectionView View => _view;
 
-        public void AttachView(IDataGridCollectionView view)
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        void AttachView(IDataGridCollectionView view)
         {
             if (ReferenceEquals(_view, view))
             {

@@ -11,7 +11,9 @@ using System.Globalization;
 namespace Avalonia.Controls
 {
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     enum DataGridLengthUnitType
     {
@@ -27,7 +29,9 @@ namespace Avalonia.Controls
     /// </summary>
     [TypeConverter(typeof(DataGridLengthConverter))]
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     struct DataGridLength : IEquatable<DataGridLength>
     {
@@ -355,7 +359,9 @@ namespace Avalonia.Controls
     /// DataGridLengthConverter - Converter class for converting instances of other types to and from DataGridLength instances.
     /// </summary> 
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     class DataGridLengthConverter : TypeConverter
     {

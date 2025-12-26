@@ -16,7 +16,9 @@ namespace Avalonia.Controls
     /// Navigation and scrolling
     /// </summary>
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     partial class DataGrid
     {
@@ -29,7 +31,12 @@ namespace Avalonia.Controls
         /// </summary>
         /// <param name="item">an item from the DataGrid's items source or a CollectionViewGroup from the collection view</param>
         /// <param name="column">a column from the DataGrid's columns collection</param>
-        public void ScrollIntoView(object item, DataGridColumn column)
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        void ScrollIntoView(object item, DataGridColumn column)
         {
             if ((column == null && (item == null || FirstDisplayedNonFillerColumnIndex == -1))
                 || (column != null && column.OwningGrid != this))

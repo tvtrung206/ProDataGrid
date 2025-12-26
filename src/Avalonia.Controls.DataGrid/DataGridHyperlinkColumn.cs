@@ -18,7 +18,9 @@ namespace Avalonia.Controls
     /// Represents a <see cref="DataGridBoundColumn" /> that displays hyperlinks.
     /// </summary>
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     class DataGridHyperlinkColumn : DataGridBoundColumn
     {

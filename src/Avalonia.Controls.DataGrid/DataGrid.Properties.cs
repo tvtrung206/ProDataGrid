@@ -25,7 +25,9 @@ namespace Avalonia.Controls
     /// Styled and direct properties
     /// </summary>
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     partial class DataGrid
     {
@@ -175,13 +177,23 @@ namespace Avalonia.Controls
         /// <summary>
         /// Identifies the <see cref="RowDropHandler"/> dependency property.
         /// </summary>
-        public static readonly StyledProperty<IDataGridRowDropHandler> RowDropHandlerProperty =
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        static readonly StyledProperty<IDataGridRowDropHandler> RowDropHandlerProperty =
             AvaloniaProperty.Register<DataGrid, IDataGridRowDropHandler>(nameof(RowDropHandler));
 
         /// <summary>
         /// Gets or sets the handler used to perform row drops.
         /// </summary>
-        public IDataGridRowDropHandler RowDropHandler
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        IDataGridRowDropHandler RowDropHandler
         {
             get => GetValue(RowDropHandlerProperty);
             set => SetValue(RowDropHandlerProperty, value);
@@ -190,14 +202,24 @@ namespace Avalonia.Controls
         /// <summary>
         /// Identifies the <see cref="RowDragDropControllerFactory"/> dependency property.
         /// </summary>
-        public static readonly StyledProperty<IDataGridRowDragDropControllerFactory> RowDragDropControllerFactoryProperty =
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        static readonly StyledProperty<IDataGridRowDragDropControllerFactory> RowDragDropControllerFactoryProperty =
             AvaloniaProperty.Register<DataGrid, IDataGridRowDragDropControllerFactory>(
                 nameof(RowDragDropControllerFactory));
 
         /// <summary>
         /// Gets or sets the controller factory used to wire drag/drop.
         /// </summary>
-        public IDataGridRowDragDropControllerFactory RowDragDropControllerFactory
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        IDataGridRowDragDropControllerFactory RowDragDropControllerFactory
         {
             get => GetValue(RowDragDropControllerFactoryProperty);
             set => SetValue(RowDragDropControllerFactoryProperty, value);
@@ -230,13 +252,23 @@ namespace Avalonia.Controls
         /// <summary>
         /// Identifies the ColumnWidth dependency property.
         /// </summary>
-        public static readonly StyledProperty<DataGridLength> ColumnWidthProperty =
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        static readonly StyledProperty<DataGridLength> ColumnWidthProperty =
             AvaloniaProperty.Register<DataGrid, DataGridLength>(nameof(ColumnWidth), defaultValue: DataGridLength.Auto);
 
         /// <summary>
         /// Gets or sets the standard width or automatic sizing mode of columns in the control.
         /// </summary>
-        public DataGridLength ColumnWidth
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        DataGridLength ColumnWidth
         {
             get { return GetValue(ColumnWidthProperty); }
             set { SetValue(ColumnWidthProperty, value); }
@@ -347,25 +379,45 @@ namespace Avalonia.Controls
 
         private static bool ValidateFrozenColumnCount(int value) => value >= 0;
 
-        public static readonly StyledProperty<DataGridGridLinesVisibility> GridLinesVisibilityProperty =
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        static readonly StyledProperty<DataGridGridLinesVisibility> GridLinesVisibilityProperty =
             AvaloniaProperty.Register<DataGrid, DataGridGridLinesVisibility>(nameof(GridLinesVisibility));
 
         /// <summary>
         /// Gets or sets a value that indicates which grid lines separating inner cells are shown.
         /// </summary>
-        public DataGridGridLinesVisibility GridLinesVisibility
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        DataGridGridLinesVisibility GridLinesVisibility
         {
             get { return GetValue(GridLinesVisibilityProperty); }
             set { SetValue(GridLinesVisibilityProperty, value); }
         }
 
-        public static readonly StyledProperty<DataGridHeadersVisibility> HeadersVisibilityProperty =
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        static readonly StyledProperty<DataGridHeadersVisibility> HeadersVisibilityProperty =
             AvaloniaProperty.Register<DataGrid, DataGridHeadersVisibility>(nameof(HeadersVisibility));
 
         /// <summary>
         /// Gets or sets a value that indicates the visibility of row and column headers.
         /// </summary>
-        public DataGridHeadersVisibility HeadersVisibility
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        DataGridHeadersVisibility HeadersVisibility
         {
             get { return GetValue(HeadersVisibilityProperty); }
             set { SetValue(HeadersVisibilityProperty, value); }
@@ -538,10 +590,20 @@ namespace Avalonia.Controls
             set { SetValue(RowHeaderWidthProperty, value); }
         }
 
-        public static readonly StyledProperty<DataGridSelectionMode> SelectionModeProperty =
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        static readonly StyledProperty<DataGridSelectionMode> SelectionModeProperty =
             AvaloniaProperty.Register<DataGrid, DataGridSelectionMode>(nameof(SelectionMode));
 
-        public static readonly StyledProperty<DataGridSelectionUnit> SelectionUnitProperty =
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        static readonly StyledProperty<DataGridSelectionUnit> SelectionUnitProperty =
             AvaloniaProperty.Register<DataGrid, DataGridSelectionUnit>(
                 nameof(SelectionUnit),
                 defaultValue: DataGridSelectionUnit.FullRow);
@@ -549,7 +611,12 @@ namespace Avalonia.Controls
         /// <summary>
         /// Gets or sets the selection behavior of the data grid.
         /// </summary>
-        public DataGridSelectionMode SelectionMode
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        DataGridSelectionMode SelectionMode
         {
             get { return GetValue(SelectionModeProperty); }
             set { SetValue(SelectionModeProperty, value); }
@@ -558,7 +625,12 @@ namespace Avalonia.Controls
         /// <summary>
         /// Gets or sets whether selection targets rows or cells.
         /// </summary>
-        public DataGridSelectionUnit SelectionUnit
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        DataGridSelectionUnit SelectionUnit
         {
             get { return GetValue(SelectionUnitProperty); }
             set { SetValue(SelectionUnitProperty, value); }
@@ -567,7 +639,12 @@ namespace Avalonia.Controls
         /// <summary>
         /// Defines the <see cref="KeyboardGestureOverrides"/> property.
         /// </summary>
-        public static readonly StyledProperty<DataGridKeyboardGestures> KeyboardGestureOverridesProperty =
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        static readonly StyledProperty<DataGridKeyboardGestures> KeyboardGestureOverridesProperty =
             AvaloniaProperty.Register<DataGrid, DataGridKeyboardGestures>(nameof(KeyboardGestureOverrides));
 
         /// <summary>
@@ -577,7 +654,12 @@ namespace Avalonia.Controls
         /// When set, any non-null gesture replaces the default mapping for that action.
         /// Use <see cref="KeyGesture.Key"/> set to <see cref="Key.None"/> to disable an action.
         /// </remarks>
-        public DataGridKeyboardGestures KeyboardGestureOverrides
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        DataGridKeyboardGestures KeyboardGestureOverrides
         {
             get { return GetValue(KeyboardGestureOverridesProperty); }
             set { SetValue(KeyboardGestureOverridesProperty, value); }
@@ -788,14 +870,24 @@ namespace Avalonia.Controls
                 (o, v) => o.SelectedItems = v,
                 defaultBindingMode: BindingMode.TwoWay);
 
-        public static readonly DirectProperty<DataGrid, IList<DataGridCellInfo>> SelectedCellsProperty =
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        static readonly DirectProperty<DataGrid, IList<DataGridCellInfo>> SelectedCellsProperty =
             AvaloniaProperty.RegisterDirect<DataGrid, IList<DataGridCellInfo>>(
                 nameof(SelectedCells),
                 o => o.SelectedCells,
                 (o, v) => o.SelectedCells = v,
                 defaultBindingMode: BindingMode.TwoWay);
 
-        public static readonly DirectProperty<DataGrid, DataGridCellInfo> CurrentCellProperty =
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        static readonly DirectProperty<DataGrid, DataGridCellInfo> CurrentCellProperty =
             AvaloniaProperty.RegisterDirect<DataGrid, DataGridCellInfo>(
                 nameof(CurrentCell),
                 o => o.CurrentCell,
@@ -805,7 +897,12 @@ namespace Avalonia.Controls
         /// <summary>
         /// Gets or sets information about the current cell.
         /// </summary>
-        public DataGridCellInfo CurrentCell
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        DataGridCellInfo CurrentCell
         {
             get => _currentCell;
             set => SetCurrentCell(value);
@@ -866,7 +963,12 @@ namespace Avalonia.Controls
                 (o, v) => o.HierarchicalModel = v,
                 defaultBindingMode: BindingMode.TwoWay);
 
-        public static readonly StyledProperty<DataGridClipboardCopyMode> ClipboardCopyModeProperty =
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        static readonly StyledProperty<DataGridClipboardCopyMode> ClipboardCopyModeProperty =
             AvaloniaProperty.Register<DataGrid, DataGridClipboardCopyMode>(
                 nameof(ClipboardCopyMode),
                 defaultValue: DataGridClipboardCopyMode.ExcludeHeader);
@@ -874,7 +976,12 @@ namespace Avalonia.Controls
         /// <summary>
         /// The property which determines how DataGrid content is copied to the Clipboard.
         /// </summary>
-        public DataGridClipboardCopyMode ClipboardCopyMode
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        DataGridClipboardCopyMode ClipboardCopyMode
         {
             get { return GetValue(ClipboardCopyModeProperty); }
             set { SetValue(ClipboardCopyModeProperty, value); }
@@ -883,7 +990,12 @@ namespace Avalonia.Controls
         /// <summary>
         /// Identifies the <see cref="ClipboardExportFormat"/> styled property.
         /// </summary>
-        public static readonly StyledProperty<DataGridClipboardExportFormat> ClipboardExportFormatProperty =
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        static readonly StyledProperty<DataGridClipboardExportFormat> ClipboardExportFormatProperty =
             AvaloniaProperty.Register<DataGrid, DataGridClipboardExportFormat>(
                 nameof(ClipboardExportFormat),
                 defaultValue: DataGridClipboardExportFormat.Text);
@@ -891,7 +1003,12 @@ namespace Avalonia.Controls
         /// <summary>
         /// Gets or sets the clipboard format emitted by the grid's default exporter.
         /// </summary>
-        public DataGridClipboardExportFormat ClipboardExportFormat
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        DataGridClipboardExportFormat ClipboardExportFormat
         {
             get => GetValue(ClipboardExportFormatProperty);
             set => SetValue(ClipboardExportFormatProperty, value);
@@ -901,14 +1018,24 @@ namespace Avalonia.Controls
         /// <summary>
         /// Identifies the <see cref="ClipboardExporter"/> styled property.
         /// </summary>
-        public static readonly StyledProperty<IDataGridClipboardExporter?> ClipboardExporterProperty =
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        static readonly StyledProperty<IDataGridClipboardExporter?> ClipboardExporterProperty =
             AvaloniaProperty.Register<DataGrid, IDataGridClipboardExporter?>(
                 nameof(ClipboardExporter));
 
         /// <summary>
         /// Gets or sets the clipboard exporter responsible for building the clipboard payload.
         /// </summary>
-        public IDataGridClipboardExporter? ClipboardExporter
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        IDataGridClipboardExporter? ClipboardExporter
         {
             get => GetValue(ClipboardExporterProperty);
             set => SetValue(ClipboardExporterProperty, value);
@@ -917,14 +1044,24 @@ namespace Avalonia.Controls
         /// <summary>
         /// Identifies the <see cref="ClipboardFormatExporters"/> styled property.
         /// </summary>
-        public static readonly StyledProperty<IReadOnlyList<IDataGridClipboardFormatExporter>?> ClipboardFormatExportersProperty =
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        static readonly StyledProperty<IReadOnlyList<IDataGridClipboardFormatExporter>?> ClipboardFormatExportersProperty =
             AvaloniaProperty.Register<DataGrid, IReadOnlyList<IDataGridClipboardFormatExporter>?>(nameof(ClipboardFormatExporters));
 
         /// <summary>
         /// Gets or sets the per-format exporters used by the default clipboard exporter.
         /// If unset, built-in exporters (text, CSV, HTML) are used.
         /// </summary>
-        public IReadOnlyList<IDataGridClipboardFormatExporter>? ClipboardFormatExporters
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        IReadOnlyList<IDataGridClipboardFormatExporter>? ClipboardFormatExporters
         {
             get => GetValue(ClipboardFormatExportersProperty);
             set => SetValue(ClipboardFormatExportersProperty, value);
@@ -933,7 +1070,12 @@ namespace Avalonia.Controls
         /// <summary>
         /// Identifies the Columns direct property; bindings to Columns are fully supported.
         /// </summary>
-        public static readonly DirectProperty<DataGrid, IList<DataGridColumn>> ColumnsProperty =
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        static readonly DirectProperty<DataGrid, IList<DataGridColumn>> ColumnsProperty =
             AvaloniaProperty.RegisterDirect<DataGrid, IList<DataGridColumn>>(
                 nameof(Columns),
                 o => o.Columns,
@@ -943,7 +1085,12 @@ namespace Avalonia.Controls
         /// <summary>
         /// Identifies the ColumnsSynchronizationMode styled property.
         /// </summary>
-        public static readonly StyledProperty<ColumnsSynchronizationMode> ColumnsSynchronizationModeProperty =
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        static readonly StyledProperty<ColumnsSynchronizationMode> ColumnsSynchronizationModeProperty =
             AvaloniaProperty.Register<DataGrid, ColumnsSynchronizationMode>(
                 nameof(ColumnsSynchronizationMode),
                 ColumnsSynchronizationMode.OneWayToGrid,
@@ -952,7 +1099,12 @@ namespace Avalonia.Controls
         /// <summary>
         /// Identifies the ColumnsSourceResetBehavior styled property.
         /// </summary>
-        public static readonly StyledProperty<ColumnsSourceResetBehavior> ColumnsSourceResetBehaviorProperty =
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        static readonly StyledProperty<ColumnsSourceResetBehavior> ColumnsSourceResetBehaviorProperty =
             AvaloniaProperty.Register<DataGrid, ColumnsSourceResetBehavior>(
                 nameof(ColumnsSourceResetBehavior),
                 ColumnsSourceResetBehavior.Reload,
@@ -961,7 +1113,12 @@ namespace Avalonia.Controls
         /// <summary>
         /// Identifies the AutoGeneratedColumnsPlacement styled property.
         /// </summary>
-        public static readonly StyledProperty<AutoGeneratedColumnsPlacement> AutoGeneratedColumnsPlacementProperty =
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        static readonly StyledProperty<AutoGeneratedColumnsPlacement> AutoGeneratedColumnsPlacementProperty =
             AvaloniaProperty.Register<DataGrid, AutoGeneratedColumnsPlacement>(
                 nameof(AutoGeneratedColumnsPlacement),
                 AutoGeneratedColumnsPlacement.AfterSource,
@@ -970,7 +1127,12 @@ namespace Avalonia.Controls
         /// <summary>
         /// Gets or sets how a bound columns collection synchronizes with the grid.
         /// </summary>
-        public ColumnsSynchronizationMode ColumnsSynchronizationMode
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        ColumnsSynchronizationMode ColumnsSynchronizationMode
         {
             get => GetValue(ColumnsSynchronizationModeProperty);
             set => SetValue(ColumnsSynchronizationModeProperty, value);
@@ -979,7 +1141,12 @@ namespace Avalonia.Controls
         /// <summary>
         /// Gets or sets how the grid reacts to Reset notifications from the bound columns collection.
         /// </summary>
-        public ColumnsSourceResetBehavior ColumnsSourceResetBehavior
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        ColumnsSourceResetBehavior ColumnsSourceResetBehavior
         {
             get => GetValue(ColumnsSourceResetBehaviorProperty);
             set => SetValue(ColumnsSourceResetBehaviorProperty, value);
@@ -988,7 +1155,12 @@ namespace Avalonia.Controls
         /// <summary>
         /// Gets or sets where auto-generated columns should be placed relative to bound columns.
         /// </summary>
-        public AutoGeneratedColumnsPlacement AutoGeneratedColumnsPlacement
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        AutoGeneratedColumnsPlacement AutoGeneratedColumnsPlacement
         {
             get => GetValue(AutoGeneratedColumnsPlacementProperty);
             set => SetValue(AutoGeneratedColumnsPlacementProperty, value);
@@ -1047,26 +1219,46 @@ namespace Avalonia.Controls
             set { SetValue(RowDetailsTemplateProperty, value); }
         }
 
-        public static readonly StyledProperty<DataGridRowDetailsVisibilityMode> RowDetailsVisibilityModeProperty =
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        static readonly StyledProperty<DataGridRowDetailsVisibilityMode> RowDetailsVisibilityModeProperty =
             AvaloniaProperty.Register<DataGrid, DataGridRowDetailsVisibilityMode>(nameof(RowDetailsVisibilityMode));
 
         /// <summary>
         /// Gets or sets a value that indicates when the details sections of rows are displayed.
         /// </summary>
-        public DataGridRowDetailsVisibilityMode RowDetailsVisibilityMode
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        DataGridRowDetailsVisibilityMode RowDetailsVisibilityMode
         {
             get { return GetValue(RowDetailsVisibilityModeProperty); }
             set { SetValue(RowDetailsVisibilityModeProperty, value); }
         }
 
-        public static readonly DirectProperty<DataGrid, IDataGridCollectionView> CollectionViewProperty =
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        static readonly DirectProperty<DataGrid, IDataGridCollectionView> CollectionViewProperty =
             AvaloniaProperty.RegisterDirect<DataGrid, IDataGridCollectionView>(nameof(CollectionView),
                 o => o.CollectionView);
 
         /// <summary>
         /// Gets current <see cref="IDataGridCollectionView"/>.
         /// </summary>
-        public IDataGridCollectionView CollectionView =>
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        IDataGridCollectionView CollectionView =>
             DataConnection.CollectionView;
 
         /// <summary>

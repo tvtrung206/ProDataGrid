@@ -14,7 +14,9 @@ namespace Avalonia.Controls.Primitives
     /// allowing the scroll to naturally align to row boundaries.
     /// </summary>
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     sealed partial class DataGridRowsPresenter : IScrollSnapPointsInfo
     {

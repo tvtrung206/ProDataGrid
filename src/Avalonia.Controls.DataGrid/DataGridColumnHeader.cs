@@ -33,7 +33,9 @@ namespace Avalonia.Controls
     /// </summary>
     [PseudoClasses(":dragIndicator", ":pressed", ":sortascending", ":sortdescending", ":filtered")]
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     class DataGridColumnHeader : ContentControl
     {

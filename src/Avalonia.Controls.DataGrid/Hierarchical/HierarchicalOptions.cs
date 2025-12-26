@@ -12,7 +12,12 @@ namespace Avalonia.Controls.DataGridHierarchical
     /// <summary>
     /// Defines how expanded nodes are matched when restoring expansion state.
     /// </summary>
-    public enum ExpandedStateKeyMode
+    #if !DATAGRID_INTERNAL
+    public
+    #else
+    internal
+    #endif
+    enum ExpandedStateKeyMode
     {
         /// <summary>
         /// Uses the item instance (or its equality semantics) as the key.
@@ -33,7 +38,12 @@ namespace Avalonia.Controls.DataGridHierarchical
     /// <summary>
     /// Options controlling hierarchical data resolution and behavior.
     /// </summary>
-    public class HierarchicalOptions
+    #if !DATAGRID_INTERNAL
+    public
+    #else
+    internal
+    #endif
+    class HierarchicalOptions
     {
         /// <summary>
         /// Delegate used to resolve children for a given item.

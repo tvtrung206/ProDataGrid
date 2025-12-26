@@ -10,7 +10,9 @@ namespace Avalonia.Controls
     /// Provides context for clipboard export operations.
     /// </summary>
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     sealed class DataGridClipboardExportContext
     {

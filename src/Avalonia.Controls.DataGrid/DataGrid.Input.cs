@@ -22,14 +22,21 @@ namespace Avalonia.Controls
     /// Keyboard and pointer input handling
     /// </summary>
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     partial class DataGrid
     {
         /// <summary>
         /// Identifies the <see cref="CellPointerPressed"/> routed event.
         /// </summary>
-        public static readonly RoutedEvent<DataGridCellPointerPressedEventArgs> CellPointerPressedEvent =
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        static readonly RoutedEvent<DataGridCellPointerPressedEventArgs> CellPointerPressedEvent =
             RoutedEvent.Register<DataGrid, DataGridCellPointerPressedEventArgs>(nameof(CellPointerPressed), RoutingStrategies.Bubble);
 
         private IDisposable _keyDownRouteFinishedSubscription;
@@ -1274,7 +1281,12 @@ namespace Avalonia.Controls
         /// <summary>
         /// Occurs when cell is mouse-pressed.
         /// </summary>
-        public event EventHandler<DataGridCellPointerPressedEventArgs> CellPointerPressed
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        event EventHandler<DataGridCellPointerPressedEventArgs> CellPointerPressed
         {
             add => AddHandler(CellPointerPressedEvent, value);
             remove => RemoveHandler(CellPointerPressedEvent, value);

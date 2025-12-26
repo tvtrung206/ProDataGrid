@@ -14,7 +14,12 @@ using System.Linq;
 
 namespace Avalonia.Controls.DataGridSelection
 {
-    public class SelectedItemsView : IList, INotifyCollectionChanged, INotifyPropertyChanged, IDisposable
+    #if !DATAGRID_INTERNAL
+    public
+    #else
+    internal
+    #endif
+    class SelectedItemsView : IList, INotifyCollectionChanged, INotifyPropertyChanged, IDisposable
     {
         private readonly ISelectionModel _model;
         private readonly List<object> _pending = new();

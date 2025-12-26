@@ -11,7 +11,12 @@ namespace Avalonia.Controls
     /// Default implementation of <see cref="IDataGridRowHeightEstimator"/> that uses
     /// a simple average-based estimation algorithm. This matches the original DataGrid behavior.
     /// </summary>
-    public class DefaultRowHeightEstimator : IDataGridRowHeightEstimator, IDataGridRowHeightEstimatorStateful
+    #if !DATAGRID_INTERNAL
+    public
+    #else
+    internal
+    #endif
+    class DefaultRowHeightEstimator : IDataGridRowHeightEstimator, IDataGridRowHeightEstimatorStateful
     {
         private const double DefaultHeight = 22.0;
         private const int MaxRowGroupLevels = 10;

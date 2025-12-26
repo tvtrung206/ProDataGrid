@@ -19,7 +19,9 @@ namespace Avalonia.Controls
     /// for displaying progress values. This column is read-only.
     /// </summary>
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     class DataGridProgressBarColumn : DataGridBoundColumn
     {

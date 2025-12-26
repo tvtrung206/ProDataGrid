@@ -13,7 +13,12 @@ namespace Avalonia.Controls.DataGridSelection
     /// Factory hook for creating selection models used by the DataGrid.
     /// Implementations can provide custom selection behavior.
     /// </summary>
-    public interface IDataGridSelectionModelFactory
+    #if !DATAGRID_INTERNAL
+    public
+    #else
+    internal
+    #endif
+    interface IDataGridSelectionModelFactory
     {
         ISelectionModel Create();
     }
@@ -21,7 +26,12 @@ namespace Avalonia.Controls.DataGridSelection
     /// <summary>
     /// Default adapter around ISelectionModel that DataGrid will use to manage selection.
     /// </summary>
-    public class DataGridSelectionModelAdapter : IDisposable
+    #if !DATAGRID_INTERNAL
+    public
+    #else
+    internal
+    #endif
+    class DataGridSelectionModelAdapter : IDisposable
     {
         public DataGridSelectionModelAdapter(ISelectionModel model)
             : this(model, null, null)

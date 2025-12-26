@@ -20,7 +20,9 @@ namespace Avalonia.Controls.Primitives
     [TemplatePart(DATAGRIDROWHEADER_elementRootName, typeof(Control))]
     [PseudoClasses(":invalid", ":selected", ":editing", ":current")]
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     class DataGridRowHeader : ContentControl
     {

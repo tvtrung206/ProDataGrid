@@ -16,7 +16,9 @@ namespace Avalonia.Controls
     [TemplatePart(DATAGRID_SUMMARYROW_elementCellsPresenter, typeof(DataGridSummaryCellsPresenter))]
     [PseudoClasses(":total", ":group")]
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     class DataGridSummaryRow : TemplatedControl
     {

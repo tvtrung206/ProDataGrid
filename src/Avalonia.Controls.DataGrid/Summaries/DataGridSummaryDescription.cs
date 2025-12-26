@@ -13,7 +13,9 @@ namespace Avalonia.Controls
     /// Base class for column summary definitions.
     /// </summary>
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     abstract class DataGridSummaryDescription : AvaloniaObject
     {

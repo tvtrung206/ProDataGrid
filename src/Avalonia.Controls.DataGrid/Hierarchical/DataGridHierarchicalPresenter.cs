@@ -13,7 +13,12 @@ namespace Avalonia.Controls
     /// <summary>
     /// Presenter used by <see cref="DataGridHierarchicalColumn"/> to render an expander with indent.
     /// </summary>
-    public class DataGridHierarchicalPresenter : ContentControl
+    #if !DATAGRID_INTERNAL
+    public
+    #else
+    internal
+    #endif
+    class DataGridHierarchicalPresenter : ContentControl
     {
         private const string PartExpander = "PART_Expander";
         private ToggleButton? _expander;

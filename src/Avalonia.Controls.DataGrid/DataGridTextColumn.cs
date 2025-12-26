@@ -22,7 +22,9 @@ namespace Avalonia.Controls
     /// Represents a <see cref="T:Avalonia.Controls.DataGrid" /> column that hosts textual content in its cells.
     /// </summary>
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     class DataGridTextColumn : DataGridBoundColumn
     {

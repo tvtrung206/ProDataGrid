@@ -13,7 +13,12 @@ namespace Avalonia.Controls.DataGridHierarchical
     /// <summary>
     /// Factory to create a hierarchical adapter without subclassing <see cref="DataGrid"/>.
     /// </summary>
-    public interface IDataGridHierarchicalAdapterFactory
+    #if !DATAGRID_INTERNAL
+    public
+    #else
+    internal
+    #endif
+    interface IDataGridHierarchicalAdapterFactory
     {
         DataGridHierarchicalAdapter Create(DataGrid grid, IHierarchicalModel model);
     }
@@ -21,7 +26,12 @@ namespace Avalonia.Controls.DataGridHierarchical
     /// <summary>
     /// Factory to create a strongly-typed hierarchical adapter without subclassing <see cref="DataGrid"/>.
     /// </summary>
-    public interface IDataGridHierarchicalAdapterFactory<T> : IDataGridHierarchicalAdapterFactory
+    #if !DATAGRID_INTERNAL
+    public
+    #else
+    internal
+    #endif
+    interface IDataGridHierarchicalAdapterFactory<T> : IDataGridHierarchicalAdapterFactory
     {
         DataGridHierarchicalAdapter<T> Create(DataGrid grid, IHierarchicalModel<T> model);
     }
@@ -29,7 +39,12 @@ namespace Avalonia.Controls.DataGridHierarchical
     /// <summary>
     /// Factory to create a strongly-typed hierarchical model without subclassing <see cref="DataGrid"/>.
     /// </summary>
-    public interface IDataGridHierarchicalModelFactory<T> : IDataGridHierarchicalModelFactory
+    #if !DATAGRID_INTERNAL
+    public
+    #else
+    internal
+    #endif
+    interface IDataGridHierarchicalModelFactory<T> : IDataGridHierarchicalModelFactory
     {
         new IHierarchicalModel<T> Create();
     }
@@ -58,7 +73,12 @@ namespace Avalonia.Controls.DataGridHierarchical
     /// <summary>
     /// Bridges a hierarchical model to the DataGrid by exposing flattened accessors and gestures.
     /// </summary>
-    public class DataGridHierarchicalAdapter : IDisposable
+    #if !DATAGRID_INTERNAL
+    public
+    #else
+    internal
+    #endif
+    class DataGridHierarchicalAdapter : IDisposable
     {
         private readonly IHierarchicalModel _model;
         private readonly Action<FlattenedChangedEventArgs>? _flattenedChangedCallback;
@@ -186,7 +206,12 @@ namespace Avalonia.Controls.DataGridHierarchical
     /// <summary>
     /// Typed adapter that wraps <see cref="DataGridHierarchicalAdapter"/> to remove casts for <typeparamref name="T"/>.
     /// </summary>
-    public class DataGridHierarchicalAdapter<T> : IDisposable
+    #if !DATAGRID_INTERNAL
+    public
+    #else
+    internal
+    #endif
+    class DataGridHierarchicalAdapter<T> : IDisposable
     {
         private readonly IHierarchicalModel<T> _model;
         private readonly DataGridHierarchicalAdapter _inner;

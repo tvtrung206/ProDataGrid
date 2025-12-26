@@ -15,9 +15,14 @@ namespace Avalonia.Controls.DataGridDragDrop
     /// <summary>
     /// Reorders hierarchical rows by moving items between sibling collections.
     /// </summary>
-    public class DataGridHierarchicalRowReorderHandler : IDataGridRowDropHandler
+#if !DATAGRID_INTERNAL
+    public
+#else
+    internal
+#endif
+    class DataGridHierarchicalRowReorderHandler : IDataGridRowDropHandler
     {
-        public bool Validate(DataGridRowDropEventArgs args)
+        private bool ValidateCore(DataGridRowDropEventArgs args)
         {
             if (args == null)
             {
@@ -121,9 +126,15 @@ namespace Avalonia.Controls.DataGridDragDrop
             return true;
         }
 
-        public bool Execute(DataGridRowDropEventArgs args)
+#if !DATAGRID_INTERNAL
+        public bool Validate(DataGridRowDropEventArgs args) => ValidateCore(args);
+#else
+        bool IDataGridRowDropHandler.Validate(DataGridRowDropEventArgs args) => ValidateCore(args);
+#endif
+
+        private bool ExecuteCore(DataGridRowDropEventArgs args)
         {
-            if (!Validate(args))
+            if (!ValidateCore(args))
             {
                 return false;
             }
@@ -189,6 +200,12 @@ namespace Avalonia.Controls.DataGridDragDrop
 
             return true;
         }
+
+#if !DATAGRID_INTERNAL
+        public bool Execute(DataGridRowDropEventArgs args) => ExecuteCore(args);
+#else
+        bool IDataGridRowDropHandler.Execute(DataGridRowDropEventArgs args) => ExecuteCore(args);
+#endif
 
         private static bool TryCastNodes(IReadOnlyList<object> items, out List<HierarchicalNode> nodes)
         {

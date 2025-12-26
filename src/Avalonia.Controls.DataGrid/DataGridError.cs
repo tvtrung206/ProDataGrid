@@ -11,7 +11,12 @@ namespace Avalonia.Controls
 
     internal static class DataGridError
     {
-        public static class DataGrid
+        #if !DATAGRID_INTERNAL
+        public
+        #else
+        internal
+        #endif
+        static class DataGrid
         {
             public static InvalidOperationException CannotChangeItemsWhenLoadingRows()
             {
@@ -124,7 +129,12 @@ namespace Avalonia.Controls
 
         }
 
-        public static class DataGridColumnHeader
+        #if !DATAGRID_INTERNAL
+        public
+        #else
+        internal
+        #endif
+        static class DataGridColumnHeader
         {
             public static NotSupportedException ContentDoesNotSupportUIElements()
             {
@@ -132,7 +142,12 @@ namespace Avalonia.Controls
             }
         }
 
-        public static class DataGridLength
+        #if !DATAGRID_INTERNAL
+        public
+        #else
+        internal
+        #endif
+        static class DataGridLength
         {
             public static ArgumentException InvalidUnitType(string paramName)
             {
@@ -140,7 +155,12 @@ namespace Avalonia.Controls
             }
         }
 
-        public static class DataGridLengthConverter
+        #if !DATAGRID_INTERNAL
+        public
+        #else
+        internal
+        #endif
+        static class DataGridLengthConverter
         {
             public static NotSupportedException CannotConvertFrom(string paramName)
             {
@@ -158,7 +178,12 @@ namespace Avalonia.Controls
             }
         }
 
-        public static class DataGridRow
+        #if !DATAGRID_INTERNAL
+        public
+        #else
+        internal
+        #endif
+        static class DataGridRow
         {
             public static InvalidOperationException InvalidRowIndexCannotCompleteOperation()
             {
@@ -166,7 +191,12 @@ namespace Avalonia.Controls
             }
         }
 
-        public static class DataGridSelectedItemsCollection
+        #if !DATAGRID_INTERNAL
+        public
+        #else
+        internal
+        #endif
+        static class DataGridSelectedItemsCollection
         {
             public static InvalidOperationException CannotChangeSelectedItemsCollectionInSingleMode()
             {
@@ -174,7 +204,12 @@ namespace Avalonia.Controls
             }
         }
 
-        public static class DataGridTemplateColumn
+        #if !DATAGRID_INTERNAL
+        public
+        #else
+        internal
+        #endif
+        static class DataGridTemplateColumn
         {
             public static TypeInitializationException MissingTemplateForType(Type type)
             {

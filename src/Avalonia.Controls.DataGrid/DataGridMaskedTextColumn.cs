@@ -19,7 +19,9 @@ namespace Avalonia.Controls
     /// for editing text values with input masks (e.g., phone numbers, SSN, credit cards).
     /// </summary>
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     class DataGridMaskedTextColumn : DataGridBoundColumn
     {

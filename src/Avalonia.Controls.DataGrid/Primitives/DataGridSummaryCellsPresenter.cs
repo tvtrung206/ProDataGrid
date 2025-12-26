@@ -13,7 +13,9 @@ namespace Avalonia.Controls
     /// Presenter for summary cells, handles layout to align with columns.
     /// </summary>
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     class DataGridSummaryCellsPresenter : Panel
     {

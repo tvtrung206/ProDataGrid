@@ -16,7 +16,9 @@ namespace Avalonia.Controls
     /// </summary>
     [PseudoClasses(":sum", ":average", ":count", ":min", ":max", ":custom", ":none")]
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     class DataGridSummaryCell : ContentControl
     {

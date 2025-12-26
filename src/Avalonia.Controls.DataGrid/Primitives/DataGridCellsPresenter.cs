@@ -21,7 +21,9 @@ namespace Avalonia.Controls.Primitives
     /// to specify the location in the control's visual tree where the cells are to be added. 
     /// </summary>
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     sealed class DataGridCellsPresenter : Panel, IChildIndexProvider
     {

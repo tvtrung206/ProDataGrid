@@ -10,9 +10,14 @@ using Avalonia.Utilities;
 
 namespace Avalonia.Controls.DataGridDragDrop
 {
-    public class DataGridRowReorderHandler : IDataGridRowDropHandler
+#if !DATAGRID_INTERNAL
+    public
+#else
+    internal
+#endif
+    class DataGridRowReorderHandler : IDataGridRowDropHandler
     {
-        public bool Validate(DataGridRowDropEventArgs args)
+        private bool ValidateCore(DataGridRowDropEventArgs args)
         {
             if (args == null)
             {
@@ -69,9 +74,15 @@ namespace Avalonia.Controls.DataGridDragDrop
             return true;
         }
 
-        public bool Execute(DataGridRowDropEventArgs args)
+#if !DATAGRID_INTERNAL
+        public bool Validate(DataGridRowDropEventArgs args) => ValidateCore(args);
+#else
+        bool IDataGridRowDropHandler.Validate(DataGridRowDropEventArgs args) => ValidateCore(args);
+#endif
+
+        private bool ExecuteCore(DataGridRowDropEventArgs args)
         {
-            if (!Validate(args))
+            if (!ValidateCore(args))
             {
                 return false;
             }
@@ -155,5 +166,11 @@ namespace Avalonia.Controls.DataGridDragDrop
 
             return true;
         }
+
+#if !DATAGRID_INTERNAL
+        public bool Execute(DataGridRowDropEventArgs args) => ExecuteCore(args);
+#else
+        bool IDataGridRowDropHandler.Execute(DataGridRowDropEventArgs args) => ExecuteCore(args);
+#endif
     }
 }

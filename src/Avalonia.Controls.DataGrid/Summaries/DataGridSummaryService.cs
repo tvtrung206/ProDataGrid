@@ -381,7 +381,9 @@ namespace Avalonia.Controls
     /// Event arguments for when summaries are recalculated.
     /// </summary>
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     class DataGridSummaryRecalculatedEventArgs : EventArgs
     {

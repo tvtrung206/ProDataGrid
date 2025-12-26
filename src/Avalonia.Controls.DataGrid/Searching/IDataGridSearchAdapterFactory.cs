@@ -10,7 +10,12 @@ namespace Avalonia.Controls.DataGridSearching
     /// <summary>
     /// Factory for creating a <see cref="DataGridSearchAdapter"/> without subclassing <see cref="DataGrid"/>.
     /// </summary>
-    public interface IDataGridSearchAdapterFactory
+#if !DATAGRID_INTERNAL
+    public
+#else
+    internal
+#endif
+    interface IDataGridSearchAdapterFactory
     {
         /// <summary>
         /// Creates a new search adapter for the grid.

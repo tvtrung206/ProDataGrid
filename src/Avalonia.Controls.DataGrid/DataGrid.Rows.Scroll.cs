@@ -9,7 +9,12 @@ using System.Diagnostics;
 
 namespace Avalonia.Controls
 {
-    public partial class DataGrid
+    #if !DATAGRID_INTERNAL
+    public
+    #else
+    internal
+    #endif
+    partial class DataGrid
     {
         private void ScrollSlotsByHeight(double height)
         {

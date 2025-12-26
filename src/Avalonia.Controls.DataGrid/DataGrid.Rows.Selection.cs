@@ -9,7 +9,12 @@ using System.Diagnostics;
 
 namespace Avalonia.Controls
 {
-    public partial class DataGrid
+    #if !DATAGRID_INTERNAL
+    public
+    #else
+    internal
+    #endif
+    partial class DataGrid
     {
 
         private void SelectDisplayedElement(int slot, bool? isSelectedOverride = null)

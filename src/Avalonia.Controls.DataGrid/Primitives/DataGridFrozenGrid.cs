@@ -13,7 +13,9 @@ namespace Avalonia.Controls.Primitives
     /// Represents a non-scrollable grid that contains <see cref="T:Avalonia.Controls.DataGrid" /> row headers.
     /// </summary>
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     class DataGridFrozenGrid : Grid
     {

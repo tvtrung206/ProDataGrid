@@ -33,7 +33,9 @@ namespace Avalonia.Controls
     [TemplatePart(DATAGRIDROW_elementRowHeader,      typeof(DataGridRowHeader))]
     [PseudoClasses(":selected", ":editing", ":invalid", ":current", ":pointerover", ":dragging", ":drag-over-before", ":drag-over-after", ":drag-over-inside", ":placeholder", ":searchmatch", ":searchcurrent")]
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     partial class DataGridRow : TemplatedControl
     {

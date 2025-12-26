@@ -21,7 +21,9 @@ namespace Avalonia.Controls
     [TemplatePart(DATAGRIDCELL_elementRightGridLine, typeof(Rectangle))]
     [PseudoClasses(":selected", ":current", ":edited", ":invalid", ":focus", ":searchmatch", ":searchcurrent")]
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     class DataGridCell : ContentControl
     {

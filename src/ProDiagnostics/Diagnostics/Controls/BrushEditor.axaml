@@ -1,0 +1,20 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:ClassModifier="internal">
+  <Design.PreviewWith>
+    <BrushEditor />
+  </Design.PreviewWith>
+
+  <Style Selector=":is(BrushEditor)">
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Grid>
+          <Button Theme="{StaticResource SimpleTextBoxClearButtonTheme}"
+                  x:Name="PART_ClearButton"
+                  HorizontalAlignment="Right"
+                  VerticalContentAlignment="Center"/>
+        </Grid>
+      </ControlTemplate>
+    </Setter>
+  </Style>
+</Styles>

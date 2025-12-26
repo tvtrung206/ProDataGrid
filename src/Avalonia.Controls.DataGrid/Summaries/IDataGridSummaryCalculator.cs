@@ -9,7 +9,9 @@ namespace Avalonia.Controls
     /// Interface for implementing custom summary calculations.
     /// </summary>
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     interface IDataGridSummaryCalculator
     {
@@ -43,7 +45,9 @@ namespace Avalonia.Controls
     /// State object for incremental summary calculations.
     /// </summary>
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     interface IDataGridSummaryState
     {

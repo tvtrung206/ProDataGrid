@@ -20,7 +20,9 @@ namespace Avalonia.Controls.Primitives
     /// location in the control's visual tree where the column headers are to be added.
     /// </summary>
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     sealed class DataGridColumnHeadersPresenter : Panel, IChildIndexProvider
     {

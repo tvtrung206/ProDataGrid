@@ -13,50 +13,87 @@ namespace Avalonia.Controls
     /// Event declarations
     /// </summary>
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     partial class DataGrid
     {
         /// <summary>
         /// Identifies the <see cref="AutoGeneratingColumn"/> routed event.
         /// </summary>
-        public static readonly RoutedEvent<DataGridAutoGeneratingColumnEventArgs> AutoGeneratingColumnEvent =
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        static readonly RoutedEvent<DataGridAutoGeneratingColumnEventArgs> AutoGeneratingColumnEvent =
             RoutedEvent.Register<DataGrid, DataGridAutoGeneratingColumnEventArgs>(nameof(AutoGeneratingColumn), RoutingStrategies.Bubble);
 
         /// <summary>
         /// Identifies the <see cref="ColumnDisplayIndexChanged"/> routed event.
         /// </summary>
-        public static readonly RoutedEvent<DataGridColumnEventArgs> ColumnDisplayIndexChangedEvent =
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        static readonly RoutedEvent<DataGridColumnEventArgs> ColumnDisplayIndexChangedEvent =
             RoutedEvent.Register<DataGrid, DataGridColumnEventArgs>(nameof(ColumnDisplayIndexChanged), RoutingStrategies.Bubble);
 
         /// <summary>
         /// Identifies the <see cref="ColumnReordered"/> routed event.
         /// </summary>
-        public static readonly RoutedEvent<DataGridColumnEventArgs> ColumnReorderedEvent =
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        static readonly RoutedEvent<DataGridColumnEventArgs> ColumnReorderedEvent =
             RoutedEvent.Register<DataGrid, DataGridColumnEventArgs>(nameof(ColumnReordered), RoutingStrategies.Bubble);
 
         /// <summary>
         /// Identifies the <see cref="ColumnReordering"/> routed event.
         /// </summary>
-        public static readonly RoutedEvent<DataGridColumnReorderingEventArgs> ColumnReorderingEvent =
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        static readonly RoutedEvent<DataGridColumnReorderingEventArgs> ColumnReorderingEvent =
             RoutedEvent.Register<DataGrid, DataGridColumnReorderingEventArgs>(nameof(ColumnReordering), RoutingStrategies.Bubble);
 
         /// <summary>
         /// Identifies the <see cref="LoadingRow"/> routed event.
         /// </summary>
-        public static readonly RoutedEvent<DataGridRowEventArgs> LoadingRowEvent =
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        static readonly RoutedEvent<DataGridRowEventArgs> LoadingRowEvent =
             RoutedEvent.Register<DataGrid, DataGridRowEventArgs>(nameof(LoadingRow), RoutingStrategies.Bubble);
 
         /// <summary>
         /// Identifies the <see cref="Sorting"/> routed event.
         /// </summary>
-        public static readonly RoutedEvent<DataGridColumnEventArgs> SortingEvent =
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        static readonly RoutedEvent<DataGridColumnEventArgs> SortingEvent =
             RoutedEvent.Register<DataGrid, DataGridColumnEventArgs>(nameof(Sorting), RoutingStrategies.Bubble);
 
         /// <summary>
         /// Identifies the <see cref="UnloadingRow"/> routed event.
         /// </summary>
-        public static readonly RoutedEvent<DataGridRowEventArgs> UnloadingRowEvent =
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        static readonly RoutedEvent<DataGridRowEventArgs> UnloadingRowEvent =
             RoutedEvent.Register<DataGrid, DataGridRowEventArgs>(nameof(UnloadingRow), RoutingStrategies.Bubble);
 
         /// <summary>
@@ -64,7 +101,12 @@ namespace Avalonia.Controls
         /// <see cref="P:Avalonia.Controls.DataGrid.ItemsSource" /> property is changed and the
         /// <see cref="P:Avalonia.Controls.DataGrid.AutoGenerateColumns" /> property is true.
         /// </summary>
-        public event EventHandler<DataGridAutoGeneratingColumnEventArgs> AutoGeneratingColumn
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        event EventHandler<DataGridAutoGeneratingColumnEventArgs> AutoGeneratingColumn
         {
             add => AddHandler(AutoGeneratingColumnEvent, value);
             remove => RemoveHandler(AutoGeneratingColumnEvent, value);
@@ -74,7 +116,12 @@ namespace Avalonia.Controls
         /// Occurs when the <see cref="P:Avalonia.Controls.DataGridColumn.DisplayIndex" />
         /// property of a column changes.
         /// </summary>
-        public event EventHandler<DataGridColumnEventArgs> ColumnDisplayIndexChanged
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        event EventHandler<DataGridColumnEventArgs> ColumnDisplayIndexChanged
         {
             add => AddHandler(ColumnDisplayIndexChangedEvent, value);
             remove => RemoveHandler(ColumnDisplayIndexChangedEvent, value);
@@ -83,7 +130,12 @@ namespace Avalonia.Controls
         /// <summary>
         /// Raised when column reordering ends, to allow subscribers to clean up.
         /// </summary>
-        public event EventHandler<DataGridColumnEventArgs> ColumnReordered
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        event EventHandler<DataGridColumnEventArgs> ColumnReordered
         {
             add => AddHandler(ColumnReorderedEvent, value);
             remove => RemoveHandler(ColumnReorderedEvent, value);
@@ -94,7 +146,12 @@ namespace Avalonia.Controls
         /// set tooltip and caret UIElements, constrain tooltip position, indicate that
         /// a preview should be shown, or cancel reordering.
         /// </summary>
-        public event EventHandler<DataGridColumnReorderingEventArgs> ColumnReordering
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        event EventHandler<DataGridColumnReorderingEventArgs> ColumnReordering
         {
             add => AddHandler(ColumnReorderingEvent, value);
             remove => RemoveHandler(ColumnReorderingEvent, value);
@@ -104,7 +161,12 @@ namespace Avalonia.Controls
         /// Occurs after a <see cref="T:Avalonia.Controls.DataGridRow" />
         /// is instantiated, so that you can customize it before it is used.
         /// </summary>
-        public event EventHandler<DataGridRowEventArgs> LoadingRow
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        event EventHandler<DataGridRowEventArgs> LoadingRow
         {
             add => AddHandler(LoadingRowEvent, value);
             remove => RemoveHandler(LoadingRowEvent, value);
@@ -119,7 +181,12 @@ namespace Avalonia.Controls
         /// <summary>
         /// Occurs when the <see cref="DataGridColumn"/> sorting request is triggered.
         /// </summary>
-        public event EventHandler<DataGridColumnEventArgs> Sorting
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        event EventHandler<DataGridColumnEventArgs> Sorting
         {
             add => AddHandler(SortingEvent, value);
             remove => RemoveHandler(SortingEvent, value);
@@ -129,7 +196,12 @@ namespace Avalonia.Controls
         /// Occurs when a <see cref="T:Avalonia.Controls.DataGridRow" />
         /// object becomes available for reuse.
         /// </summary>
-        public event EventHandler<DataGridRowEventArgs> UnloadingRow
+#if !DATAGRID_INTERNAL
+        public
+#else
+        internal
+#endif
+        event EventHandler<DataGridRowEventArgs> UnloadingRow
         {
             add => AddHandler(UnloadingRowEvent, value);
             remove => RemoveHandler(UnloadingRowEvent, value);
@@ -138,7 +210,12 @@ namespace Avalonia.Controls
         /// <summary>
         /// Raises the AutoGeneratingColumn event.
         /// </summary>
-        protected virtual void OnAutoGeneratingColumn(DataGridAutoGeneratingColumnEventArgs e)
+#if !DATAGRID_INTERNAL
+        protected
+#else
+        internal
+#endif
+        virtual void OnAutoGeneratingColumn(DataGridAutoGeneratingColumnEventArgs e)
         {
             e.RoutedEvent ??= AutoGeneratingColumnEvent;
             e.Source ??= this;

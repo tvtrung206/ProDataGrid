@@ -5,21 +5,36 @@ using Avalonia.Input;
 
 namespace Avalonia.Controls.DataGridDragDrop
 {
-    public enum DataGridRowDragHandle
+    #if !DATAGRID_INTERNAL
+    public
+    #else
+    internal
+    #endif
+    enum DataGridRowDragHandle
     {
         RowHeader,
         Row,
         RowHeaderAndRow
     }
 
-    public enum DataGridRowDropPosition
+    #if !DATAGRID_INTERNAL
+    public
+    #else
+    internal
+    #endif
+    enum DataGridRowDropPosition
     {
         Before,
         After,
         Inside
     }
 
-    public class DataGridRowDragDropOptions
+    #if !DATAGRID_INTERNAL
+    public
+    #else
+    internal
+    #endif
+    class DataGridRowDragDropOptions
     {
         public DragDropEffects AllowedEffects { get; set; } = DragDropEffects.Move;
 

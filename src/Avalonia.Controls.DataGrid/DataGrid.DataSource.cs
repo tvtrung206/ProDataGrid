@@ -20,7 +20,9 @@ namespace Avalonia.Controls
     /// Data source management
     /// </summary>
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     partial class DataGrid
     {

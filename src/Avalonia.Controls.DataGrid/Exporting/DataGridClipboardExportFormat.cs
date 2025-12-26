@@ -9,7 +9,9 @@ namespace Avalonia.Controls
     /// Defines formats that can be exported to the clipboard.
     /// </summary>
 #if !DATAGRID_INTERNAL
-    public
+public
+#else
+internal
 #endif
     enum DataGridClipboardExportFormat
     {
