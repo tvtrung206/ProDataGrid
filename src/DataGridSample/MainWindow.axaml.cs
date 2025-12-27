@@ -1,6 +1,9 @@
 ﻿using System;
+using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Interactivity;
 using Avalonia.Rendering;
+using Avalonia.Styling;
 
 namespace DataGridSample;
 
@@ -18,6 +21,23 @@ public partial class MainWindow : Window
     private void OnTabFilterChanged(object? sender, TextChangedEventArgs e)
     {
         ApplyTabFilter();
+    }
+
+    private void OnThemeToggleChanged(object? sender, RoutedEventArgs e)
+    {
+        ApplyThemeVariant();
+    }
+
+    private void ApplyThemeVariant()
+    {
+        var app = Application.Current;
+        if (app == null)
+        {
+            return;
+        }
+
+        var isDark = ThemeToggle?.IsChecked ?? false;
+        app.RequestedThemeVariant = isDark ? ThemeVariant.Dark : ThemeVariant.Light;
     }
 
     private void ApplyTabFilter()

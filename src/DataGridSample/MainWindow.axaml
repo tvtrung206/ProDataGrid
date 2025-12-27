@@ -8,6 +8,15 @@
         Height="700"
         WindowStartupLocation="CenterScreen">
 
+  <Window.Styles>
+    <Style Selector="ToggleButton#ThemeToggle">
+      <Setter Property="Content" Value="☀️" />
+    </Style>
+    <Style Selector="ToggleButton#ThemeToggle:checked">
+      <Setter Property="Content" Value="🌙" />
+    </Style>
+  </Window.Styles>
+
   <DockPanel>
     <StackPanel DockPanel.Dock="Top"
                 Orientation="Horizontal"
@@ -19,6 +28,22 @@
                Width="240"
                Watermark="Type to filter sample pages"
                TextChanged="OnTabFilterChanged" />
+      <ToggleButton x:Name="ThemeToggle"
+                    VerticalAlignment="Center"
+                    Background="Transparent"
+                    Checked="OnThemeToggleChanged"
+                    Unchecked="OnThemeToggleChanged">
+        <ToggleButton.Resources>
+          <SolidColorBrush x:Key="ToggleButtonBackgroundChecked" Color="Transparent" />
+          <SolidColorBrush x:Key="ToggleButtonBackgroundCheckedPointerOver" Color="Transparent" />
+          <SolidColorBrush x:Key="ToggleButtonBackgroundCheckedPressed" Color="Transparent" />
+          <SolidColorBrush x:Key="ToggleButtonBackgroundCheckedDisabled" Color="Transparent" />
+          <SolidColorBrush x:Key="ToggleButtonBorderBrushChecked" Color="Transparent" />
+          <SolidColorBrush x:Key="ToggleButtonBorderBrushCheckedPointerOver" Color="Transparent" />
+          <SolidColorBrush x:Key="ToggleButtonBorderBrushCheckedPressed" Color="Transparent" />
+          <SolidColorBrush x:Key="ToggleButtonBorderBrushCheckedDisabled" Color="Transparent" />
+        </ToggleButton.Resources>
+      </ToggleButton>
     </StackPanel>
 
     <TabControl x:Name="SampleTabs"
