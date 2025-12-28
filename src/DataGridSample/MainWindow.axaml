@@ -101,6 +101,9 @@
     <TabItem Header="Custom SelectionModel">
       <pages:CustomSelectionModelPage />
     </TabItem>
+    <TabItem Header="SelectionModel Select by Item">
+      <pages:SelectionModelItemSelectionPage />
+    </TabItem>
     <TabItem Header="Grouped Selection">
       <pages:GroupedSelectionPage />
     </TabItem>

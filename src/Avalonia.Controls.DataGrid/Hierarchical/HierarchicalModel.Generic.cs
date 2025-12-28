@@ -907,7 +907,7 @@ namespace Avalonia.Controls.DataGridHierarchical
     #else
     internal
     #endif
-    readonly struct HierarchicalNode<T>
+    readonly struct HierarchicalNode<T> : IHierarchicalNodeItem
     {
         internal HierarchicalNode(HierarchicalNode inner)
         {
@@ -919,6 +919,8 @@ namespace Avalonia.Controls.DataGridHierarchical
         public T Item => Inner.Item is T typed
             ? typed
             : throw new InvalidCastException($"Node item is not of type {typeof(T).FullName}.");
+
+        object IHierarchicalNodeItem.Item => Inner.Item;
 
         public HierarchicalNode<T>? Parent => Inner.Parent != null ? new HierarchicalNode<T>(Inner.Parent) : null;
 

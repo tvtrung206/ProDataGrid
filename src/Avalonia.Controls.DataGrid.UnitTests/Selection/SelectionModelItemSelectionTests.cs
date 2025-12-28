@@ -1,0 +1,138 @@
+// Copyright (c) Wiesław Šoltés. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for details.
+
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using Avalonia.Controls;
+using Avalonia.Controls.DataGridHierarchical;
+using Avalonia.Controls.Selection;
+using Avalonia.Data;
+using Avalonia.Headless.XUnit;
+using Xunit;
+
+namespace Avalonia.Controls.DataGridTests.Selection;
+
+public class SelectionModelItemSelectionTests
+{
+    private sealed class NodeItem
+    {
+        public NodeItem(string name)
+        {
+            Name = name;
+            Children = new ObservableCollection<NodeItem>();
+        }
+
+        public string Name { get; }
+
+        public ObservableCollection<NodeItem> Children { get; }
+    }
+
+    [Fact]
+    public void SelectionModel_Select_By_Item_Uses_Source_Index()
+    {
+        var items = new List<string> { "A", "B", "C" };
+        var selection = new SelectionModel<string> { Source = items };
+
+        selection.Select("B");
+
+        Assert.Equal(1, selection.SelectedIndex);
+        Assert.Equal("B", selection.SelectedItem);
+        Assert.Contains(1, selection.SelectedIndexes);
+    }
+
+    [Fact]
+    public void SelectionModel_Select_By_Item_Resolves_Hierarchical_Nodes()
+    {
+        var root = new NodeItem("root");
+        var child = new NodeItem("child");
+        root.Children.Add(child);
+
+        var model = CreateModel(root);
+        var selection = new SelectionModel<object> { Source = model.Flattened };
+
+        selection.Select(child);
+
+        Assert.Contains(1, selection.SelectedIndexes);
+        var selectedNode = Assert.IsAssignableFrom<IHierarchicalNodeItem>(selection.SelectedItem);
+        Assert.Same(child, selectedNode.Item);
+    }
+
+    [Fact]
+    public void SelectionModel_Select_By_Item_Throws_When_Not_Found()
+    {
+        var items = new List<string> { "A", "B" };
+        var selection = new SelectionModel<string> { Source = items };
+
+        var exception = Assert.Throws<ArgumentException>(() => selection.Select("C"));
+        Assert.Contains("Item not found", exception.Message);
+    }
+
+    [Fact]
+    public void SelectionModel_Select_By_Item_With_Null_Source_Sets_SelectedItem()
+    {
+        var selection = new SelectionModel<string>();
+
+        selection.Select("B");
+
+        Assert.Equal("B", selection.SelectedItem);
+        Assert.Single(selection.SelectedItems);
+        Assert.Equal("B", selection.SelectedItems[0]);
+    }
+
+    [Fact]
+    public void SelectionModel_Select_By_Item_With_Null_Source_Allows_MultiSelect()
+    {
+        var selection = new SelectionModel<string> { SingleSelect = false };
+
+        selection.Select("B");
+
+        Assert.Equal("B", selection.SelectedItem);
+        Assert.Single(selection.SelectedItems);
+        Assert.Equal("B", selection.SelectedItems[0]);
+    }
+
+    [AvaloniaFact]
+    public void DataGrid_Selection_Select_By_Item_Selects_Hierarchical_Item()
+    {
+        var root = new NodeItem("root");
+        var child = new NodeItem("child");
+        root.Children.Add(child);
+
+        var model = CreateModel(root);
+        var grid = new DataGrid
+        {
+            AutoGenerateColumns = false,
+            HierarchicalModel = model,
+            HierarchicalRowsEnabled = true,
+            ItemsSource = model.Flattened
+        };
+
+        grid.Columns.Add(new DataGridHierarchicalColumn
+        {
+            Header = "Name",
+            Binding = new Binding("Item.Name")
+        });
+
+        grid.ApplyTemplate();
+        grid.UpdateLayout();
+
+        grid.Selection.Select(child);
+
+        Assert.Equal(1, grid.Selection.SelectedIndex);
+        Assert.Same(child, grid.Selection.SelectedItem);
+    }
+
+    private static HierarchicalModel<NodeItem> CreateModel(NodeItem root)
+    {
+        var model = new HierarchicalModel<NodeItem>(new HierarchicalOptions<NodeItem>
+        {
+            ChildrenSelector = item => item.Children,
+            AutoExpandRoot = true
+        });
+
+        model.SetRoot(root);
+        model.Expand(model.Root ?? throw new InvalidOperationException("Root node not created."));
+        return model;
+    }
+}

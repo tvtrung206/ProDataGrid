@@ -21,7 +21,7 @@ namespace Avalonia.Controls.DataGridHierarchical
     #else
     internal
     #endif
-    class HierarchicalNode : INotifyPropertyChanged
+    class HierarchicalNode : INotifyPropertyChanged, IHierarchicalNodeItem
     {
         private readonly List<HierarchicalNode> _children;
         private bool _isExpanded;

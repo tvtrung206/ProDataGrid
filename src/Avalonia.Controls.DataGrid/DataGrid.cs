@@ -2762,8 +2762,13 @@ internal
 
         private object? ProjectHierarchicalSelectionItem(object? item)
         {
-            return item is Avalonia.Controls.DataGridHierarchical.HierarchicalNode node
-                ? node.Item
+            if (item is Avalonia.Controls.DataGridHierarchical.HierarchicalNode node)
+            {
+                return node.Item;
+            }
+
+            return item is Avalonia.Controls.DataGridHierarchical.IHierarchicalNodeItem nodeItem
+                ? nodeItem.Item
                 : item;
         }
 
@@ -2782,6 +2787,11 @@ internal
             if (item is Avalonia.Controls.DataGridHierarchical.HierarchicalNode node)
             {
                 return _hierarchicalModel.IndexOf(node);
+            }
+
+            if (item is Avalonia.Controls.DataGridHierarchical.IHierarchicalNodeItem nodeItem)
+            {
+                return _hierarchicalModel.IndexOf(nodeItem.Item);
             }
 
             return _hierarchicalModel.IndexOf(item);
