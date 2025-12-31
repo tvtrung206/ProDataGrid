@@ -395,6 +395,7 @@ namespace Avalonia.Controls
                     }
                 }
                 EnsureRowGroupSpacerColumnWidth(groupLevelCount);
+                UpdateGroupingIndentation();
             }
         }
 
@@ -749,10 +750,12 @@ namespace Avalonia.Controls
 
             // RowGroupInfo on the recycled header can become stale if slots shifted; always re-sync with the table
             var currentInfo = RowGroupInfoFromCollectionViewGroup(collectionViewGroup) ?? groupHeader.RowGroupInfo;
-            if (!ReferenceEquals(groupHeader.RowGroupInfo, currentInfo))
+            if (currentInfo == null)
             {
-                groupHeader.RowGroupInfo = currentInfo;
+                return;
             }
+
+            SyncRowGroupHeaderInfo(groupHeader, currentInfo);
 
             Debug.Assert(groupHeader.RowGroupInfo.CollectionViewGroup.ItemCount > 0);
 
@@ -772,6 +775,64 @@ namespace Avalonia.Controls
             ComputeScrollBarsLayout();
             // We need force arrange since our Scrollings Rows could update without automatically triggering layout
             InvalidateRowsArrange();
+        }
+
+        private void SyncRowGroupHeaderInfo(DataGridRowGroupHeader groupHeader, DataGridRowGroupInfo rowGroupInfo)
+        {
+            var infoChanged = !ReferenceEquals(groupHeader.RowGroupInfo, rowGroupInfo);
+            if (infoChanged)
+            {
+                if (groupHeader.RowGroupInfo?.CollectionViewGroup is INotifyPropertyChanged oldInpc)
+                {
+                    oldInpc.PropertyChanged -= new PropertyChangedEventHandler(CollectionViewGroup_PropertyChanged);
+                }
+
+                groupHeader.RowGroupInfo = rowGroupInfo;
+                groupHeader.DataContext = rowGroupInfo.CollectionViewGroup;
+
+                if (rowGroupInfo.CollectionViewGroup is INotifyPropertyChanged newInpc)
+                {
+                    newInpc.PropertyChanged -= new PropertyChangedEventHandler(CollectionViewGroup_PropertyChanged);
+                    newInpc.PropertyChanged += new PropertyChangedEventHandler(CollectionViewGroup_PropertyChanged);
+                }
+            }
+
+            var levelChanged = groupHeader.Level != rowGroupInfo.Level;
+            if (levelChanged)
+            {
+                groupHeader.Level = rowGroupInfo.Level;
+            }
+
+            if (infoChanged || levelChanged)
+            {
+                UpdateRowGroupHeaderPropertyName(groupHeader, rowGroupInfo.Level);
+                groupHeader.UpdateTitleElements();
+                groupHeader.EnsureExpanderButtonIsChecked();
+                groupHeader.UpdateSummaryRowState();
+                groupHeader.UpdatePseudoClasses();
+                groupHeader.ApplyHeaderStatus();
+            }
+        }
+
+        private void UpdateRowGroupHeaderPropertyName(DataGridRowGroupHeader groupHeader, int level)
+        {
+            if (DataConnection?.CollectionView == null ||
+                level < 0 ||
+                level >= DataConnection.CollectionView.GroupingDepth)
+            {
+                groupHeader.PropertyName = null;
+                return;
+            }
+
+            string propertyName = DataConnection.CollectionView.GetGroupingPropertyNameAtDepth(level);
+            if (string.IsNullOrWhiteSpace(propertyName))
+            {
+                groupHeader.PropertyName = null;
+            }
+            else
+            {
+                groupHeader.PropertyName = DataConnection.DataType?.GetDisplayName(propertyName) ?? propertyName;
+            }
         }
 
 

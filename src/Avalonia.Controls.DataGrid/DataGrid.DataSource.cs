@@ -453,6 +453,13 @@ internal
                 slot >= 0 &&
                 GetRowSelection(slot);
 
+            if (currentItem != null && (slot < 0 || slot >= SlotCount))
+            {
+                ClearRowSelection(true);
+                SetCurrentCellCore(-1, -1);
+                return;
+            }
+
             if (_selectionModelAdapter != null &&
                 _selectionModelAdapter.Model.SelectedIndexes.Count > 0 &&
                 !currentInSelection)

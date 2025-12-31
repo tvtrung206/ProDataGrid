@@ -511,9 +511,23 @@ namespace Avalonia.Collections
             (args.Action == NotifyCollectionChangedAction.Remove ||
             args.Action == NotifyCollectionChangedAction.Replace))
             {
-                for (var i = 0; i < args.OldItems.Count; i++)
+                var isReplace = args.Action == NotifyCollectionChangedAction.Replace;
+                var oldStartingIndex = args.OldStartingIndex;
+
+                if (oldStartingIndex >= 0 && args.OldItems.Count > 1)
                 {
-                    ProcessRemoveEvent(args.OldItems[i], args.Action == NotifyCollectionChangedAction.Replace, args.OldStartingIndex + i);
+                    for (var i = args.OldItems.Count - 1; i >= 0; i--)
+                    {
+                        ProcessRemoveEvent(args.OldItems[i], isReplace, oldStartingIndex + i);
+                    }
+                }
+                else
+                {
+                    for (var i = 0; i < args.OldItems.Count; i++)
+                    {
+                        var indexHint = oldStartingIndex >= 0 ? oldStartingIndex + i : (int?)null;
+                        ProcessRemoveEvent(args.OldItems[i], isReplace, indexHint);
+                    }
                 }
             }
 

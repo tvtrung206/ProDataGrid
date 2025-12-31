@@ -112,7 +112,9 @@ internal
             };
 
             presenter.ToggleRequested += PresenterOnToggleRequested;
-            presenter.Bind(DataGridHierarchicalPresenter.LevelProperty, new Binding(nameof(HierarchicalNode.Level)));
+            presenter.Bind(
+                DataGridHierarchicalPresenter.LevelProperty,
+                new Binding(nameof(HierarchicalNode.Level)) { Mode = BindingMode.OneWay });
             presenter.Bind(
                 DataGridHierarchicalPresenter.IsExpandedProperty,
                 new Binding(nameof(HierarchicalNode.IsExpanded)) { Mode = BindingMode.OneWay });

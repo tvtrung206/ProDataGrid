@@ -403,7 +403,7 @@ internal
                     }
                     else
                     {
-                        OwningGrid.MouseOverRowIndex = null;
+                        OwningGrid.RequestPointerOverRefreshFromRow();
                     }
                 }
             }

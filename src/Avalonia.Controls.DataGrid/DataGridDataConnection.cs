@@ -247,6 +247,16 @@ namespace Avalonia.Controls
         /// <returns>true if able to retrieve number of DataSource items; otherwise, false.</returns>
         internal bool TryGetCount(bool allowSlow, bool getAny, out int count)
         {
+            if (IsHierarchicalItemsSource() && _owner?.HierarchicalModel is { } model)
+            {
+                count = model.Count;
+                if (CanAddNew)
+                {
+                    count++;
+                }
+                return true;
+            }
+
             bool result;
             (result, count) = DataSource switch
             {
@@ -444,6 +454,18 @@ namespace Avalonia.Controls
         {
             Debug.Assert(index >= 0);
 
+            if (IsHierarchicalItemsSource() && _owner?.HierarchicalModel is { } model)
+            {
+                if (index < model.Count)
+                {
+                    return model.GetNode(index);
+                }
+
+                return CanAddNew && index == model.Count
+                    ? DataGridCollectionView.NewItemPlaceholder
+                    : null;
+            }
+
             if (DataSource is DataGridCollectionView collectionView)
             {
                 if (index < collectionView.Count)
@@ -549,6 +571,27 @@ namespace Avalonia.Controls
         {
             bool isNewItemPlaceholder = dataItem == DataGridCollectionView.NewItemPlaceholder;
 
+            if (!isNewItemPlaceholder && IsHierarchicalItemsSource())
+            {
+                var model = _owner.HierarchicalModel;
+                if (dataItem is Avalonia.Controls.DataGridHierarchical.HierarchicalNode node)
+                {
+                    var hierarchicalIndex = model.IndexOf(node);
+                    if (hierarchicalIndex >= 0)
+                    {
+                        return hierarchicalIndex;
+                    }
+                }
+                else if (dataItem != null)
+                {
+                    var hierarchicalIndex = model.IndexOf(dataItem);
+                    if (hierarchicalIndex >= 0)
+                    {
+                        return hierarchicalIndex;
+                    }
+                }
+            }
+
             if (!isNewItemPlaceholder && DataSource is IList referenceList && dataItem is object)
             {
                 var referenceIndex = FindReferenceIndex(referenceList, dataItem);
@@ -605,6 +648,24 @@ namespace Avalonia.Controls
                 }
             }
             return -1;
+        }
+
+        private bool IsHierarchicalItemsSource()
+        {
+            if (_owner?.HierarchicalRowsEnabled != true)
+            {
+                return false;
+            }
+
+            var model = _owner.HierarchicalModel;
+            if (model == null)
+            {
+                return false;
+            }
+
+            var itemsSource = _owner.ItemsSource;
+            return ReferenceEquals(itemsSource, model.Flattened) ||
+                   ReferenceEquals(itemsSource, model.ObservableFlattened);
         }
 
         private static int FindReferenceIndex(IList list, object dataItem)
@@ -820,6 +881,11 @@ namespace Avalonia.Controls
 
         private void CollectionView_CurrentChanged(object sender, EventArgs e)
         {
+            if (!_expectingCurrentChanged && _owner.NoCurrentCellChangeCount > 0)
+            {
+                return;
+            }
+
             if (_expectingCurrentChanged)
             {
                 // Committing Edit could cause our item to move to a group that no longer exists.  In
@@ -886,6 +952,11 @@ namespace Avalonia.Controls
 
         private void NotifyingDataSource_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
         {
+            if (IsHierarchicalItemsSource())
+            {
+                return;
+            }
+
             bool updateSnapshotAfterChange = e.Action == NotifyCollectionChangedAction.Reset;
             var snapshotSuppression = _owner.BeginSelectionSnapshotSuppression();
             try

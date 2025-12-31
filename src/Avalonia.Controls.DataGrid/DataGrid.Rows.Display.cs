@@ -285,10 +285,7 @@ namespace Avalonia.Controls
                 row.Cells[CurrentColumnIndex].UpdatePseudoClasses();
             }
 
-            if (row.IsSelected || row.IsRecycled)
-            {
-                row.ApplyState();
-            }
+            row.ApplyState();
 
             // Show or hide RowDetails based on DataGrid settings
             EnsureRowDetailsVisibility(row, raiseNotification: false, animate: false);
@@ -373,6 +370,11 @@ namespace Avalonia.Controls
                 // Move hidden elements off-screen immediately to avoid stale bounds being picked up
                 // by layout-sensitive logic (e.g., tests that inspect all rows).
                 element.Arrange(new Rect(-10000, -10000, size.Width, size.Height));
+            }
+
+            if (element is DataGridRow row)
+            {
+                row.ClearPointerOverState();
             }
         }
 

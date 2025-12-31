@@ -356,7 +356,7 @@ internal
 
         internal bool IsRowRecyclable(DataGridRow row)
         {
-            return (row != EditingRow && row != _focusedRow);
+            return row != EditingRow && row != _focusedRow && !row.IsMouseOver;
         }
 
         internal void OnRowsMeasure()
@@ -405,6 +405,10 @@ internal
                 // _desiredCurrentColumnIndex is used in MakeFirstDisplayedCellCurrentCell to set the
                 // column position back to what it was before the refresh
                 _desiredCurrentColumnIndex = CurrentColumnIndex;
+                var preserveLogicalOffset = UseLogicalScrollable &&
+                                            _pendingHierarchicalScrollOffset.HasValue &&
+                                            DisplayData.FirstScrollingSlot >= 0 &&
+                                            !clearRows;
                 double verticalOffset = _verticalOffset;
                 if (UseLogicalScrollable && _rowsPresenter != null)
                 {
@@ -421,8 +425,16 @@ internal
                     // has been reset multiple times in a row.
                     verticalOffset = DisplayData.PendingVerticalScrollHeight;
                 }
-                _verticalOffset = 0;
-                NegVerticalOffset = 0;
+                var scrollDelta = verticalOffset;
+                if (preserveLogicalOffset)
+                {
+                    scrollDelta = verticalOffset - _verticalOffset;
+                }
+                else
+                {
+                    _verticalOffset = 0;
+                    NegVerticalOffset = 0;
+                }
 
                 if (clearRows)
                 {
@@ -444,12 +456,28 @@ internal
                     }
                 }
 
-                if (DataConnection != null && ColumnsItemsInternal.Count > 0)
+                var suppressVerticalOffsetAdjustments = preserveLogicalOffset;
+                if (suppressVerticalOffsetAdjustments)
                 {
-                    AddSlots(DataConnection.Count);
-                    AddSlots(DataConnection.Count + RowGroupHeadersTable.IndexCount + RowGroupFootersTable.IndexCount);
+                    _suppressVerticalOffsetAdjustments++;
+                }
 
-                    InvalidateMeasure();
+                try
+                {
+                    if (DataConnection != null && ColumnsItemsInternal.Count > 0)
+                    {
+                        AddSlots(DataConnection.Count);
+                        AddSlots(DataConnection.Count + RowGroupHeadersTable.IndexCount + RowGroupFootersTable.IndexCount);
+
+                        InvalidateMeasure();
+                    }
+                }
+                finally
+                {
+                    if (suppressVerticalOffsetAdjustments)
+                    {
+                        _suppressVerticalOffsetAdjustments = Math.Max(0, _suppressVerticalOffsetAdjustments - 1);
+                    }
                 }
 
                 EnsureRowGroupSpacerColumn();
@@ -471,7 +499,9 @@ internal
                 }
                 else if (UseLogicalScrollable)
                 {
-                    DisplayData.PendingVerticalScrollHeight = Math.Max(0, verticalOffset);
+                    DisplayData.PendingVerticalScrollHeight = preserveLogicalOffset
+                        ? scrollDelta
+                        : Math.Max(0, verticalOffset);
                 }
             }
             else

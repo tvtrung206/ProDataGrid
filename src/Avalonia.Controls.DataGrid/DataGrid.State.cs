@@ -697,24 +697,51 @@ namespace Avalonia.Controls
                 ? RowGroupSublevelIndents[0]
                 : DATAGRID_defaultRowGroupSublevelIndent;
 
-            foreach (var element in DisplayData.GetScrollingElements())
+            int slot = DisplayData.FirstScrollingSlot;
+            int lastSlot = DisplayData.LastScrollingSlot;
+            while (slot >= 0 && slot <= lastSlot)
             {
+                var element = DisplayData.GetDisplayedElement(slot);
                 if (element is DataGridRowGroupHeader header)
                 {
-                    if (header.Level <= 0)
+                    var rowGroupInfo = RowGroupHeadersTable.GetValueAt(slot) ?? header.RowGroupInfo;
+                    if (rowGroupInfo != null)
+                    {
+                        SyncRowGroupHeaderInfo(header, rowGroupInfo);
+                    }
+
+                    var level = rowGroupInfo?.Level ?? header.Level;
+                    if (level <= 0 || RowGroupSublevelIndents.Length == 0)
                     {
                         header.TotalIndent = 0;
                     }
                     else
                     {
-                        var index = Math.Min(header.Level - 1, RowGroupSublevelIndents.Length - 1);
+                        var index = Math.Min(level - 1, RowGroupSublevelIndents.Length - 1);
                         header.TotalIndent = RowGroupSublevelIndents[index];
                     }
                 }
                 else if (element is DataGridRowGroupFooter footer)
                 {
+                    var rowGroupInfo = RowGroupFootersTable.GetValueAt(slot) ?? footer.RowGroupInfo;
+                    if (rowGroupInfo != null)
+                    {
+                        if (!ReferenceEquals(footer.RowGroupInfo, rowGroupInfo))
+                        {
+                            footer.RowGroupInfo = rowGroupInfo;
+                            footer.Group = rowGroupInfo.CollectionViewGroup;
+                        }
+
+                        if (footer.Level != rowGroupInfo.Level)
+                        {
+                            footer.Level = rowGroupInfo.Level;
+                        }
+                    }
+
                     footer.Margin = new Thickness(footer.Level * baseIndent, 0, 0, 0);
                 }
+
+                slot = GetNextVisibleSlot(slot);
             }
 
             InvalidateRowsMeasure(invalidateIndividualElements: true);

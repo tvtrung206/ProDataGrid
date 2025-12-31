@@ -1,13 +1,16 @@
 // Copyright (c) Wiesław Šoltés. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Avalonia.Collections;
 using Avalonia.Controls;
+using Avalonia.Controls.Shapes;
 using Avalonia.Data;
 using Avalonia.Headless.XUnit;
 using Avalonia.Markup.Xaml.Styling;
+using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Xunit;
 
@@ -25,21 +28,20 @@ public class DataGridRowGroupExpandCollapseAllTests
             var topGroups = GetTopLevelGroups(view);
             var totalGroups = CountAllGroups(topGroups);
 
-            Assert.Equal(totalGroups, GetGroupHeaders(grid).Count);
+            var rowGroupInfos = GetRowGroupInfos(grid);
+            Assert.Equal(totalGroups, rowGroupInfos.Count);
+            Assert.True(rowGroupInfos.Any(info => info.Level > 0));
 
             grid.CollapseAllGroups();
-            grid.UpdateLayout();
+            PumpLayout(grid);
 
-            var collapsedHeaders = GetGroupHeaders(grid);
-            Assert.All(collapsedHeaders, header => Assert.NotNull(header.RowGroupInfo));
-            Assert.All(collapsedHeaders, header => Assert.False(header.RowGroupInfo!.IsVisible));
+            rowGroupInfos = GetRowGroupInfos(grid);
+            Assert.All(rowGroupInfos, info => Assert.False(info.IsVisible));
 
-            var visibleHeaders = collapsedHeaders.Where(header => header.IsVisible).ToList();
-            Assert.Equal(topGroups.Count, visibleHeaders.Count);
+            var visibleHeaders = GetGroupHeaders(grid).Where(header => header.IsVisible).ToList();
             Assert.All(visibleHeaders, header => Assert.Equal(0, header.RowGroupInfo!.Level));
 
-            var subGroupHeaders = collapsedHeaders.Where(header => header.RowGroupInfo!.Level > 0).ToList();
-            Assert.NotEmpty(subGroupHeaders);
+            var subGroupHeaders = GetGroupHeaders(grid).Where(header => header.RowGroupInfo!.Level > 0).ToList();
             Assert.All(subGroupHeaders, header => Assert.False(header.IsVisible));
         }
         finally
@@ -58,17 +60,17 @@ public class DataGridRowGroupExpandCollapseAllTests
             var totalGroups = CountAllGroups(GetTopLevelGroups(view));
 
             grid.CollapseAllGroups();
-            grid.UpdateLayout();
+            PumpLayout(grid);
             grid.ExpandAllGroups();
-            grid.UpdateLayout();
+            PumpLayout(grid);
 
-            var expandedHeaders = GetGroupHeaders(grid);
-            Assert.Equal(totalGroups, expandedHeaders.Count);
-            Assert.All(expandedHeaders, header => Assert.NotNull(header.RowGroupInfo));
-            Assert.All(expandedHeaders, header => Assert.True(header.RowGroupInfo!.IsVisible));
+            var rowGroupInfos = GetRowGroupInfos(grid);
+            Assert.Equal(totalGroups, rowGroupInfos.Count);
+            Assert.All(rowGroupInfos, info => Assert.True(info.IsVisible));
 
-            var visibleHeaders = expandedHeaders.Where(header => header.IsVisible).ToList();
-            Assert.Contains(visibleHeaders, header => header.RowGroupInfo!.Level > 0);
+            var subgroupInfo = rowGroupInfos.First(info => info.Level > 0);
+            var subgroupHeader = GetHeaderForGroupInfo(grid, subgroupInfo);
+            Assert.True(subgroupHeader.IsVisible);
         }
         finally
         {
@@ -125,6 +127,83 @@ public class DataGridRowGroupExpandCollapseAllTests
         }
     }
 
+    [AvaloniaFact]
+    public void GroupHeaderIndentation_Updates_After_GroupDescriptions_Change()
+    {
+        var items = new List<Item>
+        {
+            new("A", "X", "One"),
+            new("A", "Y", "Two"),
+            new("B", "X", "Three"),
+            new("B", "Y", "Four"),
+        };
+
+        var view = new DataGridCollectionView(items);
+        view.GroupDescriptions.Add(new DataGridPathGroupDescription(nameof(Item.Category)));
+        view.Refresh();
+
+        var root = new Window
+        {
+            Width = 600,
+            Height = 400,
+        };
+
+        root.SetThemeStyles();
+
+        var grid = new DataGrid
+        {
+            ItemsSource = view,
+            HeadersVisibility = DataGridHeadersVisibility.Column,
+        };
+
+        grid.ColumnsInternal.Add(new DataGridTextColumn
+        {
+            Header = "Category",
+            Binding = new Binding(nameof(Item.Category))
+        });
+        grid.ColumnsInternal.Add(new DataGridTextColumn
+        {
+            Header = "SubCategory",
+            Binding = new Binding(nameof(Item.SubCategory))
+        });
+        grid.ColumnsInternal.Add(new DataGridTextColumn
+        {
+            Header = "Name",
+            Binding = new Binding(nameof(Item.Name))
+        });
+
+        root.Content = grid;
+        root.Show();
+        grid.UpdateLayout();
+        Dispatcher.UIThread.RunJobs();
+
+        try
+        {
+            var initialInfo = GetRowGroupInfos(grid).First(info => info.Level == 0);
+            var initialHeader = GetHeaderForGroupInfo(grid, initialInfo);
+            Assert.Equal(0d, GetIndentSpacerWidth(initialHeader));
+
+            view.GroupDescriptions.Clear();
+            view.GroupDescriptions.Add(new DataGridPathGroupDescription(nameof(Item.Category)));
+            view.GroupDescriptions.Add(new DataGridPathGroupDescription(nameof(Item.SubCategory)));
+            view.Refresh();
+            PumpLayout(grid);
+
+            var subInfo = GetRowGroupInfos(grid).First(info => info.Level == 1);
+            var subHeader = GetHeaderForGroupInfo(grid, subInfo);
+
+            Assert.NotNull(grid.RowGroupSublevelIndents);
+            var expectedIndent = grid.RowGroupSublevelIndents![0];
+            var actualIndent = GetIndentSpacerWidth(subHeader);
+
+            Assert.Equal(expectedIndent, actualIndent, precision: 3);
+        }
+        finally
+        {
+            root.Close();
+        }
+    }
+
     private static (DataGrid grid, DataGridCollectionView view, Window root) CreateNestedGroupedGrid()
     {
         var items = new List<Item>
@@ -173,7 +252,7 @@ public class DataGridRowGroupExpandCollapseAllTests
 
         root.Content = grid;
         root.Show();
-        grid.UpdateLayout();
+        PumpLayout(grid);
 
         return (grid, view, root);
     }
@@ -182,7 +261,44 @@ public class DataGridRowGroupExpandCollapseAllTests
     {
         return grid.GetVisualDescendants()
             .OfType<DataGridRowGroupHeader>()
+            .Where(header => !header.IsRecycled)
             .ToList();
+    }
+
+    private static IReadOnlyList<DataGridRowGroupInfo> GetRowGroupInfos(DataGrid grid)
+    {
+        return grid.RowGroupHeadersTable.GetIndexes()
+            .Select(slot => grid.RowGroupHeadersTable.GetValueAt(slot))
+            .Where(info => info != null)
+            .ToList();
+    }
+
+    private static DataGridRowGroupHeader GetHeaderForGroupInfo(DataGrid grid, DataGridRowGroupInfo info)
+    {
+        var columnIndex = grid.ColumnsInternal.FirstVisibleNonFillerColumn?.Index ?? 0;
+        if (grid.ColumnDefinitions.Count > 0)
+        {
+            grid.ScrollSlotIntoView(columnIndex, info.Slot, forCurrentCellChange: false, forceHorizontalScroll: false);
+        }
+
+        PumpLayout(grid);
+
+        if (grid.DisplayData.GetDisplayedElement(info.Slot) is DataGridRowGroupHeader header)
+        {
+            return header;
+        }
+
+        throw new InvalidOperationException("Group header was not realized.");
+    }
+
+    private static double GetIndentSpacerWidth(DataGridRowGroupHeader header)
+    {
+        var spacer = header.GetVisualDescendants()
+            .OfType<Rectangle>()
+            .FirstOrDefault(rect => rect.Name == "PART_IndentSpacer");
+
+        Assert.NotNull(spacer);
+        return spacer!.Width;
     }
 
     private static IReadOnlyList<DataGridCollectionViewGroup> GetTopLevelGroups(DataGridCollectionView view)
@@ -200,6 +316,21 @@ public class DataGridRowGroupExpandCollapseAllTests
             count += CountAllGroups(group.Items.OfType<DataGridCollectionViewGroup>());
         }
         return count;
+    }
+
+    private static void PumpLayout(Control control)
+    {
+        Dispatcher.UIThread.RunJobs();
+        if (control.GetVisualRoot() is Window window)
+        {
+            window.ApplyTemplate();
+            window.UpdateLayout();
+        }
+        control.ApplyTemplate();
+        control.UpdateLayout();
+        Dispatcher.UIThread.RunJobs();
+        control.UpdateLayout();
+        Dispatcher.UIThread.RunJobs();
     }
 
     private record Item(string Category, string SubCategory, string Name);

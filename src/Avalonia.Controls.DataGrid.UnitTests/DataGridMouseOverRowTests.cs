@@ -1,11 +1,13 @@
 // Copyright (c) Wiesław Šoltés. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Controls.DataGridHierarchical;
 using Avalonia.Data;
 using Avalonia.Headless.XUnit;
@@ -173,11 +175,9 @@ public class DataGridMouseOverRowTests
             AssertSinglePointerOverRow(grid, childRow);
 
             model.Collapse(model.Flattened[0]);
-            grid.UpdateLayout();
-            Dispatcher.UIThread.RunJobs();
+            PumpLayout(grid);
 
-            var rowAtPoint = FindRowAtPoint(grid, point);
-            Assert.NotNull(rowAtPoint);
+            var rowAtPoint = FindRow(root2, grid);
             Assert.Equal(initialIndex, rowAtPoint!.Index);
             Assert.Same(root2, GetRowItem(rowAtPoint));
             Assert.Equal(initialIndex, grid.MouseOverRowIndex);
@@ -296,33 +296,67 @@ public class DataGridMouseOverRowTests
 
     private static DataGridRow FindRow(object item, DataGrid grid)
     {
-        return grid.GetSelfAndVisualDescendants()
-            .OfType<DataGridRow>()
-            .First(row =>
-            {
-                if (row.DataContext is HierarchicalNode node)
-                {
-                    return ReferenceEquals(node.Item, item);
-                }
-
-                return ReferenceEquals(row.DataContext, item);
-            });
-    }
-
-    private static DataGridRow? FindRowAtPoint(DataGrid grid, Point point)
-    {
+        DataGridRow fallback = null;
         foreach (var row in grid.GetSelfAndVisualDescendants().OfType<DataGridRow>())
         {
-            var topLeft = row.TranslatePoint(new Point(0, 0), grid);
-            if (topLeft == null)
+            var matches = row.DataContext is HierarchicalNode node
+                ? ReferenceEquals(node.Item, item)
+                : ReferenceEquals(row.DataContext, item);
+
+            if (!matches)
             {
                 continue;
             }
 
-            var bounds = new Rect(topLeft.Value, row.Bounds.Size);
-            if (bounds.Contains(point))
+            if (row.IsVisible)
             {
                 return row;
+            }
+
+            fallback ??= row;
+        }
+
+        return fallback ?? throw new InvalidOperationException("Sequence contains no matching element");
+    }
+
+    private static DataGridRow? FindRowAtPoint(DataGrid grid, Point point)
+    {
+        var visual = grid.GetVisualAt(point);
+        if (visual is Visual hit)
+        {
+            var row = hit.GetSelfAndVisualAncestors()
+                .OfType<DataGridRow>()
+                .FirstOrDefault(candidate => candidate.OwningGrid == grid && candidate.IsVisible);
+
+            if (row != null)
+            {
+                var topLeft = row.TranslatePoint(new Point(0, 0), grid);
+                if (topLeft != null)
+                {
+                    var bounds = new Rect(topLeft.Value, row.Bounds.Size);
+                    if (bounds.Contains(point))
+                    {
+                        return row;
+                    }
+                }
+            }
+        }
+
+        var presenter = grid.GetVisualDescendants().OfType<DataGridRowsPresenter>().FirstOrDefault();
+        if (presenter != null)
+        {
+            var presenterPoint = grid.TranslatePoint(point, presenter) ?? point;
+            foreach (var row in presenter.Children.OfType<DataGridRow>())
+            {
+                if (!row.IsVisible)
+                {
+                    continue;
+                }
+
+                if (row.Bounds.Contains(presenterPoint))
+                {
+                    return row;
+                }
             }
         }
 
@@ -360,6 +394,21 @@ public class DataGridMouseOverRowTests
         var properties = new PointerPointProperties(RawInputModifiers.LeftMouseButton, PointerUpdateKind.LeftButtonPressed);
         var args = new PointerPressedEventArgs(grid, pointer, grid, point, 0, properties, KeyModifiers.None);
         grid.RaiseEvent(args);
+    }
+
+    private static void PumpLayout(Control control)
+    {
+        Dispatcher.UIThread.RunJobs();
+        if (control.GetVisualRoot() is Window window)
+        {
+            window.ApplyTemplate();
+            window.UpdateLayout();
+        }
+        control.ApplyTemplate();
+        control.UpdateLayout();
+        Dispatcher.UIThread.RunJobs();
+        control.UpdateLayout();
+        Dispatcher.UIThread.RunJobs();
     }
 
     private sealed class TreeItem

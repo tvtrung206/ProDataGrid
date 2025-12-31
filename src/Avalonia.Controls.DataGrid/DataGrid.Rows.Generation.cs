@@ -38,7 +38,6 @@ namespace Avalonia.Controls
             using var _ = DataGridDiagnostics.BeginRowGenerate();
             activity?.SetTag(DataGridDiagnostics.Tags.RowIndex, rowIndex);
             activity?.SetTag(DataGridDiagnostics.Tags.Slot, slot);
-
             string source = null;
             DataGridRow dataGridRow = GetGeneratedRow(dataContext);
             bool isOwnContainer = false;
@@ -221,14 +220,12 @@ namespace Avalonia.Controls
                 {
                     LoadRowVisualsForDisplay(row);
 
-                    if (IsRowRecyclable(row))
+                    if (_rowsPresenter != null && !_rowsPresenter.Children.Contains(row))
                     {
-                        if (_rowsPresenter != null && !_rowsPresenter.Children.Contains(row))
-                        {
-                            _rowsPresenter.Children.Add(row);
-                        }
+                        _rowsPresenter.Children.Add(row);
                     }
-                    else
+
+                    if (!IsRowRecyclable(row))
                     {
                         element.Clip = null;
                         Debug.Assert(row.Index == RowIndexFromSlot(slot));

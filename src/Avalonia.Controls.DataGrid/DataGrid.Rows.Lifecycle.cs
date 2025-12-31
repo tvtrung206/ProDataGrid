@@ -49,7 +49,7 @@ namespace Avalonia.Controls
 
         private void OnAddedElement_Phase2(int slot, bool updateVerticalScrollBarOnly)
         {
-            if (slot < DisplayData.FirstScrollingSlot - 1)
+            if (_suppressVerticalOffsetAdjustments == 0 && slot < DisplayData.FirstScrollingSlot - 1)
             {
                 // The element was added above our viewport so it pushes the VerticalOffset down
                 var estimator = RowHeightEstimator;

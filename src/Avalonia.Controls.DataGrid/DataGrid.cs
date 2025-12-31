@@ -149,6 +149,7 @@ internal
             element.ClearDragDropState();
             ClearRowValidation(element);
             element.DataContext = null;
+            element.ClearPointerOverState();
         }
 
         /// <summary>
@@ -303,6 +304,7 @@ internal
         private bool _pendingHierarchicalRefresh;
         private HierarchicalAnchorHint? _pendingHierarchicalAnchorHint;
         private double? _pendingHierarchicalScrollOffset;
+        private bool _pendingHierarchicalIndentationRefresh;
         private IEnumerable _hierarchicalItemsSource;
         private bool _ownsHierarchicalItemsSource;
         private IDataGridRowDropHandler _rowDropHandler;
@@ -359,6 +361,7 @@ internal
         // does not know their actual height. The heights used for the approximation are the ones
         // set as the rows were scrolled off.
         private double _verticalOffset;
+        private int _suppressVerticalOffsetAdjustments;
 
         /// <summary>
         /// Identifies the <see cref="HorizontalScroll"/> routed event.
@@ -993,6 +996,19 @@ internal
 
         private void DataGrid_PointerExited(object? sender, PointerEventArgs e)
         {
+            if (VisualRoot is IInputRoot inputRoot && inputRoot.PointerOverElement is Visual visual)
+            {
+                for (var current = visual; current != null; current = current.VisualParent)
+                {
+                    if (ReferenceEquals(current, this))
+                    {
+                        _lastPointerPosition = e.GetPosition(this);
+                        RequestPointerOverRefresh();
+                        return;
+                    }
+                }
+            }
+
             _lastPointerPosition = null;
             RequestPointerOverRefresh();
         }
@@ -1024,6 +1040,50 @@ internal
             }, DispatcherPriority.Background);
         }
 
+        internal void RequestPointerOverRefreshFromRow()
+        {
+            RequestPointerOverRefresh();
+        }
+
+        private void RequestHierarchicalIndentationRefresh()
+        {
+            if (_pendingHierarchicalIndentationRefresh)
+            {
+                return;
+            }
+
+            if (!_hierarchicalRowsEnabled || DisplayData == null)
+            {
+                return;
+            }
+
+            _pendingHierarchicalIndentationRefresh = true;
+            LayoutUpdated += DataGrid_LayoutUpdatedHierarchicalIndentationRefresh;
+            Dispatcher.UIThread.Post(() =>
+            {
+                if (!_pendingHierarchicalIndentationRefresh)
+                {
+                    return;
+                }
+
+                LayoutUpdated -= DataGrid_LayoutUpdatedHierarchicalIndentationRefresh;
+                _pendingHierarchicalIndentationRefresh = false;
+                RefreshHierarchicalIndentation();
+            }, DispatcherPriority.Background);
+        }
+
+        private void DataGrid_LayoutUpdatedHierarchicalIndentationRefresh(object? sender, EventArgs e)
+        {
+            LayoutUpdated -= DataGrid_LayoutUpdatedHierarchicalIndentationRefresh;
+            if (!_pendingHierarchicalIndentationRefresh)
+            {
+                return;
+            }
+
+            _pendingHierarchicalIndentationRefresh = false;
+            RefreshHierarchicalIndentation();
+        }
+
         private void DataGrid_LayoutUpdatedPointerOverRefresh(object? sender, EventArgs e)
         {
             LayoutUpdated -= DataGrid_LayoutUpdatedPointerOverRefresh;
@@ -1039,12 +1099,25 @@ internal
         private void RefreshPointerOverRow()
         {
             int? newRowIndex = null;
-            if (IsPointerOverSelfOrDescendant() && _lastPointerPosition != null)
+            var isPointerOverGrid = IsPointerOverSelfOrDescendant();
+            if (isPointerOverGrid && DisplayData.FirstScrollingSlot < 0 && _mouseOverRowIndex.HasValue && SlotCount > 0)
+            {
+                newRowIndex = _mouseOverRowIndex;
+            }
+            else if (isPointerOverGrid && _lastPointerPosition != null)
             {
                 if (TryGetRowFromPoint(_lastPointerPosition.Value, out var row))
                 {
                     newRowIndex = row.Index;
                 }
+                else if (_mouseOverRowIndex.HasValue && IsPointWithinDisplayedRows(_lastPointerPosition.Value))
+                {
+                    newRowIndex = _mouseOverRowIndex;
+                }
+            }
+            else if (isPointerOverGrid && _mouseOverRowIndex.HasValue && DisplayData.FirstScrollingSlot >= 0)
+            {
+                newRowIndex = _mouseOverRowIndex;
             }
 
             if (_mouseOverRowIndex != newRowIndex)
@@ -1079,6 +1152,59 @@ internal
             }
 
             return _lastPointerPosition != null && Bounds.Contains(_lastPointerPosition.Value);
+        }
+
+        private bool IsPointWithinDisplayedRows(Point point)
+        {
+            if (_rowsPresenter == null || DisplayData.FirstScrollingSlot < 0)
+            {
+                return false;
+            }
+
+            var presenterPoint = this.TranslatePoint(point, _rowsPresenter);
+            if (presenterPoint == null)
+            {
+                return false;
+            }
+
+            double minY = double.PositiveInfinity;
+            double maxY = double.NegativeInfinity;
+            foreach (var row in DisplayData.GetScrollingRows())
+            {
+                if (!row.IsVisible)
+                {
+                    continue;
+                }
+
+                minY = Math.Min(minY, row.Bounds.Top);
+                maxY = Math.Max(maxY, row.Bounds.Bottom);
+            }
+
+            if (double.IsInfinity(minY) || double.IsInfinity(maxY))
+            {
+                return IsPointWithinEstimatedRows(presenterPoint.Value.Y);
+            }
+
+            var y = presenterPoint.Value.Y;
+            if (y >= minY && y <= maxY)
+            {
+                return true;
+            }
+
+            return IsPointWithinEstimatedRows(y);
+        }
+
+        private bool IsPointWithinEstimatedRows(double y)
+        {
+            if (DisplayData.FirstScrollingSlot < 0 || DisplayData.LastScrollingSlot < DisplayData.FirstScrollingSlot)
+            {
+                return false;
+            }
+
+            var estimatedHeight = GetHeightEstimate(DisplayData.FirstScrollingSlot, DisplayData.LastScrollingSlot);
+            var top = -NegVerticalOffset;
+            var bottom = top + estimatedHeight;
+            return y >= top && y <= bottom;
         }
 
         private void RefreshPointerOverRowStates()
@@ -2172,14 +2298,19 @@ internal
                     _pendingHierarchicalScrollOffset = Math.Max(0, anchor.ContentOffset + delta - anchor.ViewportOffset);
                 }
             }
-
             var indexMap = e.IndexMap;
             using (_hierarchicalModel?.BeginVirtualizationGuard())
             using (_rowsPresenter?.BeginVirtualizationGuard())
             {
                 RemapSelectionForHierarchyChange(indexMap);
                 RefreshRowsAndColumns(clearRows: false);
+                if (CurrentColumnIndex > -1 && (CurrentSlot < 0 || CurrentSlot >= SlotCount))
+                {
+                    CurrentColumnIndex = -1;
+                    CurrentSlot = -1;
+                }
                 RefreshSelectionFromModel();
+                RequestHierarchicalIndentationRefresh();
             }
 
             OnCollectionChangedForSummaries(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
@@ -2250,6 +2381,11 @@ internal
 
         private double GetEffectiveVerticalOffset()
         {
+            if (UseLogicalScrollable && _rowsPresenter != null)
+            {
+                return _rowsPresenter.Offset.Y;
+            }
+
             return _verticalOffset;
         }
 
@@ -2619,13 +2755,14 @@ internal
                 return;
             }
 
-            var source = _hierarchicalModel.Flattened;
+            var source = _hierarchicalModel.ObservableFlattened;
             var itemsSource = ItemsSource;
 
             if (!_ownsHierarchicalItemsSource &&
                 itemsSource != null &&
                 !ReferenceEquals(itemsSource, _hierarchicalItemsSource) &&
-                !ReferenceEquals(itemsSource, source))
+                !ReferenceEquals(itemsSource, source) &&
+                !ReferenceEquals(itemsSource, _hierarchicalModel.Flattened))
             {
                 return;
             }
@@ -2667,23 +2804,25 @@ internal
                     if (_hierarchicalRowsEnabled)
                     {
                         RefreshRowsAndColumns(clearRows: false);
+                        RefreshSelectionFromModel();
+                        RequestHierarchicalIndentationRefresh();
                     }
                 }
             }
         }
 
-        private void RemapSelectionForHierarchyChange(Avalonia.Controls.DataGridHierarchical.FlattenedIndexMap? indexMap)
+        private bool RemapSelectionForHierarchyChange(Avalonia.Controls.DataGridHierarchical.FlattenedIndexMap? indexMap)
         {
             if (indexMap == null || _selectionModelAdapter == null)
             {
-                return;
+                return false;
             }
 
             var model = _selectionModelAdapter.Model;
             var selected = model.SelectedIndexes;
             if (selected == null || selected.Count == 0)
             {
-                return;
+                return false;
             }
 
             var mapped = new List<int>(selected.Count);
@@ -2704,7 +2843,7 @@ internal
 
             var previous = PushSelectionSync();
             var source = model.Source;
-            var view = DataConnection?.CollectionView as Avalonia.Collections.DataGridCollectionView;
+            var view = DataConnection?.CollectionView;
             try
             {
                 if (source != null)
@@ -2737,7 +2876,19 @@ internal
             {
                 if (source != null)
                 {
-                    view?.Refresh();
+                    if (view != null)
+                    {
+                        NoCurrentCellChangeCount++;
+                        try
+                        {
+                            view.Refresh();
+                        }
+                        finally
+                        {
+                            NoCurrentCellChangeCount--;
+                        }
+                    }
+
                     if (model.Source != source)
                     {
                         model.Source = source;
@@ -2746,6 +2897,8 @@ internal
 
                 PopSelectionSync(previous);
             }
+
+            return source != null && view != null;
         }
 
         private void UpdateSelectionProxy()

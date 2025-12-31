@@ -164,6 +164,11 @@ namespace Avalonia.Controls
             }
         }
 
+        internal void ClearPointerOverState()
+        {
+            PseudoClassesHelper.Set(PseudoClasses, ":pointerover", false);
+        }
+
         internal void ClearDragDropState()
         {
             PseudoClassesHelper.Set(PseudoClasses, ":dragging", false);

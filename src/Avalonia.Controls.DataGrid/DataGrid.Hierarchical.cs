@@ -1,6 +1,9 @@
 // Copyright (c) Wiesław Šoltés. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 
+using Avalonia.Collections;
+using Avalonia.Data;
+
 namespace Avalonia.Controls
 {
     /// <summary>
@@ -168,6 +171,101 @@ namespace Avalonia.Controls
             Toggle,
             Expand,
             Collapse
+        }
+
+        private void RefreshHierarchicalIndentation()
+        {
+            if (!_hierarchicalRowsEnabled || DisplayData == null)
+            {
+                return;
+            }
+
+            var requestPointerOverRefresh = false;
+            var slot = DisplayData.FirstScrollingSlot;
+            while (slot >= 0 && slot <= DisplayData.LastScrollingSlot)
+            {
+                var element = DisplayData.GetDisplayedElement(slot);
+                if (element is DataGridRow row)
+                {
+                    var stateChanged = false;
+                    if (row.Slot != slot)
+                    {
+                        row.Slot = slot;
+                        requestPointerOverRefresh = true;
+                        stateChanged = true;
+                    }
+
+                    var dataItemChanged = false;
+                    var rowIndex = RowIndexFromSlot(slot);
+
+                    object dataItem = null;
+                    if (DataConnection != null && rowIndex >= 0 && rowIndex < DataConnection.Count)
+                    {
+                        dataItem = DataConnection.GetDataItem(rowIndex);
+                        if (!ReferenceEquals(row.DataContext, dataItem))
+                        {
+                            row.DataContext = dataItem;
+                            dataItemChanged = true;
+                            requestPointerOverRefresh = true;
+                            stateChanged = true;
+                        }
+
+                        var isPlaceholder = ReferenceEquals(dataItem, DataGridCollectionView.NewItemPlaceholder);
+                        if (row.IsPlaceholder != isPlaceholder)
+                        {
+                            row.IsPlaceholder = isPlaceholder;
+                            stateChanged = true;
+                        }
+                    }
+                    if (row.Index != rowIndex)
+                    {
+                        row.Index = rowIndex;
+                        requestPointerOverRefresh = true;
+                        stateChanged = true;
+                    }
+                    foreach (var cell in row.Cells)
+                    {
+                        if (cell is not DataGridCell dataGridCell)
+                        {
+                            continue;
+                        }
+
+                        if (dataItemChanged && dataGridCell.OwningColumn is DataGridHierarchicalColumn)
+                        {
+                            dataGridCell.Content = dataGridCell.OwningColumn.GenerateElementInternal(dataGridCell, row.DataContext);
+                        }
+
+                        if (dataGridCell.Content is DataGridHierarchicalPresenter presenter)
+                        {
+                            BindingOperations
+                                .GetBindingExpressionBase(presenter, DataGridHierarchicalPresenter.LevelProperty)
+                                ?.UpdateTarget();
+                            BindingOperations
+                                .GetBindingExpressionBase(presenter, DataGridHierarchicalPresenter.IsExpandedProperty)
+                                ?.UpdateTarget();
+                            BindingOperations
+                                .GetBindingExpressionBase(presenter, DataGridHierarchicalPresenter.IsExpandableProperty)
+                                ?.UpdateTarget();
+                        }
+                    }
+
+                    if (stateChanged)
+                    {
+                        row.ApplyState();
+                    }
+                }
+
+                slot = GetNextVisibleSlot(slot);
+            }
+
+            if (_lastPointerPosition != null || _mouseOverRowIndex != null)
+            {
+                RefreshPointerOverRowStates();
+                if (requestPointerOverRefresh)
+                {
+                    RequestPointerOverRefresh();
+                }
+            }
         }
     }
 }
