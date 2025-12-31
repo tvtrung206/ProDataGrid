@@ -811,7 +811,31 @@ namespace Avalonia.Controls
                 groupHeader.UpdateSummaryRowState();
                 groupHeader.UpdatePseudoClasses();
                 groupHeader.ApplyHeaderStatus();
+                ApplyRowGroupHeaderIndent(groupHeader);
             }
+        }
+
+        private void ApplyRowGroupHeaderIndent(DataGridRowGroupHeader groupHeader)
+        {
+            if (groupHeader == null)
+            {
+                return;
+            }
+
+            if (groupHeader.Level <= 0)
+            {
+                groupHeader.TotalIndent = 0;
+                return;
+            }
+
+            if (RowGroupSublevelIndents == null || RowGroupSublevelIndents.Length == 0)
+            {
+                groupHeader.TotalIndent = DATAGRID_defaultRowGroupSublevelIndent * groupHeader.Level;
+                return;
+            }
+
+            var index = Math.Min(groupHeader.Level - 1, RowGroupSublevelIndents.Length - 1);
+            groupHeader.TotalIndent = RowGroupSublevelIndents[index];
         }
 
         private void UpdateRowGroupHeaderPropertyName(DataGridRowGroupHeader groupHeader, int level)

@@ -1,14 +1,17 @@
 // Copyright (c) Wieslaw Soltes. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Avalonia.Collections;
 using Avalonia.Controls;
 using Avalonia.Controls.DataGridTests;
+using Avalonia.Controls.Shapes;
 using Avalonia.Data;
 using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 using Xunit;
 
 namespace Avalonia.Controls.DataGridTests.State;
@@ -169,6 +172,73 @@ public class DataGridStateGroupingTests
         }
     }
 
+    [AvaloniaFact]
+    public void RestoreGroupingState_ReappliesIndentationToVisibleHeaders()
+    {
+        var items = StateTestHelper.CreateItems(18);
+        var view = new DataGridCollectionView(items);
+        view.GroupDescriptions.Add(new DataGridPathGroupDescription(nameof(StateTestItem.Category)));
+        view.GroupDescriptions.Add(new DataGridPathGroupDescription(nameof(StateTestItem.Group)));
+        view.Refresh();
+
+        var root = new Window
+        {
+            Width = 600,
+            Height = 400,
+        };
+
+        root.SetThemeStyles();
+
+        var grid = new DataGrid
+        {
+            ItemsSource = view,
+            HeadersVisibility = DataGridHeadersVisibility.Column,
+        };
+
+        grid.ColumnsInternal.Add(new DataGridTextColumn
+        {
+            Header = "Category",
+            Binding = new Binding(nameof(StateTestItem.Category)),
+        });
+        grid.ColumnsInternal.Add(new DataGridTextColumn
+        {
+            Header = "Group",
+            Binding = new Binding(nameof(StateTestItem.Group)),
+        });
+        grid.ColumnsInternal.Add(new DataGridTextColumn
+        {
+            Header = "Name",
+            Binding = new Binding(nameof(StateTestItem.Name)),
+        });
+
+        root.Content = grid;
+        root.Show();
+        PumpLayout(grid);
+
+        try
+        {
+            grid.ExpandAllGroups();
+            PumpLayout(grid);
+
+            var state = grid.CaptureGroupingState();
+            Assert.NotNull(state);
+
+            view.GroupDescriptions.Clear();
+            view.Refresh();
+            PumpLayout(grid);
+
+            grid.RestoreGroupingState(state);
+            grid.ExpandAllGroups();
+            PumpLayout(grid);
+
+            AssertGroupHeaderIndentation(grid);
+        }
+        finally
+        {
+            root.Close();
+        }
+    }
+
     private static DataGridCollectionViewGroup? FindGroup(DataGridCollectionView view, params object[] pathKeys)
     {
         IEnumerable<DataGridCollectionViewGroup> current = view.Groups?.Cast<DataGridCollectionViewGroup>();
@@ -186,5 +256,81 @@ public class DataGridStateGroupingTests
         }
 
         return matched;
+    }
+
+    private static IReadOnlyList<DataGridRowGroupInfo> GetRowGroupInfos(DataGrid grid)
+    {
+        return grid.RowGroupHeadersTable.GetIndexes()
+            .Select(slot => grid.RowGroupHeadersTable.GetValueAt(slot))
+            .Where(info => info != null)
+            .ToList();
+    }
+
+    private static DataGridRowGroupHeader GetHeaderForGroupInfo(DataGrid grid, DataGridRowGroupInfo info)
+    {
+        var columnIndex = grid.ColumnsInternal.FirstVisibleNonFillerColumn?.Index ?? 0;
+        if (grid.ColumnDefinitions.Count > 0)
+        {
+            grid.ScrollSlotIntoView(columnIndex, info.Slot, forCurrentCellChange: false, forceHorizontalScroll: false);
+        }
+
+        PumpLayout(grid);
+
+        if (grid.DisplayData.GetDisplayedElement(info.Slot) is DataGridRowGroupHeader header)
+        {
+            return header;
+        }
+
+        throw new InvalidOperationException("Group header was not realized.");
+    }
+
+    private static void AssertGroupHeaderIndentation(DataGrid grid)
+    {
+        var rowGroupInfos = GetRowGroupInfos(grid);
+        Assert.NotEmpty(rowGroupInfos);
+
+        var hasSubGroups = rowGroupInfos.Any(info => info.Level > 0);
+        var indents = grid.RowGroupSublevelIndents ?? Array.Empty<double>();
+
+        if (hasSubGroups)
+        {
+            Assert.NotNull(grid.RowGroupSublevelIndents);
+        }
+
+        foreach (var info in rowGroupInfos)
+        {
+            var header = GetHeaderForGroupInfo(grid, info);
+            var level = info.Level;
+            var expected = level <= 0 || indents.Length == 0
+                ? 0
+                : indents[Math.Min(level - 1, indents.Length - 1)];
+
+            Assert.Equal(expected, GetIndentSpacerWidth(header), precision: 3);
+        }
+    }
+
+    private static double GetIndentSpacerWidth(DataGridRowGroupHeader header)
+    {
+        var spacer = header.GetVisualDescendants()
+            .OfType<Rectangle>()
+            .FirstOrDefault(rect => rect.Name == "PART_IndentSpacer");
+
+        Assert.NotNull(spacer);
+        return spacer!.Width;
+    }
+
+    private static void PumpLayout(Control control)
+    {
+        Dispatcher.UIThread.RunJobs();
+        if (control.GetVisualRoot() is Window window)
+        {
+            window.ApplyTemplate();
+            window.UpdateLayout();
+        }
+        control.ApplyTemplate();
+        control.UpdateLayout();
+        Dispatcher.UIThread.RunJobs();
+        control.UpdateLayout();
+        Dispatcher.UIThread.RunJobs();
     }
 }
