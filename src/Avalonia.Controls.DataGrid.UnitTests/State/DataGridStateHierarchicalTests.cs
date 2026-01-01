@@ -3,12 +3,15 @@
 
 using System;
 using System.Collections.ObjectModel;
+using System.Linq;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.DataGridHierarchical;
 using Avalonia.Controls.DataGridTests;
 using Avalonia.Data;
 using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 using Xunit;
 
 namespace Avalonia.Controls.DataGridTests.State;
@@ -315,5 +318,122 @@ public class DataGridStateHierarchicalTests
         {
             root.Close();
         }
+    }
+
+    [AvaloniaFact]
+    public void RestoreHierarchicalState_ReappliesIndentationForVisibleRows()
+    {
+        var rootItem = new TreeItem(0, "Root");
+        var childItem = new TreeItem(1, "Child");
+        var grandChildItem = new TreeItem(2, "GrandChild");
+        childItem.Children.Add(grandChildItem);
+        rootItem.Children.Add(childItem);
+
+        var model = new HierarchicalModel<TreeItem>(new HierarchicalOptions<TreeItem>
+        {
+            ChildrenSelector = item => item.Children,
+            AutoExpandRoot = true,
+            MaxAutoExpandDepth = 2,
+        });
+        model.SetRoot(rootItem);
+
+        const double indent = 18;
+
+        var grid = new DataGrid
+        {
+            HierarchicalModel = model,
+            HierarchicalRowsEnabled = true,
+            AutoGenerateColumns = false,
+            ItemsSource = model.Flattened,
+        };
+
+        grid.ColumnsInternal.Add(new DataGridHierarchicalColumn
+        {
+            Header = "Name",
+            Binding = new Binding("Item.Name"),
+            Indent = indent,
+        });
+
+        var root = new Window
+        {
+            Width = 500,
+            Height = 300,
+            Content = grid,
+        };
+
+        root.SetThemeStyles();
+        root.Show();
+        PumpLayout(grid);
+
+        try
+        {
+            var rootNode = model.Root ?? throw new InvalidOperationException("Root node missing.");
+            model.Expand(rootNode);
+            var childNode = model.FindNode(childItem) ?? throw new InvalidOperationException("Child node missing.");
+            model.Expand(childNode);
+            PumpLayout(grid);
+
+            AssertVisibleRowsHaveCorrectIndent(grid, indent);
+
+            var state = grid.CaptureHierarchicalState();
+            Assert.NotNull(state);
+
+            model.CollapseAll();
+            PumpLayout(grid);
+
+            grid.RestoreHierarchicalState(state);
+            PumpLayout(grid);
+
+            AssertVisibleRowsHaveCorrectIndent(grid, indent);
+        }
+        finally
+        {
+            root.Close();
+        }
+    }
+
+    private static void AssertVisibleRowsHaveCorrectIndent(DataGrid grid, double indent)
+    {
+        foreach (var row in grid.GetVisualDescendants().OfType<DataGridRow>().Where(row => row.IsVisible))
+        {
+            if (row.DataContext is not HierarchicalNode node)
+            {
+                continue;
+            }
+
+            var presenter = GetHierarchicalPresenter(row);
+            var expected = new Thickness(node.Level * indent, 0, 0, 0);
+            Assert.Equal(expected, presenter.Padding);
+        }
+    }
+
+    private static DataGridHierarchicalPresenter GetHierarchicalPresenter(DataGridRow row)
+    {
+        if (row.Cells.Count > 0 && row.Cells[0].Content is DataGridHierarchicalPresenter presenter)
+        {
+            return presenter;
+        }
+
+        presenter = row.GetVisualDescendants()
+            .OfType<DataGridHierarchicalPresenter>()
+            .FirstOrDefault();
+
+        Assert.NotNull(presenter);
+        return presenter!;
+    }
+
+    private static void PumpLayout(Control control)
+    {
+        Dispatcher.UIThread.RunJobs();
+        if (control.GetVisualRoot() is Window window)
+        {
+            window.ApplyTemplate();
+            window.UpdateLayout();
+        }
+        control.ApplyTemplate();
+        control.UpdateLayout();
+        Dispatcher.UIThread.RunJobs();
+        control.UpdateLayout();
+        Dispatcher.UIThread.RunJobs();
     }
 }

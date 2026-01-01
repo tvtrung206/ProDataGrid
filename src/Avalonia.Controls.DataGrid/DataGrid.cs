@@ -305,6 +305,9 @@ internal
         private HierarchicalAnchorHint? _pendingHierarchicalAnchorHint;
         private double? _pendingHierarchicalScrollOffset;
         private bool _pendingHierarchicalIndentationRefresh;
+        private bool _pendingGroupingIndentationRefresh;
+        private bool _groupingIndentationRefreshQueued;
+        private bool _pendingGroupingIndentationReset;
         private IEnumerable _hierarchicalItemsSource;
         private bool _ownsHierarchicalItemsSource;
         private IDataGridRowDropHandler _rowDropHandler;
@@ -1072,6 +1075,33 @@ internal
             }, DispatcherPriority.Background);
         }
 
+        private void RequestGroupingIndentationRefresh()
+        {
+            if (_pendingGroupingIndentationRefresh)
+            {
+                _groupingIndentationRefreshQueued = true;
+                return;
+            }
+
+            if (DisplayData == null)
+            {
+                return;
+            }
+
+            _pendingGroupingIndentationRefresh = true;
+            LayoutUpdated += DataGrid_LayoutUpdatedGroupingIndentationRefresh;
+            Dispatcher.UIThread.Post(() =>
+            {
+                if (!_pendingGroupingIndentationRefresh)
+                {
+                    return;
+                }
+
+                LayoutUpdated -= DataGrid_LayoutUpdatedGroupingIndentationRefresh;
+                CompleteGroupingIndentationRefresh();
+            }, DispatcherPriority.Background);
+        }
+
         private void DataGrid_LayoutUpdatedHierarchicalIndentationRefresh(object? sender, EventArgs e)
         {
             LayoutUpdated -= DataGrid_LayoutUpdatedHierarchicalIndentationRefresh;
@@ -1082,6 +1112,29 @@ internal
 
             _pendingHierarchicalIndentationRefresh = false;
             RefreshHierarchicalIndentation();
+        }
+
+        private void DataGrid_LayoutUpdatedGroupingIndentationRefresh(object? sender, EventArgs e)
+        {
+            LayoutUpdated -= DataGrid_LayoutUpdatedGroupingIndentationRefresh;
+            if (!_pendingGroupingIndentationRefresh)
+            {
+                return;
+            }
+
+            CompleteGroupingIndentationRefresh();
+        }
+
+        private void CompleteGroupingIndentationRefresh()
+        {
+            _pendingGroupingIndentationRefresh = false;
+            UpdateGroupingIndentation();
+
+            if (_groupingIndentationRefreshQueued)
+            {
+                _groupingIndentationRefreshQueued = false;
+                RequestGroupingIndentationRefresh();
+            }
         }
 
         private void DataGrid_LayoutUpdatedPointerOverRefresh(object? sender, EventArgs e)

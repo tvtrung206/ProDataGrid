@@ -581,14 +581,18 @@ namespace Avalonia.Controls
                 double heightChangeBelowLastDisplayedSlot = 0;
                 if (DisplayData.FirstScrollingSlot >= startSlot && DisplayData.FirstScrollingSlot <= endSlot)
                 {
-                    // Our first visible slot was collapsed, find the replacement
-                    int collapsedSlotsAbove = DisplayData.FirstScrollingSlot - startSlot - _collapsedSlotsTable.GetIndexCount(startSlot, DisplayData.FirstScrollingSlot);
-                    Debug.Assert(collapsedSlotsAbove > 0);
-                    int newFirstScrollingSlot = GetNextVisibleSlot(DisplayData.FirstScrollingSlot);
-                    while (collapsedSlotsAbove > 1 && newFirstScrollingSlot < SlotCount)
+                    int newFirstScrollingSlot = -1;
+                    if (isDisplayed)
                     {
-                        collapsedSlotsAbove--;
-                        newFirstScrollingSlot = GetNextVisibleSlot(newFirstScrollingSlot);
+                        // Our first visible slot was collapsed, find the replacement
+                        int collapsedSlotsAbove = DisplayData.FirstScrollingSlot - startSlot - _collapsedSlotsTable.GetIndexCount(startSlot, DisplayData.FirstScrollingSlot);
+                        Debug.Assert(collapsedSlotsAbove >= 0);
+                        newFirstScrollingSlot = GetNextVisibleSlot(DisplayData.FirstScrollingSlot);
+                        while (collapsedSlotsAbove > 1 && newFirstScrollingSlot < SlotCount)
+                        {
+                            collapsedSlotsAbove--;
+                            newFirstScrollingSlot = GetNextVisibleSlot(newFirstScrollingSlot);
+                        }
                     }
                     heightChange += CollapseSlotsInTable(startSlot, endSlot, ref slotsExpanded, oldLastDisplayedSlot, ref heightChangeBelowLastDisplayedSlot);
                     if (isDisplayed)
@@ -777,7 +781,7 @@ namespace Avalonia.Controls
             InvalidateRowsArrange();
         }
 
-        private void SyncRowGroupHeaderInfo(DataGridRowGroupHeader groupHeader, DataGridRowGroupInfo rowGroupInfo)
+        internal void SyncRowGroupHeaderInfo(DataGridRowGroupHeader groupHeader, DataGridRowGroupInfo rowGroupInfo)
         {
             var infoChanged = !ReferenceEquals(groupHeader.RowGroupInfo, rowGroupInfo);
             if (infoChanged)
@@ -811,7 +815,31 @@ namespace Avalonia.Controls
                 groupHeader.UpdateSummaryRowState();
                 groupHeader.UpdatePseudoClasses();
                 groupHeader.ApplyHeaderStatus();
+                ApplyRowGroupHeaderIndent(groupHeader);
             }
+        }
+
+        internal void ApplyRowGroupHeaderIndent(DataGridRowGroupHeader groupHeader)
+        {
+            if (groupHeader == null)
+            {
+                return;
+            }
+
+            if (groupHeader.Level <= 0)
+            {
+                groupHeader.TotalIndent = 0;
+                return;
+            }
+
+            if (RowGroupSublevelIndents == null || RowGroupSublevelIndents.Length == 0)
+            {
+                groupHeader.TotalIndent = DATAGRID_defaultRowGroupSublevelIndent * groupHeader.Level;
+                return;
+            }
+
+            var index = Math.Min(groupHeader.Level - 1, RowGroupSublevelIndents.Length - 1);
+            groupHeader.TotalIndent = RowGroupSublevelIndents[index];
         }
 
         private void UpdateRowGroupHeaderPropertyName(DataGridRowGroupHeader groupHeader, int level)

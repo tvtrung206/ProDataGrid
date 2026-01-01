@@ -11,6 +11,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.Collections;
 using System;
 using Avalonia.LogicalTree;
 using Avalonia.Reactive;
@@ -447,6 +448,19 @@ internal
             
             EnsureExpanderButtonIsChecked();
             EnsureHeaderVisibility();
+            if (OwningGrid != null)
+            {
+                var group = DataContext as DataGridCollectionViewGroup ?? RowGroupInfo?.CollectionViewGroup;
+                var info = group != null ? OwningGrid.RowGroupInfoFromCollectionViewGroup(group) : RowGroupInfo;
+                if (info != null)
+                {
+                    OwningGrid.SyncRowGroupHeaderInfo(this, info);
+                }
+                else
+                {
+                    OwningGrid.ApplyRowGroupHeaderIndent(this);
+                }
+            }
             UpdatePseudoClasses();
             ApplyHeaderStatus();
             ApplySummaryRowTheme();

@@ -602,12 +602,16 @@ namespace Avalonia.Controls
 
             if (DataConnection?.CollectionView is DataGridCollectionView view && state.GroupDescriptions != null)
             {
-                using (view.DeferRefresh())
+                var groupDescriptions = view.GroupDescriptions;
+                if (groupDescriptions != null && !GroupDescriptionsMatch(groupDescriptions, state.GroupDescriptions))
                 {
-                    view.GroupDescriptions.Clear();
-                    foreach (var description in state.GroupDescriptions)
+                    using (view.DeferRefresh())
                     {
-                        view.GroupDescriptions.Add(description);
+                        groupDescriptions.Clear();
+                        foreach (var description in state.GroupDescriptions)
+                        {
+                            groupDescriptions.Add(description);
+                        }
                     }
                 }
             }
@@ -618,6 +622,27 @@ namespace Avalonia.Controls
             }
 
             RefreshGroupingLayout();
+            RequestGroupingIndentationRefresh();
+        }
+
+        private static bool GroupDescriptionsMatch(
+            AvaloniaList<DataGridGroupDescription> current,
+            IReadOnlyList<DataGridGroupDescription> desired)
+        {
+            if (current == null || desired == null || current.Count != desired.Count)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < current.Count; i++)
+            {
+                if (!ReferenceEquals(current[i], desired[i]))
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         public DataGridHierarchicalState CaptureHierarchicalState(DataGridStateOptions options = null)
@@ -684,10 +709,30 @@ namespace Avalonia.Controls
             UpdateGroupingIndentation();
         }
 
+        internal void RefreshGroupingAfterDescriptionsChange()
+        {
+            RefreshGroupingLayout();
+            RequestGroupingIndentationRefresh();
+        }
+
         private void UpdateGroupingIndentation()
         {
             if (RowGroupSublevelIndents == null || DisplayData == null)
             {
+                _pendingGroupingIndentationReset = false;
+                InvalidateRowsMeasure(invalidateIndividualElements: true);
+                InvalidateRowsArrange();
+                return;
+            }
+
+            if (DisplayData.FirstScrollingSlot < 0 || DisplayData.LastScrollingSlot < 0)
+            {
+                _pendingGroupingIndentationReset = false;
+                if (SlotCount > 0 && IsAttachedToVisualTree && IsVisible)
+                {
+                    RequestGroupingIndentationRefresh();
+                }
+
                 InvalidateRowsMeasure(invalidateIndividualElements: true);
                 InvalidateRowsArrange();
                 return;
@@ -699,12 +744,19 @@ namespace Avalonia.Controls
 
             int slot = DisplayData.FirstScrollingSlot;
             int lastSlot = DisplayData.LastScrollingSlot;
+            var resetDisplayedRows = false;
             while (slot >= 0 && slot <= lastSlot)
             {
                 var element = DisplayData.GetDisplayedElement(slot);
                 if (element is DataGridRowGroupHeader header)
                 {
-                    var rowGroupInfo = RowGroupHeadersTable.GetValueAt(slot) ?? header.RowGroupInfo;
+                    var rowGroupInfo = RowGroupHeadersTable.GetValueAt(slot);
+                    if (rowGroupInfo == null)
+                    {
+                        resetDisplayedRows = true;
+                        break;
+                    }
+
                     if (rowGroupInfo != null)
                     {
                         SyncRowGroupHeaderInfo(header, rowGroupInfo);
@@ -723,7 +775,13 @@ namespace Avalonia.Controls
                 }
                 else if (element is DataGridRowGroupFooter footer)
                 {
-                    var rowGroupInfo = RowGroupFootersTable.GetValueAt(slot) ?? footer.RowGroupInfo;
+                    var rowGroupInfo = RowGroupFootersTable.GetValueAt(slot);
+                    if (rowGroupInfo == null)
+                    {
+                        resetDisplayedRows = true;
+                        break;
+                    }
+
                     if (rowGroupInfo != null)
                     {
                         if (!ReferenceEquals(footer.RowGroupInfo, rowGroupInfo))
@@ -744,6 +802,18 @@ namespace Avalonia.Controls
                 slot = GetNextVisibleSlot(slot);
             }
 
+            if (resetDisplayedRows)
+            {
+                if (!_pendingGroupingIndentationReset)
+                {
+                    _pendingGroupingIndentationReset = true;
+                    ResetDisplayedRows();
+                }
+                RequestGroupingIndentationRefresh();
+                return;
+            }
+
+            _pendingGroupingIndentationReset = false;
             InvalidateRowsMeasure(invalidateIndividualElements: true);
             InvalidateRowsArrange();
         }
