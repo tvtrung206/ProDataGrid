@@ -806,7 +806,7 @@ namespace Avalonia.Controls.DataGridHierarchical
 
         public void SetRoot(T rootItem) => base.SetRoot(rootItem!);
 
-        public void SetRoots(IEnumerable<T> rootItems) => base.SetRoots(rootItems.Cast<object>());
+        public void SetRoots(IEnumerable<T> rootItems) => base.SetRoots(rootItems);
 
         public HierarchicalNode<T> GetTypedNode(int index) => new HierarchicalNode<T>(base.GetNode(index));
 

@@ -116,6 +116,9 @@
     <TabItem Header="Hierarchical Expand Items">
       <pages:HierarchicalExpandCollapseItemsPage />
     </TabItem>
+    <TabItem Header="Hierarchical Root Items">
+      <pages:HierarchicalRootItemsPage />
+    </TabItem>
     <TabItem Header="Grouped Selection">
       <pages:GroupedSelectionPage />
     </TabItem>

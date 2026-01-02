@@ -14,6 +14,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Controls.DataGridHierarchical;
 using Avalonia.Controls.DataGridSorting;
+using Avalonia.Controls.Templates;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.Markup.Xaml.Styling;
@@ -70,7 +71,9 @@ public class HierarchicalHeadlessTests
             HierarchicalModel = model,
             HierarchicalRowsEnabled = true,
             AutoGenerateColumns = false,
-            ItemsSource = model.Flattened
+            ItemsSource = model.Flattened,
+            UseLogicalScrollable = true,
+            RowHeight = 24
         };
 
         grid.ColumnsInternal.Add(new DataGridHierarchicalColumn
@@ -185,14 +188,9 @@ public class HierarchicalHeadlessTests
             Content = grid
         };
 
-        window.SetThemeStyles();
+        window.SetThemeStyles(DataGridTheme.SimpleV2);
         window.Show();
-
-        grid.ApplyTemplate();
-        grid.Measure(new Size(400, 300));
-        grid.Arrange(new Rect(0, 0, 400, 300));
-        grid.UpdateLayout();
-        Dispatcher.UIThread.RunJobs();
+        PumpLayout(grid);
 
         var items = Assert.IsAssignableFrom<IReadOnlyList<HierarchicalNode>>(grid.ItemsSource);
         Assert.Equal(1, items.Count);
@@ -205,6 +203,102 @@ public class HierarchicalHeadlessTests
         Assert.True(model.Root.IsExpanded);
         Assert.Equal(2, model.Count);
         Assert.Equal(2, items.Count);
+    }
+
+    [AvaloniaFact]
+    public void Expander_Click_Does_Not_Select_Row()
+    {
+        var items = new[] { new Item("root") };
+
+        var grid = new DataGrid
+        {
+            AutoGenerateColumns = false,
+            SelectionMode = DataGridSelectionMode.Single,
+            IsTabStop = false,
+            HierarchicalRowsEnabled = true,
+            ItemsSource = items
+        };
+
+        var column = new DataGridTextColumn
+        {
+            Header = "Name",
+            Binding = new Avalonia.Data.Binding(nameof(Item.Name))
+        };
+        grid.ColumnsInternal.Add(column);
+
+        var row = new DataGridRow
+        {
+            OwningGrid = grid,
+            Slot = 0,
+            Index = 0,
+            DataContext = items[0]
+        };
+
+        var presenter = new DataGridHierarchicalPresenter
+        {
+            Template = new FuncControlTemplate<DataGridHierarchicalPresenter>((owner, scope) =>
+            {
+                var expander = new ToggleButton
+                {
+                    Name = "PART_Expander",
+                    Width = 16,
+                    Height = 16
+                };
+
+                scope.Register(expander.Name, expander);
+
+                return expander;
+            })
+        };
+
+        var cell = new DataGridCell
+        {
+            OwningRow = row,
+            OwningColumn = column,
+            Content = presenter
+        };
+        row.Cells.Insert(0, cell);
+
+        var window = new Window
+        {
+            Width = 200,
+            Height = 100,
+            Content = new StackPanel
+            {
+                Children =
+                {
+                    grid,
+                    cell
+                }
+            }
+        };
+
+        window.SetThemeStyles();
+        window.Show();
+        PumpLayout(grid);
+
+        cell.ApplyTemplate();
+        presenter.ApplyTemplate();
+        presenter.UpdateLayout();
+
+        var expander = presenter.GetTemplateChildren()
+            .OfType<ToggleButton>()
+            .FirstOrDefault(control => control.Name == "PART_Expander");
+        Assert.NotNull(expander);
+
+        Assert.True(expander!.GetVisualAncestors().OfType<DataGridHierarchicalPresenter>().Any());
+
+        var pointer = new Avalonia.Input.Pointer(Avalonia.Input.Pointer.GetNextFreeId(), PointerType.Mouse, isPrimary: true);
+
+        grid.SelectedIndex = -1;
+        cell.RaiseEvent(CreatePointerPressedArgs(cell, window, pointer, new Point(1, 1), KeyModifiers.None));
+        Assert.Equal(0, grid.SelectedIndex);
+
+        grid.SelectedIndex = -1;
+        expander.RaiseEvent(CreatePointerPressedArgs(expander, window, pointer, new Point(1, 1), KeyModifiers.None));
+        Assert.Equal(-1, grid.SelectedIndex);
+
+        window.Close();
     }
 
     [AvaloniaFact]
@@ -806,6 +900,12 @@ public class HierarchicalHeadlessTests
         return presenter!;
     }
 
+    private static PointerPressedEventArgs CreatePointerPressedArgs(Control source, Visual root, IPointer pointer, Point position, KeyModifiers modifiers)
+    {
+        var properties = new PointerPointProperties(RawInputModifiers.LeftMouseButton, PointerUpdateKind.LeftButtonPressed);
+        return new PointerPressedEventArgs(source, pointer, root, position, 0, properties, modifiers);
+    }
+
     private static Item CreateTree(string name, int childCount, int grandchildCount)
     {
         var root = new Item(name);
@@ -964,6 +1064,68 @@ public class HierarchicalHeadlessTests
 
         Assert.Equal(3, model.Count);
         Assert.True(model.IsVirtualRoot);
+    }
+
+    [AvaloniaFact]
+    public void MultiRoot_TypedModel_Tracks_RootCollection_Changes()
+    {
+        var roots = new ObservableCollection<Item>();
+
+        var model = new HierarchicalModel<Item>(new HierarchicalOptions<Item>
+        {
+            ChildrenSelector = item => item.Children
+        });
+        model.SetRoots(roots);
+
+        var grid = new DataGrid
+        {
+            HierarchicalModel = model,
+            HierarchicalRowsEnabled = true,
+            AutoGenerateColumns = false,
+            ItemsSource = ((IHierarchicalModel)model).Flattened
+        };
+
+        grid.ColumnsInternal.Add(new DataGridHierarchicalColumn
+        {
+            Header = "Name",
+            Binding = new Avalonia.Data.Binding("Item.Name")
+        });
+
+        var window = new Window
+        {
+            Width = 400,
+            Height = 300,
+            Content = grid
+        };
+
+        window.SetThemeStyles();
+        window.Show();
+
+        grid.ApplyTemplate();
+        grid.Measure(new Size(400, 300));
+        grid.Arrange(new Rect(0, 0, 400, 300));
+        grid.UpdateLayout();
+        Dispatcher.UIThread.RunJobs();
+
+        var items = Assert.IsAssignableFrom<IReadOnlyList<HierarchicalNode>>(grid.ItemsSource);
+        Assert.Equal(0, items.Count);
+
+        roots.Add(new Item("Root1"));
+        roots.Add(new Item("Root2"));
+
+        Dispatcher.UIThread.RunJobs();
+        grid.UpdateLayout();
+
+        Assert.Equal(2, model.Count);
+        Assert.Equal(2, items.Count);
+
+        roots.RemoveAt(0);
+
+        Dispatcher.UIThread.RunJobs();
+        grid.UpdateLayout();
+
+        Assert.Equal(1, model.Count);
+        Assert.Equal(1, items.Count);
     }
 
     [AvaloniaFact]

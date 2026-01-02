@@ -36,6 +36,8 @@
   href: drag-drop.md
 - name: Hierarchical Data
   href: hierarchical-data.md
+- name: Observable Root Collections
+  href: hierarchical-root-items.md
 - name: State and Persistence
   href: state-persistence.md
 - name: Summaries and Aggregation

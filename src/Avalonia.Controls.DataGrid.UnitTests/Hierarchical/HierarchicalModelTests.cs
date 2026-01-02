@@ -2194,6 +2194,38 @@ namespace Avalonia.Controls.DataGridTests.Hierarchical;
     }
 
     [Fact]
+    public void SetRoots_TypedModel_Observes_RootCollectionChanges()
+    {
+        var roots = new ObservableCollection<Item>();
+
+        var model = new HierarchicalModel<Item>(new HierarchicalOptions<Item>
+        {
+            ChildrenSelector = item => item.Children
+        });
+
+        model.SetRoots(roots);
+
+        Assert.Equal(0, model.Count);
+
+        var first = new Item("Item1");
+        roots.Add(first);
+
+        Assert.Equal(1, model.Count);
+        Assert.Same(first, model.GetItem(0));
+
+        var second = new Item("Item2");
+        roots.Add(second);
+
+        Assert.Equal(2, model.Count);
+        Assert.Same(second, model.GetItem(1));
+
+        roots.Remove(first);
+
+        Assert.Equal(1, model.Count);
+        Assert.Same(second, model.GetItem(0));
+    }
+
+    [Fact]
     public void SetRoots_MaxAutoExpandDepth_RespectsLimit()
     {
         var item1 = new Item("Item1");

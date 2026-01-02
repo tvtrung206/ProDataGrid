@@ -13,6 +13,8 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Controls.Utils;
 using Avalonia.Controls.Shapes;
 using Avalonia.Input;
+using Avalonia.VisualTree;
+using System.Linq;
 
 namespace Avalonia.Controls
 {
@@ -222,6 +224,11 @@ internal
             var point = e.GetCurrentPoint(this);
             if (point.Properties.IsLeftButtonPressed)
             {
+                if (OwningGrid.HierarchicalRowsEnabled && IsHierarchicalExpanderHit(e.Source))
+                {
+                    return;
+                }
+
                 var focusWithin = IsKeyboardFocusWithin;
                 if (OwningGrid.IsTabStop && !focusWithin)
                 {
@@ -262,6 +269,22 @@ internal
                     e.Handled = OwningGrid.UpdateStateOnMouseRightButtonDown(e, ColumnIndex, OwningRow.Slot, !e.Handled);
                 }
             }
+        }
+
+        private static bool IsHierarchicalExpanderHit(object? source)
+        {
+            if (source is not Visual visual)
+            {
+                return false;
+            }
+
+            var toggleButton = visual.GetSelfAndVisualAncestors().OfType<ToggleButton>().FirstOrDefault();
+            if (toggleButton == null)
+            {
+                return false;
+            }
+
+            return toggleButton.GetVisualAncestors().OfType<DataGridHierarchicalPresenter>().Any();
         }
 
         internal void UpdatePseudoClasses()
