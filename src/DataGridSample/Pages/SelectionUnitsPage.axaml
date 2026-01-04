@@ -1,0 +1,75 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:viewModels="clr-namespace:DataGridSample.ViewModels"
+             x:Class="DataGridSample.Pages.SelectionUnitsPage"
+             x:DataType="viewModels:SelectionUnitsViewModel">
+  <UserControl.DataContext>
+    <viewModels:SelectionUnitsViewModel />
+  </UserControl.DataContext>
+
+  <Grid RowDefinitions="Auto,Auto,*"
+        ColumnDefinitions="*,*,*"
+        Margin="12"
+        ColumnSpacing="12"
+        RowSpacing="8">
+    <StackPanel Grid.Row="0" Grid.ColumnSpan="3" Spacing="4">
+      <TextBlock Classes="h2">Selection units and modes</TextBlock>
+      <TextBlock Text="Compare FullRow, Cell, and CellOrRowHeader selection units. Use SelectionMode to switch between Single and Extended. Drag to extend selection in Extended mode."
+                 TextWrapping="Wrap" />
+    </StackPanel>
+
+    <Grid Grid.Row="1" Grid.ColumnSpan="3" ColumnDefinitions="Auto,*" ColumnSpacing="12">
+      <StackPanel Orientation="Horizontal" Spacing="8">
+        <TextBlock VerticalAlignment="Center" Text="SelectionMode:" />
+        <ComboBox Width="180"
+                  ItemsSource="{Binding SelectionModes}"
+                  SelectedItem="{Binding SelectionMode, Mode=TwoWay}" />
+      </StackPanel>
+      <TextBlock Grid.Column="1"
+                 Text="Tip: CellOrRowHeader uses row headers for row selection and cells for cell selection."
+                 TextWrapping="Wrap" />
+    </Grid>
+
+    <StackPanel Grid.Row="2" Grid.Column="0" Spacing="6">
+      <TextBlock Classes="h3" Text="FullRow" />
+      <TextBlock Text="Row selection only."
+                 TextWrapping="Wrap" />
+      <DataGrid ItemsSource="{Binding Items}"
+                SelectionUnit="FullRow"
+                SelectionMode="{Binding SelectionMode}"
+                AutoGenerateColumns="True"
+                CanUserAddRows="False"
+                HeadersVisibility="All"
+                GridLinesVisibility="All"
+                Height="340" />
+    </StackPanel>
+
+    <StackPanel Grid.Row="2" Grid.Column="1" Spacing="6">
+      <TextBlock Classes="h3" Text="Cell" />
+      <TextBlock Text="Cell selection only."
+                 TextWrapping="Wrap" />
+      <DataGrid ItemsSource="{Binding Items}"
+                SelectionUnit="Cell"
+                SelectionMode="{Binding SelectionMode}"
+                AutoGenerateColumns="True"
+                CanUserAddRows="False"
+                HeadersVisibility="All"
+                GridLinesVisibility="All"
+                Height="340" />
+    </StackPanel>
+
+    <StackPanel Grid.Row="2" Grid.Column="2" Spacing="6">
+      <TextBlock Classes="h3" Text="CellOrRowHeader" />
+      <TextBlock Text="Row headers select rows. Cells select cells."
+                 TextWrapping="Wrap" />
+      <DataGrid ItemsSource="{Binding Items}"
+                SelectionUnit="CellOrRowHeader"
+                SelectionMode="{Binding SelectionMode}"
+                AutoGenerateColumns="True"
+                CanUserAddRows="False"
+                HeadersVisibility="All"
+                GridLinesVisibility="All"
+                Height="340" />
+    </StackPanel>
+  </Grid>
+</UserControl>

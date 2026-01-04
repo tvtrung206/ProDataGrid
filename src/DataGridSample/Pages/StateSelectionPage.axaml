@@ -29,6 +29,7 @@
     <DataGrid Grid.Row="2"
               x:Name="Grid"
               ItemsSource="{Binding ItemsView}"
+              SelectedCells="{Binding SelectedCells}"
               SelectionMode="Extended"
               SelectionUnit="CellOrRowHeader"
               HeadersVisibility="All"

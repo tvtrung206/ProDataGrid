@@ -1,0 +1,52 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:viewModels="clr-namespace:DataGridSample.ViewModels"
+             x:Class="DataGridSample.Pages.CellSelectionOnlyPage"
+             x:DataType="viewModels:CellSelectionOnlyViewModel">
+  <UserControl.DataContext>
+    <viewModels:CellSelectionOnlyViewModel />
+  </UserControl.DataContext>
+
+  <Grid RowDefinitions="Auto,*"
+        Margin="12"
+        RowSpacing="8">
+    <StackPanel Grid.Row="0" Spacing="4">
+      <TextBlock Classes="h2">Cell selection only</TextBlock>
+      <TextBlock Text="Row selection visuals are suppressed so only selected cells are highlighted. Use drag selection to see multi-cell ranges."
+                 TextWrapping="Wrap" />
+    </StackPanel>
+
+    <DataGrid Grid.Row="1"
+              ItemsSource="{Binding Items}"
+              SelectionUnit="Cell"
+              SelectionMode="Extended"
+              AutoGenerateColumns="True"
+              CanUserAddRows="False"
+              HeadersVisibility="All"
+              GridLinesVisibility="All"
+              Height="420">
+      <DataGrid.Styles>
+        <Style Selector="DataGridRow:pointerover /template/ Rectangle#BackgroundRectangle">
+          <Setter Property="Fill" Value="Transparent" />
+          <Setter Property="Opacity" Value="0" />
+        </Style>
+        <Style Selector="DataGridRow:selected /template/ Rectangle#BackgroundRectangle">
+          <Setter Property="Fill" Value="Transparent" />
+          <Setter Property="Opacity" Value="0" />
+        </Style>
+        <Style Selector="DataGridRow:selected:pointerover /template/ Rectangle#BackgroundRectangle">
+          <Setter Property="Fill" Value="Transparent" />
+          <Setter Property="Opacity" Value="0" />
+        </Style>
+        <Style Selector="DataGridRow:selected:focus /template/ Rectangle#BackgroundRectangle">
+          <Setter Property="Fill" Value="Transparent" />
+          <Setter Property="Opacity" Value="0" />
+        </Style>
+        <Style Selector="DataGridRow:selected:pointerover:focus /template/ Rectangle#BackgroundRectangle">
+          <Setter Property="Fill" Value="Transparent" />
+          <Setter Property="Opacity" Value="0" />
+        </Style>
+      </DataGrid.Styles>
+    </DataGrid>
+  </Grid>
+</UserControl>
