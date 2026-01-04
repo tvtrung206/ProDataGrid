@@ -104,6 +104,15 @@
     <TabItem Header="Cell Selection">
       <pages:CellSelectionPage />
     </TabItem>
+    <TabItem Header="Selection Units">
+      <pages:SelectionUnitsPage />
+    </TabItem>
+    <TabItem Header="Selection Highlighting">
+      <pages:SelectionHighlightingPage />
+    </TabItem>
+    <TabItem Header="Cell Selection Only">
+      <pages:CellSelectionOnlyPage />
+    </TabItem>
     <TabItem Header="Selection Stability">
       <pages:SelectionModelStabilityPage />
     </TabItem>
