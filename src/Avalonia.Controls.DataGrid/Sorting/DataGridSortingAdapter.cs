@@ -329,9 +329,22 @@ namespace Avalonia.Controls.DataGridSorting
 
         private SortingDescriptor CreateDescriptor(DataGridColumn column, ListSortDirection direction)
         {
+            var columnId = (object)DataGridColumnMetadata.GetDefinition(column) ?? column;
+            var culture = _view?.Culture ?? CultureInfo.InvariantCulture;
             if (column.CustomSortComparer != null)
             {
-                return new SortingDescriptor(column, direction, comparer: column.CustomSortComparer, culture: _view?.Culture ?? CultureInfo.InvariantCulture);
+                return new SortingDescriptor(columnId, direction, comparer: column.CustomSortComparer, culture: culture);
+            }
+
+            var accessor = DataGridColumnMetadata.GetValueAccessor(column);
+            if (accessor != null)
+            {
+                return new SortingDescriptor(
+                    columnId,
+                    direction,
+                    propertyPath: column.GetSortPropertyName(),
+                    comparer: new DataGridColumnValueAccessorComparer(accessor, culture),
+                    culture: culture);
             }
 
             var propertyPath = column.GetSortPropertyName();
@@ -341,7 +354,7 @@ namespace Avalonia.Controls.DataGridSorting
                 return null;
             }
 
-            return new SortingDescriptor(column, direction, propertyPath, culture: _view?.Culture ?? CultureInfo.InvariantCulture);
+            return new SortingDescriptor(columnId, direction, propertyPath, culture: culture);
         }
 
         private DataGridSortDescription ToSortDescription(SortingDescriptor descriptor)
@@ -351,9 +364,48 @@ namespace Avalonia.Controls.DataGridSorting
                 return null;
             }
 
+            var column = FindColumnById(descriptor.ColumnId);
+
             if (descriptor.HasComparer)
             {
+                if (descriptor.Comparer is DataGridColumnValueAccessorComparer accessorComparer)
+                {
+                    var propertyPath = descriptor.PropertyPath;
+                    if (string.IsNullOrEmpty(propertyPath) && column != null)
+                    {
+                        propertyPath = column.GetSortPropertyName();
+                    }
+
+                    return !string.IsNullOrEmpty(propertyPath)
+                        ? DataGridSortDescription.FromComparer(accessorComparer, descriptor.Direction, propertyPath)
+                        : DataGridSortDescription.FromComparer(accessorComparer, descriptor.Direction);
+                }
+
                 return DataGridSortDescription.FromComparer(descriptor.Comparer, descriptor.Direction);
+            }
+
+            if (column != null)
+            {
+                if (column.CustomSortComparer != null)
+                {
+                    return DataGridSortDescription.FromComparer(column.CustomSortComparer, descriptor.Direction);
+                }
+
+                var accessor = DataGridColumnMetadata.GetValueAccessor(column);
+                if (accessor != null)
+                {
+                    var culture = descriptor.Culture ?? _view?.Culture ?? CultureInfo.InvariantCulture;
+                    var comparer = new DataGridColumnValueAccessorComparer(accessor, culture);
+                    var propertyPath = descriptor.PropertyPath;
+                    if (string.IsNullOrEmpty(propertyPath))
+                    {
+                        propertyPath = column.GetSortPropertyName();
+                    }
+
+                    return !string.IsNullOrEmpty(propertyPath)
+                        ? DataGridSortDescription.FromComparer(comparer, descriptor.Direction, propertyPath)
+                        : DataGridSortDescription.FromComparer(comparer, descriptor.Direction);
+                }
             }
 
             if (descriptor.HasPropertyPath)
@@ -374,12 +426,14 @@ namespace Avalonia.Controls.DataGridSorting
             var column = FindColumnForSort(sort);
             if (sort is DataGridComparerSortDescription comparerSort)
             {
-                var id = (object)column ?? (object)comparerSort.SourceComparer ?? (object)sort;
-                return new SortingDescriptor(id, comparerSort.Direction, comparer: comparerSort.SourceComparer, culture: _view?.Culture);
+                var definition = column != null ? DataGridColumnMetadata.GetDefinition(column) : null;
+                var id = (object)definition ?? (object)column ?? (object)comparerSort.SourceComparer ?? (object)sort;
+                return new SortingDescriptor(id, comparerSort.Direction, sort.PropertyPath, comparerSort.SourceComparer, _view?.Culture);
             }
 
             var propertyPath = sort.PropertyPath;
-            var columnId = (object)column ?? (!string.IsNullOrEmpty(propertyPath) ? (object)propertyPath : sort);
+            var columnDefinition = column != null ? DataGridColumnMetadata.GetDefinition(column) : null;
+            var columnId = (object)columnDefinition ?? (object)column ?? (!string.IsNullOrEmpty(propertyPath) ? (object)propertyPath : sort);
             return new SortingDescriptor(columnId, sort.Direction, propertyPath, culture: _view?.Culture);
         }
 
@@ -392,9 +446,21 @@ namespace Avalonia.Controls.DataGridSorting
                     continue;
                 }
 
-                if (sort is DataGridComparerSortDescription comparerSort && column.CustomSortComparer != null && Equals(column.CustomSortComparer, comparerSort.SourceComparer))
+                if (sort is DataGridComparerSortDescription comparerSort)
                 {
-                    return column;
+                    if (column.CustomSortComparer != null && Equals(column.CustomSortComparer, comparerSort.SourceComparer))
+                    {
+                        return column;
+                    }
+
+                    if (comparerSort.SourceComparer is DataGridColumnValueAccessorComparer accessorComparer)
+                    {
+                        var accessor = DataGridColumnMetadata.GetValueAccessor(column);
+                        if (ReferenceEquals(accessor, accessorComparer.Accessor))
+                        {
+                            return column;
+                        }
+                    }
                 }
 
                 var propertyPath = column.GetSortPropertyName();
@@ -402,6 +468,27 @@ namespace Avalonia.Controls.DataGridSorting
                 {
                     return column;
                 }
+            }
+
+            return null;
+        }
+
+        private DataGridColumn FindColumnById(object columnId)
+        {
+            if (columnId == null)
+            {
+                return null;
+            }
+
+            if (columnId is DataGridColumn column)
+            {
+                return column;
+            }
+
+            if (columnId is DataGridColumnDefinition definition)
+            {
+                return EnumerateColumns().FirstOrDefault(c =>
+                    ReferenceEquals(DataGridColumnMetadata.GetDefinition(c), definition));
             }
 
             return null;

@@ -70,6 +70,53 @@ public class DataGridSortDirectionSyncTests
     }
 
     [AvaloniaFact]
+    public void SortDirection_Uses_ValueAccessor_When_Definition_Has_Binding_Without_Path()
+    {
+        var items = new ObservableCollection<Item>
+        {
+            new("B"),
+            new("A"),
+        };
+
+        var view = new DataGridCollectionView(items);
+        var definition = new DataGridTextColumnDefinition
+        {
+            Header = "Name",
+            Binding = DataGridBindingDefinition.Create<Item, string>(x => x.Name)
+        };
+
+        var root = new Window
+        {
+            Width = 400,
+            Height = 300
+        };
+
+        root.SetThemeStyles();
+
+        var grid = new DataGrid
+        {
+            ItemsSource = view,
+            ColumnDefinitionsSource = new[] { definition },
+            SelectionMode = DataGridSelectionMode.Extended
+        };
+
+        root.Content = grid;
+        root.Show();
+        grid.UpdateLayout();
+
+        var column = grid.ColumnsInternal.First(c => Equals(c.Header, "Name"));
+        column.SortDirection = ListSortDirection.Ascending;
+        grid.UpdateLayout();
+
+        var descriptor = Assert.Single(grid.SortingModel.Descriptors);
+        Assert.True(descriptor.HasComparer);
+        Assert.Equal(definition, descriptor.ColumnId);
+
+        var sort = Assert.IsType<DataGridComparerSortDescription>(Assert.Single(view.SortDescriptions));
+        Assert.IsType<DataGridColumnValueAccessorComparer>(sort.SourceComparer);
+    }
+
+    [AvaloniaFact]
     public void CustomSortComparer_Change_Updates_Active_Descriptor()
     {
         var items = new ObservableCollection<Item>

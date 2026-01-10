@@ -303,13 +303,18 @@ namespace Avalonia.Controls.DataGridSearching
                 else if (boundColumn.Binding is CompiledBindingExtension compiledBinding)
                 {
                     stringFormat = compiledBinding.StringFormat;
-                    converter = GetCompiledBindingConverter(compiledBinding);
-                    converterParameter = GetCompiledBindingConverterParameter(compiledBinding);
+                    converter = compiledBinding.Converter;
+                    converterParameter = compiledBinding.ConverterParameter;
                 }
             }
 
             Func<object, object> valueGetter = null;
-            if (!string.IsNullOrEmpty(propertyPath))
+            var accessor = DataGridColumnMetadata.GetValueAccessor(column);
+            if (accessor != null)
+            {
+                valueGetter = accessor.GetValue;
+            }
+            else if (!string.IsNullOrEmpty(propertyPath))
             {
                 valueGetter = GetGetter(propertyPath);
             }
@@ -379,6 +384,12 @@ namespace Avalonia.Controls.DataGridSearching
             }
 
             if (ReferenceEquals(id, column.Column))
+            {
+                return true;
+            }
+
+            if (id is DataGridColumnDefinition definition &&
+                ReferenceEquals(DataGridColumnMetadata.GetDefinition(column.Column), definition))
             {
                 return true;
             }
@@ -580,28 +591,6 @@ namespace Avalonia.Controls.DataGridSearching
             }
 
             ApplyModelToView(_model.Descriptors);
-        }
-
-        private static IValueConverter GetCompiledBindingConverter(CompiledBindingExtension compiledBinding)
-        {
-            if (compiledBinding == null)
-            {
-                return null;
-            }
-
-            var property = compiledBinding.GetType().GetProperty("Converter");
-            return property?.GetValue(compiledBinding) as IValueConverter;
-        }
-
-        private static object GetCompiledBindingConverterParameter(CompiledBindingExtension compiledBinding)
-        {
-            if (compiledBinding == null)
-            {
-                return null;
-            }
-
-            var property = compiledBinding.GetType().GetProperty("ConverterParameter");
-            return property?.GetValue(compiledBinding);
         }
 
         private readonly struct SearchCellKey : IEquatable<SearchCellKey>

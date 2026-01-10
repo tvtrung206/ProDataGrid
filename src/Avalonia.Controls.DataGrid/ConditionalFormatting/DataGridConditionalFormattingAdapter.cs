@@ -363,6 +363,11 @@ namespace Avalonia.Controls.DataGridConditionalFormatting
                 return true;
             }
 
+            if (descriptor.ColumnId is DataGridColumnDefinition definition)
+            {
+                return ReferenceEquals(DataGridColumnMetadata.GetDefinition(column), definition);
+            }
+
             if (descriptor.ColumnId is string path)
             {
                 var propertyPath = column?.GetSortPropertyName();
@@ -378,6 +383,12 @@ namespace Avalonia.Controls.DataGridConditionalFormatting
             if (item == null || column == null)
             {
                 return null;
+            }
+
+            var accessor = DataGridColumnMetadata.GetValueAccessor(column);
+            if (accessor != null)
+            {
+                return accessor.GetValue(item);
             }
 
             var propertyPath = column.GetSortPropertyName();

@@ -213,15 +213,58 @@ namespace Avalonia.Controls.DataGridFiltering
             }
 
             // Column-specific predicate factory takes precedence over inline predicate.
-            var columnPredicate = GetColumnPredicate(descriptor);
-            if (columnPredicate != null)
+            var column = FindColumn(descriptor);
+            if (column != null)
             {
-                return columnPredicate;
+                var factory = DataGridColumnFilter.GetPredicateFactory(column);
+                if (factory != null)
+                {
+                    return factory(descriptor);
+                }
             }
 
             if (descriptor.Predicate != null)
             {
                 return descriptor.Predicate;
+            }
+
+            if (column != null)
+            {
+                var accessor = DataGridColumnMetadata.GetValueAccessor(column);
+                if (accessor != null)
+                {
+                    return item =>
+                    {
+                        var value = accessor.GetValue(item);
+                        switch (descriptor.Operator)
+                        {
+                            case FilteringOperator.Equals:
+                                return Equals(value, descriptor.Value);
+                            case FilteringOperator.NotEquals:
+                                return !Equals(value, descriptor.Value);
+                            case FilteringOperator.Contains:
+                                return Contains(value, descriptor.Value, descriptor.StringComparisonMode);
+                            case FilteringOperator.StartsWith:
+                                return StartsWith(value, descriptor.Value, descriptor.StringComparisonMode);
+                            case FilteringOperator.EndsWith:
+                                return EndsWith(value, descriptor.Value, descriptor.StringComparisonMode);
+                            case FilteringOperator.GreaterThan:
+                                return Compare(value, descriptor.Value, descriptor.Culture) > 0;
+                            case FilteringOperator.GreaterThanOrEqual:
+                                return Compare(value, descriptor.Value, descriptor.Culture) >= 0;
+                            case FilteringOperator.LessThan:
+                                return Compare(value, descriptor.Value, descriptor.Culture) < 0;
+                            case FilteringOperator.LessThanOrEqual:
+                                return Compare(value, descriptor.Value, descriptor.Culture) <= 0;
+                            case FilteringOperator.Between:
+                                return Between(value, descriptor.Values, descriptor.Culture);
+                            case FilteringOperator.In:
+                                return In(value, descriptor.Values);
+                            default:
+                                return true;
+                        }
+                    };
+                }
             }
 
             if (string.IsNullOrEmpty(descriptor.PropertyPath))
@@ -268,23 +311,6 @@ namespace Avalonia.Controls.DataGridFiltering
             };
         }
 
-        private Func<object, bool> GetColumnPredicate(FilteringDescriptor descriptor)
-        {
-            var column = FindColumn(descriptor);
-            if (column == null)
-            {
-                return null;
-            }
-
-            var factory = DataGridColumnFilter.GetPredicateFactory(column);
-            if (factory == null)
-            {
-                return null;
-            }
-
-            return factory(descriptor);
-        }
-
         private DataGridColumn FindColumn(FilteringDescriptor descriptor)
         {
             var columns = _columnProvider?.Invoke();
@@ -296,6 +322,12 @@ namespace Avalonia.Controls.DataGridFiltering
             foreach (var column in columns)
             {
                 if (ReferenceEquals(column, descriptor.ColumnId))
+                {
+                    return column;
+                }
+
+                if (descriptor.ColumnId is DataGridColumnDefinition definition &&
+                    ReferenceEquals(DataGridColumnMetadata.GetDefinition(column), definition))
                 {
                     return column;
                 }

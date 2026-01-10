@@ -6,6 +6,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Collections;
 using System.Globalization;
+using System.Reflection;
 using Avalonia.Collections;
 using Avalonia.Controls;
 using Avalonia.Controls.DataGridSorting;
@@ -117,6 +118,32 @@ public class DataGridSortingAdapterTests
     }
 
     [AvaloniaFact]
+    public void HandleHeaderClick_Uses_Definition_Id_When_Available()
+    {
+        var definition = new DataGridTextColumnDefinition
+        {
+            Header = "Name",
+            SortMemberPath = "Name"
+        };
+
+        var grid = new DataGrid
+        {
+            ColumnDefinitionsSource = new[] { definition }
+        };
+
+        var column = grid.ColumnsInternal.First(c => c is DataGridTextColumn);
+        var view = CreateView();
+        var model = new SortingModel();
+        var adapter = new DataGridSortingAdapter(model, () => grid.Columns);
+        adapter.AttachView(view);
+
+        adapter.HandleHeaderClick(column, KeyModifiers.None);
+
+        var descriptor = Assert.Single(model.Descriptors);
+        Assert.Same(definition, descriptor.ColumnId);
+    }
+
+    [AvaloniaFact]
     public void HandleHeaderClick_Adds_Comparer_Sort()
     {
         var comparer = Comparer<object>.Create((x, y) =>
@@ -134,6 +161,131 @@ public class DataGridSortingAdapterTests
         var descriptor = Assert.Single(model.Descriptors);
         Assert.True(descriptor.HasComparer);
         Assert.Equal(column, descriptor.ColumnId);
+    }
+
+    [AvaloniaFact]
+    public void HandleHeaderClick_Uses_ValueAccessor_When_No_Path()
+    {
+        var column = new DataGridTextColumn();
+        var accessor = new DataGridColumnValueAccessor<Person, int>(p => p.Age);
+        DataGridColumnMetadata.SetValueAccessor(column, accessor);
+
+        var view = CreateView();
+        var model = new SortingModel();
+        var adapter = new DataGridSortingAdapter(model, () => new[] { column });
+        adapter.AttachView(view);
+
+        adapter.HandleHeaderClick(column, KeyModifiers.None);
+
+        var sort = Assert.IsType<DataGridComparerSortDescription>(Assert.Single(view.SortDescriptions));
+        Assert.IsType<DataGridColumnValueAccessorComparer>(sort.SourceComparer);
+        Assert.Single(model.Descriptors);
+        Assert.True(model.Descriptors[0].HasComparer);
+    }
+
+    [AvaloniaFact]
+    public void Model_Descriptor_Uses_Definition_Id_For_ValueAccessor_Sort()
+    {
+        var items = new[]
+        {
+            new Person("Alpha", 3),
+            new Person("Beta", 1),
+            new Person("Gamma", 2)
+        };
+
+        var view = new DataGridCollectionView(items);
+        var model = new SortingModel();
+
+        var definition = new DataGridTextColumnDefinition
+        {
+            Header = "Age",
+            Binding = DataGridBindingDefinition.Create<Person, int>(p => p.Age)
+        };
+
+        var grid = new DataGrid
+        {
+            ColumnDefinitionsSource = new[] { definition }
+        };
+
+        var adapter = new DataGridSortingAdapter(model, () => grid.Columns);
+        adapter.AttachView(view);
+
+        model.Toggle(new SortingDescriptor(definition, ListSortDirection.Ascending));
+
+        Assert.Single(view.SortDescriptions);
+        var descriptor = Assert.Single(model.Descriptors);
+        Assert.Same(definition, descriptor.ColumnId);
+    }
+
+    [AvaloniaFact]
+    public void Definition_ValueAccessor_Sort_Uses_Descriptor_Culture()
+    {
+        var items = new[]
+        {
+            new Person("i", 1),
+            new Person("I", 2)
+        };
+
+        var view = new DataGridCollectionView(items);
+        var model = new SortingModel();
+
+        var definition = new DataGridTextColumnDefinition
+        {
+            Header = "Name",
+            Binding = DataGridBindingDefinition.Create<Person, string>(p => p.Name)
+        };
+
+        var grid = new DataGrid
+        {
+            ColumnDefinitionsSource = new[] { definition }
+        };
+
+        var adapter = new DataGridSortingAdapter(model, () => grid.Columns);
+        adapter.AttachView(view);
+
+        var culture = new CultureInfo("tr-TR");
+        model.Toggle(new SortingDescriptor(definition, ListSortDirection.Ascending, culture: culture));
+
+        var sort = Assert.IsType<DataGridComparerSortDescription>(Assert.Single(view.SortDescriptions));
+        var comparer = Assert.IsType<DataGridColumnValueAccessorComparer>(sort.SourceComparer);
+        var field = typeof(DataGridColumnValueAccessorComparer).GetField("_culture", BindingFlags.Instance | BindingFlags.NonPublic);
+
+        Assert.NotNull(field);
+        Assert.Equal(culture, field.GetValue(comparer));
+    }
+
+    [AvaloniaFact]
+    public void Definition_With_Path_Uses_ValueAccessor_Sort()
+    {
+        var items = new[]
+        {
+            new Person("Alpha", 2),
+            new Person("Beta", 1)
+        };
+
+        var view = new DataGridCollectionView(items);
+        var model = new SortingModel();
+
+        var definition = new DataGridTextColumnDefinition
+        {
+            Header = "Age",
+            SortMemberPath = nameof(Person.Age),
+            Binding = DataGridBindingDefinition.Create<Person, int>(p => p.Age)
+        };
+
+        var grid = new DataGrid
+        {
+            ColumnDefinitionsSource = new[] { definition }
+        };
+
+        var adapter = new DataGridSortingAdapter(model, () => grid.Columns);
+        adapter.AttachView(view);
+
+        model.Toggle(new SortingDescriptor(definition, ListSortDirection.Ascending, nameof(Person.Age)));
+
+        var sort = Assert.IsType<DataGridComparerSortDescription>(Assert.Single(view.SortDescriptions));
+        Assert.IsType<DataGridColumnValueAccessorComparer>(sort.SourceComparer);
+        Assert.Equal(nameof(Person.Age), sort.PropertyPath);
     }
 
     [AvaloniaFact]
