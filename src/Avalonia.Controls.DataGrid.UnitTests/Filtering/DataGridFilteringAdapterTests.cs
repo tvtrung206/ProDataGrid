@@ -97,6 +97,39 @@ public class DataGridFilteringAdapterTests
     }
 
     [Fact]
+    public void Adapter_Reuses_Predicate_For_Equivalent_Descriptors()
+    {
+        var items = new[]
+        {
+            new Person("A", 1),
+            new Person("B", 2)
+        };
+        var view = new DataGridCollectionView(items);
+        var model = new FilteringModel();
+        var adapter = new DataGridFilteringAdapter(model, () => Array.Empty<DataGridColumn>());
+        adapter.AttachView(view);
+
+        model.SetOrUpdate(new FilteringDescriptor(
+            columnId: "Score",
+            @operator: FilteringOperator.Equals,
+            propertyPath: "Score",
+            value: 2));
+
+        var first = view.Filter;
+
+        model.SetOrUpdate(new FilteringDescriptor(
+            columnId: "Score",
+            @operator: FilteringOperator.Equals,
+            propertyPath: "Score",
+            value: 2));
+
+        var second = view.Filter;
+
+        Assert.NotNull(first);
+        Assert.Same(first, second);
+    }
+
+    [Fact]
     public void Custom_Predicate_Is_Used()
     {
         var items = new[]

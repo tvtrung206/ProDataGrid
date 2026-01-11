@@ -34,6 +34,19 @@ public class DataGridColumnValueAccessorTests
         Assert.True(comparer.Compare(right, left) > 0);
     }
 
+    [Fact]
+    public void Comparer_Create_Caches_By_Accessor_And_Culture()
+    {
+        var accessor = new DataGridColumnValueAccessor<Person, int>(p => p.Age);
+
+        var comparer = DataGridColumnValueAccessorComparer.Create(accessor, CultureInfo.InvariantCulture);
+        var cached = DataGridColumnValueAccessorComparer.Create(accessor, CultureInfo.InvariantCulture);
+        var different = DataGridColumnValueAccessorComparer.Create(accessor, CultureInfo.GetCultureInfo("tr-TR"));
+
+        Assert.Same(comparer, cached);
+        Assert.NotSame(comparer, different);
+    }
+
     private sealed class Person
     {
         public int Age { get; set; }

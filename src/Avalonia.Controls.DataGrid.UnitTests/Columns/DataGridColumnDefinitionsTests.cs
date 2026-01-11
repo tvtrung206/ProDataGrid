@@ -118,6 +118,67 @@ public class DataGridColumnDefinitionsTests
     }
 
     [AvaloniaFact]
+    public void ColumnDefinitionsSource_AddRange_Materializes_Columns()
+    {
+        var definitions = new DataGridColumnDefinitionList();
+
+        var grid = new DataGrid
+        {
+            ColumnDefinitionsSource = definitions
+        };
+
+        definitions.AddRange(new DataGridColumnDefinition[]
+        {
+            new DataGridTextColumnDefinition
+            {
+                Header = "Name",
+                Binding = DataGridBindingDefinition.Create<Person, string>(p => p.Name)
+            },
+            new DataGridCheckBoxColumnDefinition
+            {
+                Header = "Active",
+                Binding = DataGridBindingDefinition.Create<Person, bool>(p => p.IsActive)
+            }
+        });
+
+        var columns = GetNonFillerColumns(grid);
+        Assert.Equal(2, columns.Count);
+        Assert.IsType<DataGridTextColumn>(columns[0]);
+        Assert.IsType<DataGridCheckBoxColumn>(columns[1]);
+    }
+
+    [AvaloniaFact]
+    public void ColumnDefinitionsSource_SuspendNotifications_Batches_Changes()
+    {
+        var definitions = new DataGridColumnDefinitionList();
+
+        var grid = new DataGrid
+        {
+            ColumnDefinitionsSource = definitions
+        };
+
+        using (definitions.SuspendNotifications())
+        {
+            definitions.Add(new DataGridTextColumnDefinition
+            {
+                Header = "Name",
+                Binding = DataGridBindingDefinition.Create<Person, string>(p => p.Name)
+            });
+
+            definitions.Add(new DataGridTextColumnDefinition
+            {
+                Header = "Age",
+                Binding = DataGridBindingDefinition.Create<Person, int>(p => p.Age)
+            });
+
+            Assert.Empty(GetNonFillerColumns(grid));
+        }
+
+        var columns = GetNonFillerColumns(grid);
+        Assert.Equal(2, columns.Count);
+    }
+
+    [AvaloniaFact]
     public void ColumnDefinitionsSource_Moves_Columns_When_Definitions_Move()
     {
         var definitions = new ObservableCollection<DataGridColumnDefinition>
@@ -210,6 +271,91 @@ public class DataGridColumnDefinitionsTests
 
         Assert.Equal("Display Name", column.Header);
         Assert.Same(column, GetNonFillerColumns(grid).Single());
+    }
+
+    [AvaloniaFact]
+    public void ColumnDefinitionsSource_Batches_Definition_Updates()
+    {
+        var definition = new CountingColumnDefinition
+        {
+            Header = "Start"
+        };
+
+        var grid = new DataGrid
+        {
+            ColumnDefinitionsSource = new ObservableCollection<DataGridColumnDefinition> { definition }
+        };
+
+        definition.ResetApplyCount();
+
+        definition.BeginUpdate();
+        definition.Header = "Updated";
+        definition.IsReadOnly = true;
+        definition.EndUpdate();
+
+        var column = Assert.IsType<DataGridTextColumn>(GetNonFillerColumns(grid).Single());
+        Assert.Equal("Updated", column.Header);
+        Assert.True(column.IsReadOnly);
+        Assert.Equal(1, definition.ApplyCount);
+    }
+
+    [AvaloniaFact]
+    public void ColumnDefinitionsSource_Reapplies_ColumnProperties_On_Base_Changes()
+    {
+        var definition = new CountingColumnDefinition
+        {
+            Header = "Start"
+        };
+
+        var grid = new DataGrid
+        {
+            ColumnDefinitionsSource = new ObservableCollection<DataGridColumnDefinition> { definition }
+        };
+
+        definition.ResetApplyCount();
+
+        definition.Header = "Updated";
+
+        var column = Assert.IsType<DataGridTextColumn>(GetNonFillerColumns(grid).Single());
+        Assert.Equal("Updated", column.Header);
+        Assert.Equal(1, definition.ApplyCount);
+    }
+
+    [AvaloniaFact]
+    public void ColumnDefinitionsSource_Clears_ColumnProperties_When_Definition_Reset()
+    {
+        var definition = new DataGridSliderColumnDefinition
+        {
+            ValueTextFormat = "F2",
+            Minimum = 10,
+            Maximum = 20
+        };
+
+        var grid = new DataGrid
+        {
+            ColumnDefinitionsSource = new ObservableCollection<DataGridColumnDefinition> { definition }
+        };
+
+        var column = Assert.IsType<DataGridSliderColumn>(GetNonFillerColumns(grid).Single());
+        Assert.Equal("F2", column.ValueTextFormat);
+        Assert.Equal(10, column.Minimum);
+        Assert.Equal(20, column.Maximum);
+
+        definition.ValueTextFormat = null;
+        definition.Minimum = null;
+        definition.Maximum = null;
+
+        Assert.Equal("N0", column.ValueTextFormat);
+        Assert.Equal(0, column.Minimum);
+        Assert.Equal(100, column.Maximum);
+    }
+
+    [Fact]
+    public void ColumnDefinition_EndUpdate_Without_BeginUpdate_Throws()
+    {
+        var definition = new DataGridTextColumnDefinition();
+
+        Assert.Throws<InvalidOperationException>(() => definition.EndUpdate());
     }
 
     [AvaloniaFact]
@@ -452,6 +598,37 @@ public class DataGridColumnDefinitionsTests
         var column = Assert.IsType<DataGridTextColumn>(GetNonFillerColumns(grid).Single());
         var binding = Assert.IsType<CompiledBindingExtension>(column.Binding);
         Assert.Equal(nameof(Person.Name), binding.Path?.ToString());
+    }
+
+    [Fact]
+    public void CompiledBindingPathCache_Reuses_Path_For_Same_PropertyInfo()
+    {
+        var propertyInfo = new ClrPropertyInfo(
+            nameof(Person.Name),
+            target => ((Person)target).Name,
+            (target, value) => ((Person)target).Name = (string)value,
+            typeof(string));
+
+        var first = DataGridCompiledBindingPathCache.GetOrCreate(propertyInfo);
+        var second = DataGridCompiledBindingPathCache.GetOrCreate(propertyInfo);
+
+        Assert.Same(first, second);
+    }
+
+    [Fact]
+    public void BindingDefinition_CreateCached_Uses_Cached_Path()
+    {
+        var propertyInfo = new ClrPropertyInfo(
+            nameof(Person.Name),
+            target => ((Person)target).Name,
+            (target, value) => ((Person)target).Name = (string)value,
+            typeof(string));
+
+        var cached = DataGridCompiledBindingPathCache.GetOrCreate(propertyInfo);
+        var bindingDefinition = DataGridBindingDefinition.CreateCached<Person, string>(propertyInfo, GetName, SetName);
+        var binding = Assert.IsType<CompiledBindingExtension>(bindingDefinition.CreateBinding());
+
+        Assert.Same(cached, binding.Path);
     }
 
     [AvaloniaFact]
@@ -735,6 +912,26 @@ public class DataGridColumnDefinitionsTests
         Assert.Same(accessor, DataGridColumnMetadata.GetValueAccessor(column));
         Assert.Equal(typeof(NonComparable), DataGridColumnMetadata.GetValueType(column));
         Assert.False(column.CanUserSort);
+    }
+
+    private sealed class CountingColumnDefinition : DataGridColumnDefinition
+    {
+        public int ApplyCount { get; private set; }
+
+        public void ResetApplyCount()
+        {
+            ApplyCount = 0;
+        }
+
+        protected override DataGridColumn CreateColumnCore()
+        {
+            return new DataGridTextColumn();
+        }
+
+        protected override void ApplyColumnProperties(DataGridColumn column, DataGridColumnDefinitionContext context)
+        {
+            ApplyCount++;
+        }
     }
 
     private static System.Collections.Generic.List<DataGridColumn> GetNonFillerColumns(DataGrid grid)

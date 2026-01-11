@@ -201,6 +201,51 @@ public class DataGridSortingAdapterTests
     }
 
     [AvaloniaFact]
+    public void HandleHeaderClick_Uses_AscendingComparer()
+    {
+        var comparer = Comparer<Person>.Create((x, y) => x.Age.CompareTo(y.Age));
+        var column = new DataGridTextColumn();
+        DataGridColumnSort.SetAscendingComparer(column, comparer);
+
+        var view = CreateView();
+        var model = new SortingModel();
+        var adapter = new DataGridSortingAdapter(model, () => new[] { column });
+        adapter.AttachView(view);
+
+        adapter.HandleHeaderClick(column, KeyModifiers.None);
+
+        var sort = Assert.IsType<DataGridComparerSortDescription>(Assert.Single(view.SortDescriptions));
+        Assert.Same(comparer, sort.SourceComparer);
+        Assert.True(Assert.Single(model.Descriptors).HasComparer);
+    }
+
+    [AvaloniaFact]
+    public void HandleHeaderClick_Uses_DescendingComparer()
+    {
+        var comparer = Comparer<Person>.Create((x, y) => y.Age.CompareTo(x.Age));
+        var column = new DataGridTextColumn();
+        DataGridColumnSort.SetDescendingComparer(column, comparer);
+
+        var view = CreateView();
+        var model = new SortingModel();
+        var adapter = new DataGridSortingAdapter(model, () => new[] { column });
+        adapter.AttachView(view);
+
+        adapter.HandleHeaderClick(column, KeyModifiers.None, ListSortDirection.Descending);
+
+        var sort = Assert.IsType<DataGridComparerSortDescription>(Assert.Single(view.SortDescriptions));
+        var items = new[]
+        {
+            new Person("A", 1),
+            new Person("B", 3),
+            new Person("C", 2)
+        };
+
+        var ordered = sort.OrderBy(items).Select(item => ((Person)item).Age).ToArray();
+        Assert.Equal(new[] { 3, 2, 1 }, ordered);
+    }
+
+    [AvaloniaFact]
     public void HandleHeaderClick_Uses_ValueAccessor_When_No_Path()
     {
         var column = new DataGridTextColumn();

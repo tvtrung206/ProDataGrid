@@ -50,6 +50,36 @@ public class DataGridColumnDefinitionOptionsTests
         Assert.Same(Comparer.Default, DataGridColumnSort.GetValueComparer(column));
     }
 
+    [Fact]
+    public void Typed_Compare_Options_Are_Applied_To_Materialized_Columns()
+    {
+        var options = new DataGridColumnDefinitionOptions<Person>
+        {
+            CompareAscending = (left, right) => left.Score.CompareTo(right.Score),
+            CompareDescending = (left, right) => right.Score.CompareTo(left.Score)
+        };
+
+        var definition = new DataGridTextColumnDefinition
+        {
+            Header = "Score",
+            Options = options
+        };
+
+        var column = definition.CreateColumn(new DataGridColumnDefinitionContext(new DataGrid()));
+
+        var ascendingComparer = DataGridColumnSort.GetAscendingComparer(column);
+        var descendingComparer = DataGridColumnSort.GetDescendingComparer(column);
+
+        Assert.NotNull(ascendingComparer);
+        Assert.NotNull(descendingComparer);
+
+        var low = new Person("Low", 1);
+        var high = new Person("High", 3);
+
+        Assert.True(ascendingComparer.Compare(low, high) < 0);
+        Assert.True(descendingComparer.Compare(low, high) > 0);
+    }
+
     private sealed class Person
     {
         public Person(string name, int score)

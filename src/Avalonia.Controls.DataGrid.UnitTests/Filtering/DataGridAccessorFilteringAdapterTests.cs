@@ -62,6 +62,41 @@ public class DataGridAccessorFilteringAdapterTests
     }
 
     [Fact]
+    public void AccessorAdapter_Reuses_Predicate_For_Equivalent_Descriptors()
+    {
+        var items = new[]
+        {
+            new Person("A", 1),
+            new Person("B", 2)
+        };
+        var view = new DataGridCollectionView(items);
+        var model = new FilteringModel();
+
+        var column = new DataGridTextColumn();
+        DataGridColumnMetadata.SetValueAccessor(column, new DataGridColumnValueAccessor<Person, int>(p => p.Score));
+
+        var adapter = new DataGridAccessorFilteringAdapter(model, () => new[] { column });
+        adapter.AttachView(view);
+
+        model.SetOrUpdate(new FilteringDescriptor(
+            columnId: column,
+            @operator: FilteringOperator.Equals,
+            value: 2));
+
+        var first = view.Filter;
+
+        model.SetOrUpdate(new FilteringDescriptor(
+            columnId: column,
+            @operator: FilteringOperator.Equals,
+            value: 2));
+
+        var second = view.Filter;
+
+        Assert.NotNull(first);
+        Assert.Same(first, second);
+    }
+
+    [Fact]
     public void AccessorAdapter_Skips_PropertyPath_When_No_Accessor()
     {
         var items = new[]
