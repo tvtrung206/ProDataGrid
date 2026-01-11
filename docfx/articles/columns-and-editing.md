@@ -99,7 +99,7 @@ Bind `Columns` to an `ObservableCollection<DataGridColumn>` to drive columns fro
 
 ## MVVM Column Definitions
 
-`ColumnDefinitionsSource` lets you define columns in view-models without creating Avalonia controls. Bind an `IList<DataGridColumnDefinition>` and the grid materializes the corresponding built-in columns.
+`ColumnDefinitionsSource` lets you define columns in view-models without creating Avalonia controls. Bind an `IList<DataGridColumnDefinition>` and the grid materializes the corresponding built-in columns. Use `DataGridColumnDefinitionList` when you want `AddRange` and `SuspendNotifications()` for batch updates.
 
 For a full walkthrough, see [Column Definitions](column-definitions.md) and [Column Definitions: AOT-Friendly Bindings](column-definitions-aot.md).
 
@@ -125,7 +125,7 @@ For a full walkthrough, see [Column Definitions](column-definitions.md) and [Col
 ```
 
 ```csharp
-public ObservableCollection<DataGridColumnDefinition> ColumnDefinitions { get; } = new()
+public DataGridColumnDefinitionList ColumnDefinitions { get; } = new()
 {
     new DataGridTextColumnDefinition
     {

@@ -133,6 +133,21 @@ new DataGridTextColumnDefinition
 };
 ```
 
+If you want to compare entire models (multi-field or custom ordering), use the typed options:
+
+```csharp
+new DataGridTextColumnDefinition
+{
+    Header = "Customer",
+    Binding = DataGridBindingDefinition.Create<Order, string>(o => o.CustomerName),
+    Options = new DataGridColumnDefinitionOptions<Order>
+    {
+        CompareAscending = (left, right) => string.Compare(left.CustomerName, right.CustomerName, StringComparison.Ordinal),
+        CompareDescending = (left, right) => string.Compare(right.CustomerName, left.CustomerName, StringComparison.Ordinal)
+    }
+};
+```
+
 ## 5. Searching text sources
 
 Search uses value accessors by default. For non-string values or template columns, provide a text source:
@@ -142,6 +157,8 @@ DataGridColumnSearch.SetTextProvider(nameColumn, item => ((Person)item).Name);
 ```
 
 This keeps search highlights and navigation working without reflection.
+
+If you provide custom accessors, implement `IDataGridColumnTextAccessor` (search) and `IDataGridColumnFilterAccessor` (filtering) to keep the fast path fully typed and avoid object-based fallbacks.
 
 ## 6. Conditional formatting and summaries
 

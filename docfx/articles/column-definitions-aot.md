@@ -48,6 +48,19 @@ var nameProperty = new ClrPropertyInfo(
 var nameBinding = DataGridBindingDefinition.Create<Person, string>(nameProperty, GetName, SetName);
 ```
 
+If you reuse the same `IPropertyInfo` across many columns or grids, you can cache the compiled path:
+
+```csharp
+var namePath = DataGridCompiledBindingPathCache.GetOrCreate(nameProperty);
+var nameBinding = DataGridBindingDefinition.Create<Person, string>(namePath, GetName, SetName);
+```
+
+There is also a convenience overload:
+
+```csharp
+var nameBinding = DataGridBindingDefinition.CreateCached<Person, string>(nameProperty, GetName, SetName);
+```
+
 You can pair this with `DataGridColumnDefinitionBuilder` to keep column construction typed and AOT-friendly:
 
 ```csharp

@@ -216,6 +216,12 @@ These features also use value accessors when available:
 - State capture/restore when `ColumnKey` is used for stable ids.
 - Clipboard/export values when `ClipboardContentBinding` is supplied.
 
+## Performance notes
+
+- Sort comparers created from accessors are cached per accessor and culture to avoid repeated allocations.
+- Filtering predicates created by the accessor adapter are cached per descriptor, accessor, and operator.
+- When you reuse `IPropertyInfo` instances across columns, enable the compiled binding path cache for AOT-friendly reuse.
+
 ## Checklist
 
 - [ ] Column definitions use `DataGridBindingDefinition` or `ValueAccessor` for every column.
