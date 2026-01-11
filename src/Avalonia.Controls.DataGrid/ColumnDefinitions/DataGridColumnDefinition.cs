@@ -85,6 +85,8 @@ namespace Avalonia.Controls
         private IDataGridColumnValueAccessor _valueAccessor;
         private Type _valueType;
         private DataGridColumnDefinitionOptions _options;
+        private int _updateNesting;
+        private bool _hasPendingChange;
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -266,7 +268,28 @@ namespace Avalonia.Controls
                     _options.PropertyChanged += Options_PropertyChanged;
                 }
 
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Options)));
+                NotifyPropertyChanged(nameof(Options));
+            }
+        }
+
+        public void BeginUpdate()
+        {
+            _updateNesting++;
+        }
+
+        public void EndUpdate()
+        {
+            if (_updateNesting == 0)
+            {
+                throw new InvalidOperationException("EndUpdate called without a matching BeginUpdate.");
+            }
+
+            _updateNesting--;
+
+            if (_updateNesting == 0 && _hasPendingChange)
+            {
+                _hasPendingChange = false;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(string.Empty));
             }
         }
 
@@ -288,9 +311,36 @@ namespace Avalonia.Controls
             ApplyColumnProperties(column, context);
         }
 
+        internal void ApplyPropertyChange(DataGridColumn column, DataGridColumnDefinitionContext context, string propertyName)
+        {
+            if (column == null)
+            {
+                throw new ArgumentNullException(nameof(column));
+            }
+
+            if (string.IsNullOrEmpty(propertyName))
+            {
+                ApplyToColumn(column, context);
+                return;
+            }
+
+            if (!ApplyPropertyChangeCore(column, context, propertyName))
+            {
+                ApplyToColumn(column, context);
+            }
+        }
+
         protected abstract DataGridColumn CreateColumnCore();
 
         protected abstract void ApplyColumnProperties(DataGridColumn column, DataGridColumnDefinitionContext context);
+
+        protected virtual bool ApplyColumnPropertyChange(
+            DataGridColumn column,
+            DataGridColumnDefinitionContext context,
+            string propertyName)
+        {
+            return false;
+        }
 
         protected virtual void ApplyBaseProperties(DataGridColumn column, DataGridColumnDefinitionContext context)
         {
@@ -432,6 +482,189 @@ namespace Avalonia.Controls
             ApplyOptions(column);
         }
 
+        protected virtual bool ApplyPropertyChangeCore(
+            DataGridColumn column,
+            DataGridColumnDefinitionContext context,
+            string propertyName)
+        {
+            var baseHandled = ApplyBasePropertyChange(column, context, propertyName);
+            var handled = baseHandled;
+
+            if (!handled && string.Equals(propertyName, nameof(Options), StringComparison.Ordinal))
+            {
+                ApplyOptions(column);
+                handled = true;
+            }
+
+            if (ApplyColumnPropertyChange(column, context, propertyName))
+            {
+                return true;
+            }
+
+            if (baseHandled)
+            {
+                ApplyColumnProperties(column, context);
+                return true;
+            }
+
+            return handled;
+        }
+
+        private bool ApplyBasePropertyChange(DataGridColumn column, DataGridColumnDefinitionContext context, string propertyName)
+        {
+            switch (propertyName)
+            {
+                case nameof(Header):
+                    column.Header = Header;
+                    return true;
+                case nameof(SortMemberPath):
+                    column.SortMemberPath = SortMemberPath;
+                    return true;
+                case nameof(Tag):
+                    column.Tag = Tag;
+                    return true;
+                case nameof(CustomSortComparer):
+                    column.CustomSortComparer = CustomSortComparer;
+                    return true;
+                case nameof(HeaderTemplateKey):
+                    column.HeaderTemplate = HeaderTemplateKey != null
+                        ? context?.ResolveResource<IDataTemplate>(HeaderTemplateKey)
+                        : null;
+                    return true;
+                case nameof(HeaderThemeKey):
+                    column.HeaderTheme = HeaderThemeKey != null
+                        ? context?.ResolveResource<ControlTheme>(HeaderThemeKey)
+                        : null;
+                    return true;
+                case nameof(CellThemeKey):
+                    column.CellTheme = CellThemeKey != null
+                        ? context?.ResolveResource<ControlTheme>(CellThemeKey)
+                        : null;
+                    return true;
+                case nameof(FilterThemeKey):
+                    column.FilterTheme = FilterThemeKey != null
+                        ? context?.ResolveResource<ControlTheme>(FilterThemeKey)
+                        : null;
+                    return true;
+                case nameof(CellStyleClasses):
+                    if (CellStyleClasses != null)
+                    {
+                        column.CellStyleClasses.Replace(CellStyleClasses);
+                    }
+                    else
+                    {
+                        column.CellStyleClasses.Clear();
+                    }
+                    return true;
+                case nameof(HeaderStyleClasses):
+                    if (HeaderStyleClasses != null)
+                    {
+                        column.HeaderStyleClasses.Replace(HeaderStyleClasses);
+                    }
+                    else
+                    {
+                        column.HeaderStyleClasses.Clear();
+                    }
+                    return true;
+                case nameof(CellBackgroundBinding):
+                    column.CellBackgroundBinding = CellBackgroundBinding?.CreateBinding();
+                    return true;
+                case nameof(CellForegroundBinding):
+                    column.CellForegroundBinding = CellForegroundBinding?.CreateBinding();
+                    return true;
+                case nameof(CanUserSort):
+                    if (CanUserSort.HasValue)
+                    {
+                        column.CanUserSort = CanUserSort.Value;
+                    }
+                    return true;
+                case nameof(CanUserResize):
+                    if (CanUserResize.HasValue)
+                    {
+                        column.CanUserResize = CanUserResize.Value;
+                    }
+                    return true;
+                case nameof(CanUserReorder):
+                    if (CanUserReorder.HasValue)
+                    {
+                        column.CanUserReorder = CanUserReorder.Value;
+                    }
+                    return true;
+                case nameof(IsReadOnly):
+                    if (IsReadOnly.HasValue)
+                    {
+                        column.IsReadOnly = IsReadOnly.Value;
+                    }
+                    return true;
+                case nameof(IsVisible):
+                    if (IsVisible.HasValue)
+                    {
+                        column.IsVisible = IsVisible.Value;
+                    }
+                    return true;
+                case nameof(ShowFilterButton):
+                    if (ShowFilterButton.HasValue)
+                    {
+                        column.ShowFilterButton = ShowFilterButton.Value;
+                    }
+                    return true;
+                case nameof(DisplayIndex):
+                    if (DisplayIndex.HasValue)
+                    {
+                        column.DisplayIndex = DisplayIndex.Value;
+                    }
+                    return true;
+                case nameof(Width):
+                    if (Width.HasValue)
+                    {
+                        column.Width = Width.Value;
+                    }
+                    return true;
+                case nameof(MinWidth):
+                    if (MinWidth.HasValue)
+                    {
+                        column.MinWidth = MinWidth.Value;
+                    }
+                    return true;
+                case nameof(MaxWidth):
+                    if (MaxWidth.HasValue)
+                    {
+                        column.MaxWidth = MaxWidth.Value;
+                    }
+                    return true;
+                case nameof(SortDirection):
+                    if (SortDirection.HasValue)
+                    {
+                        column.SortDirection = SortDirection.Value;
+                    }
+                    return true;
+                case nameof(ValueAccessor):
+                    if (ValueAccessor != null)
+                    {
+                        DataGridColumnMetadata.SetValueAccessor(column, ValueAccessor);
+                    }
+                    else
+                    {
+                        DataGridColumnMetadata.ClearValueAccessor(column);
+                    }
+                    return true;
+                case nameof(ValueType):
+                    if (ValueType != null)
+                    {
+                        DataGridColumnMetadata.SetValueType(column, ValueType);
+                    }
+                    else
+                    {
+                        DataGridColumnMetadata.ClearValueType(column);
+                    }
+                    return true;
+                case nameof(ColumnKey):
+                    return true;
+            }
+
+            return false;
+        }
+
         protected bool SetProperty<T>(ref T field, T value, [CallerMemberName] string propertyName = null)
         {
             if (EqualityComparer<T>.Default.Equals(field, value))
@@ -440,13 +673,24 @@ namespace Avalonia.Controls
             }
 
             field = value;
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+            NotifyPropertyChanged(propertyName);
             return true;
         }
 
         private void Options_PropertyChanged(object sender, PropertyChangedEventArgs e)
         {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Options)));
+            NotifyPropertyChanged(nameof(Options));
+        }
+
+        private void NotifyPropertyChanged(string propertyName)
+        {
+            if (_updateNesting > 0)
+            {
+                _hasPendingChange = true;
+                return;
+            }
+
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
         private void ApplyOptions(DataGridColumn column)
@@ -528,6 +772,32 @@ namespace Avalonia.Controls
             else
             {
                 column.ClearValue(DataGridColumnSort.ValueComparerProperty);
+            }
+
+            if (options is IDataGridColumnDefinitionSortComparerProvider comparerProvider)
+            {
+                if (comparerProvider.AscendingComparer != null)
+                {
+                    DataGridColumnSort.SetAscendingComparer(column, comparerProvider.AscendingComparer);
+                }
+                else
+                {
+                    column.ClearValue(DataGridColumnSort.AscendingComparerProperty);
+                }
+
+                if (comparerProvider.DescendingComparer != null)
+                {
+                    DataGridColumnSort.SetDescendingComparer(column, comparerProvider.DescendingComparer);
+                }
+                else
+                {
+                    column.ClearValue(DataGridColumnSort.DescendingComparerProperty);
+                }
+            }
+            else
+            {
+                column.ClearValue(DataGridColumnSort.AscendingComparerProperty);
+                column.ClearValue(DataGridColumnSort.DescendingComparerProperty);
             }
         }
     }

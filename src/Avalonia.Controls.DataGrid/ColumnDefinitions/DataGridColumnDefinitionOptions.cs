@@ -16,7 +16,7 @@ namespace Avalonia.Controls
 #else
     internal
 #endif
-    sealed class DataGridColumnDefinitionOptions : INotifyPropertyChanged
+    class DataGridColumnDefinitionOptions : INotifyPropertyChanged
     {
         private bool? _isSearchable;
         private string _searchMemberPath;
@@ -77,7 +77,7 @@ namespace Avalonia.Controls
             set => SetProperty(ref _sortValueComparer, value);
         }
 
-        private bool SetProperty<T>(ref T field, T value, [CallerMemberName] string propertyName = null)
+        protected bool SetProperty<T>(ref T field, T value, [CallerMemberName] string propertyName = null)
         {
             if (Equals(field, value))
             {
@@ -85,8 +85,13 @@ namespace Avalonia.Controls
             }
 
             field = value;
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+            RaisePropertyChanged(propertyName);
             return true;
+        }
+
+        protected void RaisePropertyChanged(string propertyName)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 }

@@ -61,5 +61,42 @@ namespace Avalonia.Controls
                 }
             }
         }
+
+        protected override bool ApplyColumnPropertyChange(
+            DataGridColumn column,
+            DataGridColumnDefinitionContext context,
+            string propertyName)
+        {
+            if (column is not DataGridBoundColumn boundColumn)
+            {
+                return false;
+            }
+
+            switch (propertyName)
+            {
+                case nameof(Binding):
+                    boundColumn.Binding = Binding?.CreateBinding();
+                    ApplyBindingMetadata(column);
+                    return true;
+                case nameof(ClipboardContentBinding):
+                    boundColumn.ClipboardContentBinding = ClipboardContentBinding?.CreateBinding();
+                    return true;
+                case nameof(ValueAccessor):
+                case nameof(ValueType):
+                    ApplyBindingMetadata(column);
+                    return true;
+            }
+
+            return false;
+        }
+
+        private void ApplyBindingMetadata(DataGridColumn column)
+        {
+            if (ValueAccessor == null && Binding?.ValueAccessor != null &&
+                (ValueType == null || Binding.ValueType == ValueType))
+            {
+                DataGridColumnMetadata.SetValueAccessor(column, Binding.ValueAccessor);
+            }
+        }
     }
 }

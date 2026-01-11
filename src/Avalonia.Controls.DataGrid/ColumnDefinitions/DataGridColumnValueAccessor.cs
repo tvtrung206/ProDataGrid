@@ -7,6 +7,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Runtime.CompilerServices;
 using Avalonia.Controls.DataGridFiltering;
 using Avalonia.Data.Converters;
 
@@ -42,7 +43,12 @@ namespace Avalonia.Controls
         void SetValue(TItem item, TValue value);
     }
 
-    internal interface IDataGridColumnTextAccessor
+    #if !DATAGRID_INTERNAL
+    public
+    #else
+    internal
+    #endif
+    interface IDataGridColumnTextAccessor
     {
         bool TryGetText(
             object item,
@@ -54,7 +60,12 @@ namespace Avalonia.Controls
             out string text);
     }
 
-    internal interface IDataGridColumnFilterAccessor
+    #if !DATAGRID_INTERNAL
+    public
+    #else
+    internal
+    #endif
+    interface IDataGridColumnFilterAccessor
     {
         bool TryMatch(object item, FilteringDescriptor descriptor, out bool match);
     }
@@ -148,7 +159,7 @@ namespace Avalonia.Controls
 
         IComparer IDataGridColumnValueAccessorComparerFactory.CreateComparer(CultureInfo culture)
         {
-            return new DataGridColumnValueAccessorComparer<TItem, TValue>(this, culture);
+            return DataGridColumnValueAccessorComparer<TItem, TValue>.Create(this, culture);
         }
 
         bool IDataGridColumnTextAccessor.TryGetText(
@@ -404,6 +415,65 @@ namespace Avalonia.Controls
 #endif
     sealed class DataGridColumnValueAccessorComparer : IComparer, IDataGridColumnValueAccessorComparer
     {
+        private static readonly ConditionalWeakTable<IDataGridColumnValueAccessor, AccessorComparerCache> s_comparerCache = new();
+
+        private sealed class AccessorComparerCache
+        {
+            private readonly Dictionary<ComparerCacheKey, IComparer> _cache = new();
+
+            public IComparer GetOrAdd(ComparerCacheKey key, Func<IComparer> factory)
+            {
+                lock (_cache)
+                {
+                    if (_cache.TryGetValue(key, out var cached))
+                    {
+                        return cached;
+                    }
+
+                    var created = factory();
+                    _cache[key] = created;
+                    return created;
+                }
+            }
+        }
+
+        private readonly struct ComparerCacheKey : IEquatable<ComparerCacheKey>
+        {
+            public ComparerCacheKey(CultureInfo culture, IComparer valueComparer)
+            {
+                Culture = culture;
+                ValueComparer = valueComparer;
+            }
+
+            public CultureInfo Culture { get; }
+
+            public IComparer ValueComparer { get; }
+
+            public bool Equals(ComparerCacheKey other)
+            {
+                return Equals(Culture, other.Culture) && ReferenceEquals(ValueComparer, other.ValueComparer);
+            }
+
+            public override bool Equals(object obj)
+            {
+                return obj is ComparerCacheKey other && Equals(other);
+            }
+
+            public override int GetHashCode()
+            {
+                unchecked
+                {
+                    var hash = Culture?.GetHashCode() ?? 0;
+                    if (ValueComparer != null)
+                    {
+                        hash = (hash * 397) ^ RuntimeHelpers.GetHashCode(ValueComparer);
+                    }
+
+                    return hash;
+                }
+            }
+        }
+
         private readonly IDataGridColumnValueAccessor _accessor;
         private readonly CultureInfo _culture;
         private readonly IComparer _valueComparer;
@@ -430,17 +500,24 @@ namespace Avalonia.Controls
                 throw new ArgumentNullException(nameof(accessor));
             }
 
-            if (valueComparer != null)
-            {
-                return new DataGridColumnValueAccessorComparer(accessor, valueComparer, culture);
-            }
+            var resolvedCulture = culture ?? CultureInfo.CurrentCulture;
+            var cache = s_comparerCache.GetValue(accessor, _ => new AccessorComparerCache());
+            var key = new ComparerCacheKey(resolvedCulture, valueComparer);
 
-            if (accessor is IDataGridColumnValueAccessorComparerFactory factory)
+            return cache.GetOrAdd(key, () =>
             {
-                return factory.CreateComparer(culture);
-            }
+                if (valueComparer != null)
+                {
+                    return new DataGridColumnValueAccessorComparer(accessor, valueComparer, resolvedCulture);
+                }
 
-            return new DataGridColumnValueAccessorComparer(accessor, culture);
+                if (accessor is IDataGridColumnValueAccessorComparerFactory factory)
+                {
+                    return factory.CreateComparer(resolvedCulture);
+                }
+
+                return new DataGridColumnValueAccessorComparer(accessor, resolvedCulture);
+            });
         }
 
         public IDataGridColumnValueAccessor Accessor => _accessor;
@@ -491,8 +568,87 @@ namespace Avalonia.Controls
 #endif
     sealed class DataGridColumnValueAccessorComparer<TItem, TValue> : IComparer, IDataGridColumnValueAccessorComparer
     {
+        private static readonly ConditionalWeakTable<IDataGridColumnValueAccessor<TItem, TValue>, TypedComparerCache> s_comparerCache = new();
+
+        private sealed class TypedComparerCache
+        {
+            private readonly Dictionary<TypedComparerCacheKey, DataGridColumnValueAccessorComparer<TItem, TValue>> _cache = new();
+
+            public DataGridColumnValueAccessorComparer<TItem, TValue> GetOrAdd(
+                TypedComparerCacheKey key,
+                Func<DataGridColumnValueAccessorComparer<TItem, TValue>> factory)
+            {
+                lock (_cache)
+                {
+                    if (_cache.TryGetValue(key, out var cached))
+                    {
+                        return cached;
+                    }
+
+                    var created = factory();
+                    _cache[key] = created;
+                    return created;
+                }
+            }
+        }
+
+        private readonly struct TypedComparerCacheKey : IEquatable<TypedComparerCacheKey>
+        {
+            public TypedComparerCacheKey(CultureInfo culture, IComparer<TValue> valueComparer)
+            {
+                Culture = culture;
+                ValueComparer = valueComparer;
+            }
+
+            public CultureInfo Culture { get; }
+
+            public IComparer<TValue> ValueComparer { get; }
+
+            public bool Equals(TypedComparerCacheKey other)
+            {
+                return Equals(Culture, other.Culture) && ReferenceEquals(ValueComparer, other.ValueComparer);
+            }
+
+            public override bool Equals(object obj)
+            {
+                return obj is TypedComparerCacheKey other && Equals(other);
+            }
+
+            public override int GetHashCode()
+            {
+                unchecked
+                {
+                    var hash = Culture?.GetHashCode() ?? 0;
+                    if (ValueComparer != null)
+                    {
+                        hash = (hash * 397) ^ RuntimeHelpers.GetHashCode(ValueComparer);
+                    }
+
+                    return hash;
+                }
+            }
+        }
+
         private readonly IDataGridColumnValueAccessor<TItem, TValue> _accessor;
         private readonly IComparer<TValue> _comparer;
+
+        internal static DataGridColumnValueAccessorComparer<TItem, TValue> Create(
+            IDataGridColumnValueAccessor<TItem, TValue> accessor,
+            CultureInfo culture = null,
+            IComparer<TValue> valueComparer = null)
+        {
+            if (accessor == null)
+            {
+                throw new ArgumentNullException(nameof(accessor));
+            }
+
+            var resolvedCulture = culture ?? CultureInfo.CurrentCulture;
+            var cache = s_comparerCache.GetValue(accessor, _ => new TypedComparerCache());
+            var key = new TypedComparerCacheKey(resolvedCulture, valueComparer);
+
+            return cache.GetOrAdd(key, () =>
+                new DataGridColumnValueAccessorComparer<TItem, TValue>(accessor, valueComparer, resolvedCulture));
+        }
 
         public DataGridColumnValueAccessorComparer(
             IDataGridColumnValueAccessor<TItem, TValue> accessor,

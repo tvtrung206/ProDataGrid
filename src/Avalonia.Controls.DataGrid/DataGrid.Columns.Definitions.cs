@@ -172,7 +172,7 @@ namespace Avalonia.Controls
 
             if (sender is DataGridColumnDefinition definition && _columnDefinitionMap.TryGetValue(definition, out var column))
             {
-                definition.ApplyToColumn(column, new DataGridColumnDefinitionContext(this));
+                definition.ApplyPropertyChange(column, new DataGridColumnDefinitionContext(this), e.PropertyName);
             }
         }
 

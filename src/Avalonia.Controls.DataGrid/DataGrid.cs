@@ -4114,6 +4114,12 @@ internal
                 return new SortingDescriptor(columnId, direction, propertyPath, column.CustomSortComparer, culture);
             }
 
+            var directionalComparer = GetDirectionalComparer(column, direction);
+            if (directionalComparer != null)
+            {
+                return new SortingDescriptor(columnId, direction, propertyPath, directionalComparer, culture);
+            }
+
             var sortValueComparer = DataGridColumnSort.GetValueComparer(column);
             var sortAccessor = DataGridColumnSort.GetValueAccessor(column);
             if (sortAccessor != null || sortValueComparer != null)
@@ -4142,6 +4148,30 @@ internal
             }
 
             return new SortingDescriptor(columnId, direction, propertyPath, comparer, culture);
+        }
+
+        private IComparer GetDirectionalComparer(DataGridColumn column, ListSortDirection direction)
+        {
+            if (column == null)
+            {
+                return null;
+            }
+
+            if (direction == ListSortDirection.Ascending)
+            {
+                return DataGridColumnSort.GetAscendingComparer(column);
+            }
+
+            if (direction == ListSortDirection.Descending)
+            {
+                var comparer = DataGridColumnSort.GetDescendingComparer(column);
+                if (comparer != null)
+                {
+                    return new DataGridInvertedComparer(comparer);
+                }
+            }
+
+            return null;
         }
 
         private void SetColumnSortDirectionValue(DataGridColumn column, ListSortDirection? direction)

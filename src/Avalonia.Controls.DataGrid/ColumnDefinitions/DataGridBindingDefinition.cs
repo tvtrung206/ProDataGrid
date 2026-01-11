@@ -121,18 +121,16 @@ namespace Avalonia.Controls
             Func<TItem, TValue> getter,
             Action<TItem, TValue> setter = null)
         {
-            if (property == null)
-            {
-                throw new ArgumentNullException(nameof(property));
-            }
+            var path = BuildPath(property);
+            return Create(path, getter, setter);
+        }
 
-            Func<WeakReference<object>, IPropertyInfo, IPropertyAccessor> accessorFactory = property is AvaloniaProperty
-                ? PropertyInfoAccessorFactory.CreateAvaloniaPropertyAccessor
-                : PropertyInfoAccessorFactory.CreateInpcPropertyAccessor;
-
-            var path = new CompiledBindingPathBuilder()
-                .Property(property, accessorFactory)
-                .Build();
+        public static DataGridBindingDefinition CreateCached<TItem, TValue>(
+            IPropertyInfo property,
+            Func<TItem, TValue> getter,
+            Action<TItem, TValue> setter = null)
+        {
+            var path = DataGridCompiledBindingPathCache.GetOrCreate(property);
             return Create(path, getter, setter);
         }
 
@@ -171,6 +169,22 @@ namespace Avalonia.Controls
             }
 
             return binding;
+        }
+
+        internal static CompiledBindingPath BuildPath(IPropertyInfo property)
+        {
+            if (property == null)
+            {
+                throw new ArgumentNullException(nameof(property));
+            }
+
+            Func<WeakReference<object>, IPropertyInfo, IPropertyAccessor> accessorFactory = property is AvaloniaProperty
+                ? PropertyInfoAccessorFactory.CreateAvaloniaPropertyAccessor
+                : PropertyInfoAccessorFactory.CreateInpcPropertyAccessor;
+
+            return new CompiledBindingPathBuilder()
+                .Property(property, accessorFactory)
+                .Build();
         }
 
         private static Action<TItem, TValue> TryCreateSetter<TItem, TValue>(Expression<Func<TItem, TValue>> expression)
