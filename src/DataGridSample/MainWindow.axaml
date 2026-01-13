@@ -98,6 +98,9 @@
     <TabItem Header="ItemsSource Swap">
       <pages:ItemsSourceSwapPage />
     </TabItem>
+    <TabItem Header="ContentControl Swap">
+      <pages:ContentControlSwapPage />
+    </TabItem>
     <TabItem Header="Selection Binding">
       <pages:SelectedItemsPage />
     </TabItem>
