@@ -1,6 +1,7 @@
 // Copyright (c) Wieslaw Soltes. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -202,6 +203,31 @@ public class DataGridItemsSourceChangeHeadlessTests
     }
 
     [AvaloniaFact]
+    public void ItemsSource_Swap_To_Shorter_List_Clears_Invalid_SelectionModel_Indexes()
+    {
+        var items = CreateItems("A", 3);
+        var (window, grid) = CreateGrid(items, DataGridSelectionUnit.FullRow);
+        var selectionModel = new SelectionModel<object> { SingleSelect = false };
+        grid.Selection = selectionModel;
+        PumpLayout(grid);
+
+        selectionModel.Select(2);
+        PumpLayout(grid);
+
+        var newItems = CreateItems("B", 1);
+        grid.ItemsSource = newItems;
+        PumpLayout(grid);
+
+        Assert.All(selectionModel.SelectedIndexes, index => Assert.InRange(index, 0, newItems.Count - 1));
+        if (grid.SelectedItem != null)
+        {
+            Assert.Contains((RowItem)grid.SelectedItem, newItems);
+        }
+
+        window.Close();
+    }
+
+    [AvaloniaFact]
     public void ItemsSource_Add_Preserves_SourceList_Backing_For_View()
     {
         var items = CreateItems("A", 3);
@@ -267,6 +293,44 @@ public class DataGridItemsSourceChangeHeadlessTests
         PumpLayout(grid);
 
         AssertRowsMatchItems(grid, items);
+        window.Close();
+    }
+
+    [AvaloniaFact]
+    public void Filtering_Removes_SelectedItem_Does_Not_Throw_From_SelectionModel()
+    {
+        var items = CreateItems("A", 3);
+        var view = new DataGridCollectionView(items);
+        var (window, grid) = CreateGrid(view, DataGridSelectionUnit.FullRow);
+        var selectionModel = new SelectionModel<object> { SingleSelect = false };
+        grid.Selection = selectionModel;
+        PumpLayout(grid);
+
+        selectionModel.Select(2);
+        PumpLayout(grid);
+
+        Exception? selectionException = null;
+        selectionModel.SelectionChanged += (_, __) =>
+        {
+            try
+            {
+                _ = selectionModel.SelectedItems.Cast<object>().ToList();
+            }
+            catch (Exception ex)
+            {
+                selectionException = ex;
+            }
+        };
+
+        view.Filter = item => ((RowItem)item).Value < 2;
+        PumpLayout(grid);
+
+        Assert.Null(selectionException);
+        Assert.All(selectionModel.SelectedIndexes, index => Assert.InRange(index, 0, view.Count - 1));
+        if (grid.SelectedItem != null)
+        {
+            Assert.Contains((RowItem)grid.SelectedItem, view.Cast<RowItem>());
+        }
         window.Close();
     }
 

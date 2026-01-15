@@ -926,6 +926,57 @@ public class HierarchicalIntegrationTests
     }
 
     [Fact]
+    public async Task Selection_Remaps_OnMove_DataGridCollectionView_Persists_After_Refresh()
+    {
+        var root = new Item("root");
+        var childA = new Item("a");
+        var childB = new Item("b");
+        var childC = new Item("c");
+        root.Children.Add(childA);
+        root.Children.Add(childB);
+        root.Children.Add(childC);
+
+        var model = CreateModel();
+        model.SetRoot(root);
+        model.Expand(model.Root!);
+
+        var view = new DataGridCollectionView(model.Flattened);
+
+        var grid = new DataGrid
+        {
+            HierarchicalModel = model,
+            HierarchicalRowsEnabled = true,
+            AutoGenerateColumns = false,
+            ItemsSource = view
+        };
+
+        grid.ColumnsInternal.Add(new DataGridHierarchicalColumn
+        {
+            Header = "Name",
+            Binding = new Avalonia.Data.Binding("Item.Name")
+        });
+
+        grid.ApplyTemplate();
+        grid.UpdateLayout();
+
+        grid.Selection.Select(2); // select childB
+        root.Children.Move(1, 2); // move childB after childC
+        if (!Dispatcher.UIThread.CheckAccess())
+        {
+            await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
+        }
+
+        view.Refresh();
+        if (!Dispatcher.UIThread.CheckAccess())
+        {
+            await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
+        }
+
+        Assert.Equal(3, grid.Selection.SelectedIndex);
+        Assert.Same(childB, grid.Selection.SelectedItem);
+    }
+
+    [Fact]
     public async Task Selection_Remaps_OnReplace_List_IndexShift()
     {
         var root = new Item("root");

@@ -125,6 +125,9 @@
     <TabItem Header="Selection Stability">
       <pages:SelectionModelStabilityPage />
     </TabItem>
+    <TabItem Header="Selection Filter Reset">
+      <pages:SelectionFilterResetPage />
+    </TabItem>
     <TabItem Header="Custom SelectionModel">
       <pages:CustomSelectionModelPage />
     </TabItem>

@@ -1,0 +1,37 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:models="clr-namespace:DataGridSample.Models"
+             x:Class="DataGridSample.Pages.SelectionFilterResetPage">
+  <Grid Margin="12"
+        RowDefinitions="Auto,Auto,*"
+        RowSpacing="8">
+    <StackPanel Spacing="4">
+      <TextBlock Text="Selection + Filtering Reset" FontSize="18" FontWeight="Bold" />
+      <TextBlock Text="Select the last row, then filter it out. The selection model clears safely without exceptions."
+                 TextWrapping="Wrap" />
+    </StackPanel>
+
+    <StackPanel Grid.Row="1"
+                Orientation="Horizontal"
+                Spacing="8">
+      <Button Content="Select last row" Click="OnSelectLastRow" />
+      <Button Content="Filter out selected" Click="OnFilterOutSelected" />
+      <Button Content="Clear filter" Click="OnClearFilter" />
+    </StackPanel>
+
+    <DataGrid Grid.Row="2"
+              x:Name="Grid"
+              AutoGenerateColumns="False"
+              SelectionMode="Single"
+              SelectionUnit="FullRow"
+              CanUserReorderColumns="True"
+              CanUserResizeColumns="True"
+              CanUserSortColumns="True">
+      <DataGrid.Columns>
+        <DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="2*" x:DataType="models:SelectionFilterItem" />
+        <DataGridTextColumn Header="Group" Binding="{Binding Group}" Width="*" x:DataType="models:SelectionFilterItem" />
+        <DataGridTextColumn Header="Value" Binding="{Binding Value}" Width="*" x:DataType="models:SelectionFilterItem" />
+      </DataGrid.Columns>
+    </DataGrid>
+  </Grid>
+</UserControl>
