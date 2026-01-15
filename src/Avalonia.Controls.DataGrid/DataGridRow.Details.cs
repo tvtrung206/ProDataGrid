@@ -41,10 +41,9 @@ namespace Avalonia.Controls
                         OwningGrid.OnUnloadingRowDetails(this, _detailsContent);
                     }
                     _detailsContent.DataContext = null;
+                    ClearDetailsContentSizeSubscription();
                     if (!recycle)
                     {
-                        _detailsContentSizeSubscription?.Dispose();
-                        _detailsContentSizeSubscription = null;
                         _detailsContent = null;
                     }
                 }
@@ -219,8 +218,7 @@ namespace Avalonia.Controls
                 {
                     if (_detailsContent != null)
                     {
-                        _detailsContentSizeSubscription?.Dispose();
-                        _detailsContentSizeSubscription = null;
+                        ClearDetailsContentSizeSubscription();
                         if (_detailsLoaded)
                         {
                             OwningGrid.OnUnloadingRowDetails(this, _detailsContent);
@@ -234,28 +232,13 @@ namespace Avalonia.Controls
 
                     if (_detailsContent != null)
                     {
-                        if (_detailsContent is Layout.Layoutable layoutableContent)
-                        {
-                            layoutableContent.LayoutUpdated += DetailsContent_LayoutUpdated;
-
-                            _detailsContentSizeSubscription = new CompositeDisposable(2)
-                            {
-                                Disposable.Create(() => layoutableContent.LayoutUpdated -= DetailsContent_LayoutUpdated),
-                                _detailsContent.GetObservable(MarginProperty).Subscribe(DetailsContent_MarginChanged)
-                            };
-
-
-                        }
-                        else
-                        {
-                            _detailsContentSizeSubscription =
-                            _detailsContent.GetObservable(MarginProperty)
-                            .Subscribe(DetailsContent_MarginChanged);
-
-                        }
-
                         _detailsElement.Children.Add(_detailsContent);
+                        EnsureDetailsContentSizeSubscription();
                     }
+                }
+                else if (_detailsContent != null)
+                {
+                    EnsureDetailsContentSizeSubscription();
                 }
 
                 if (_detailsContent != null && !_detailsLoaded)
@@ -275,6 +258,37 @@ namespace Avalonia.Controls
                     EnsureDetailsDesiredHeight();
                     _detailsElement.ContentHeight = _detailsDesiredHeight;
                 }
+            }
+        }
+
+        private void ClearDetailsContentSizeSubscription()
+        {
+            _detailsContentSizeSubscription?.Dispose();
+            _detailsContentSizeSubscription = null;
+        }
+
+        private void EnsureDetailsContentSizeSubscription()
+        {
+            if (_detailsContent == null || _detailsContentSizeSubscription != null)
+            {
+                return;
+            }
+
+            if (_detailsContent is Layout.Layoutable layoutableContent)
+            {
+                layoutableContent.LayoutUpdated += DetailsContent_LayoutUpdated;
+
+                _detailsContentSizeSubscription = new CompositeDisposable(2)
+                {
+                    Disposable.Create(() => layoutableContent.LayoutUpdated -= DetailsContent_LayoutUpdated),
+                    _detailsContent.GetObservable(MarginProperty).Subscribe(DetailsContent_MarginChanged)
+                };
+            }
+            else
+            {
+                _detailsContentSizeSubscription = _detailsContent
+                    .GetObservable(MarginProperty)
+                    .Subscribe(DetailsContent_MarginChanged);
             }
         }
 

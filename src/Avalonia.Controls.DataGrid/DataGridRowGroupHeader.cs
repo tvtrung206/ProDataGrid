@@ -238,19 +238,35 @@ internal
 
         private IDisposable _expanderButtonSubscription;
 
+        private void AttachExpanderButtonSubscription()
+        {
+            if (_expanderButton == null || _expanderButtonSubscription != null)
+            {
+                return;
+            }
+
+            EnsureExpanderButtonIsChecked();
+            _expanderButtonSubscription =
+                _expanderButton.GetObservable(ToggleButton.IsCheckedProperty)
+                               .Skip(1)
+                               .Subscribe(v => OnExpanderButtonIsCheckedChanged(v));
+        }
+
+        private void DetachExpanderButtonSubscription()
+        {
+            _expanderButtonSubscription?.Dispose();
+            _expanderButtonSubscription = null;
+        }
+
         protected override void OnApplyTemplate(TemplateAppliedEventArgs e)
         {
             _rootElement = e.NameScope.Find<Panel>(DataGridRow.DATAGRIDROW_elementRoot);
 
-            _expanderButtonSubscription?.Dispose();
+            DetachExpanderButtonSubscription();
             _expanderButton = e.NameScope.Find<ToggleButton>(DATAGRIDROWGROUPHEADER_expanderButton);
             if(_expanderButton != null)
             {
-                EnsureExpanderButtonIsChecked();
-                _expanderButtonSubscription =
-                    _expanderButton.GetObservable(ToggleButton.IsCheckedProperty)
-                                   .Skip(1)
-                                   .Subscribe(v => OnExpanderButtonIsCheckedChanged(v));
+                AttachExpanderButtonSubscription();
             }
 
             _headerElement = e.NameScope.Find<DataGridRowHeader>(DataGridRow.DATAGRIDROW_elementRowHeader);
@@ -609,9 +625,16 @@ internal
             _summaryRow?.UpdateCellLayout();
         }
 
+        protected override void OnAttachedToLogicalTree(LogicalTreeAttachmentEventArgs e)
+        {
+            base.OnAttachedToLogicalTree(e);
+            AttachExpanderButtonSubscription();
+        }
+
         protected override void OnDetachedFromLogicalTree(LogicalTreeAttachmentEventArgs e)
         {
             base.OnDetachedFromLogicalTree(e);
+            DetachExpanderButtonSubscription();
             OwningGrid.RemoveReferenceFromCollectionViewGroup(RowGroupInfo.CollectionViewGroup);
             OwningGrid = null;
         }
