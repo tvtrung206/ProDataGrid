@@ -8,6 +8,7 @@ using System.Linq;
 using System.Reflection;
 using Avalonia.Collections;
 using Avalonia.Controls;
+using Avalonia.Controls.Selection;
 using Avalonia.Controls.DataGridSorting;
 using Avalonia.Data;
 using Avalonia.Headless.XUnit;
@@ -430,6 +431,82 @@ public class DataGridSelectedItemsTests
         Assert.Equal(items[3], Assert.Single(snapshot));
     }
 
+    [AvaloniaFact]
+    public void CaptureSelectionSnapshot_Falls_Back_To_PendingHierarchicalSnapshot()
+    {
+        var items = new ObservableCollection<string> { "A", "B" };
+        var grid = CreateGrid(items);
+        grid.HierarchicalRowsEnabled = true;
+        grid.HierarchicalModel = new Avalonia.Controls.DataGridHierarchical.HierarchicalModel();
+
+        SetPendingHierarchicalSnapshot(grid, new List<object> { items[1] });
+
+        var snapshot = grid.CaptureSelectionSnapshot();
+        Assert.NotNull(snapshot);
+        Assert.Equal(items[1], Assert.Single(snapshot));
+    }
+
+    [AvaloniaFact]
+    public void CaptureSelectionSnapshot_Uses_SelectionModelIndexes_When_NoModelSnapshot()
+    {
+        var items = new ObservableCollection<string> { "A", "B", "C" };
+        var grid = CreateGrid(items);
+        var selectionModel = new SelectionModel<object> { SingleSelect = false };
+
+        grid.Selection = selectionModel;
+        grid.UpdateLayout();
+
+        selectionModel.Select(1);
+        ClearSelectionSnapshot(grid);
+
+        var snapshot = grid.CaptureSelectionSnapshot();
+        Assert.NotNull(snapshot);
+        Assert.Equal(items[1], Assert.Single(snapshot));
+    }
+
+    [AvaloniaFact]
+    public void CaptureSelectionSnapshot_Ignores_Pending_Hierarchical_Snapshot_When_NotHierarchical()
+    {
+        var items = new ObservableCollection<string> { "A", "B" };
+        var grid = CreateGrid(items);
+        grid.UpdateLayout();
+
+        SetPendingHierarchicalSnapshot(grid, new List<object> { items[1] });
+
+        var snapshot = grid.CaptureSelectionSnapshot();
+        Assert.Null(snapshot);
+    }
+
+    [AvaloniaFact]
+    public void SelectionModel_SourceReset_Clears_Pending_Hierarchical_Caches()
+    {
+        var items = new ObservableCollection<string> { "A", "B" };
+        var grid = CreateGrid(items);
+        grid.UpdateLayout();
+
+        SetPendingHierarchicalSnapshot(grid, new List<object> { items[0] });
+        SetPendingHierarchicalIndexes(grid, new List<int> { 0 });
+
+        InvokeSelectionModelSourceReset(grid);
+
+        Assert.Null(GetPendingHierarchicalSnapshot(grid));
+        Assert.Null(GetPendingHierarchicalIndexes(grid));
+    }
+
+    [AvaloniaFact]
+    public void HasInvalidSelectionIndexes_Ignores_Selection_When_Source_Null()
+    {
+        var model = new StubSelectionModel
+        {
+            Source = null,
+            Count = 0,
+            SelectedIndexes = new List<int> { 1 }
+        };
+
+        var result = InvokeHasInvalidSelectionIndexes(model);
+        Assert.False(result);
+    }
+
     private static List<object> GetSelectionSnapshot(DataGrid grid)
     {
         var field = typeof(DataGrid).GetField("_selectionModelSnapshot", BindingFlags.Instance | BindingFlags.NonPublic);
@@ -442,6 +519,55 @@ public class DataGridSelectedItemsTests
         var field = typeof(DataGrid).GetField("_selectionModelSnapshot", BindingFlags.Instance | BindingFlags.NonPublic);
         Assert.NotNull(field);
         field!.SetValue(grid, snapshot);
+    }
+
+    private static void ClearSelectionSnapshot(DataGrid grid)
+    {
+        var field = typeof(DataGrid).GetField("_selectionModelSnapshot", BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.NotNull(field);
+        field!.SetValue(grid, null);
+    }
+
+    private static void SetPendingHierarchicalSnapshot(DataGrid grid, List<object> snapshot)
+    {
+        var field = typeof(DataGrid).GetField("_pendingHierarchicalSelectionSnapshot", BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.NotNull(field);
+        field!.SetValue(grid, snapshot);
+    }
+
+    private static void SetPendingHierarchicalIndexes(DataGrid grid, List<int> indexes)
+    {
+        var field = typeof(DataGrid).GetField("_pendingHierarchicalSelectionIndexes", BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.NotNull(field);
+        field!.SetValue(grid, indexes);
+    }
+
+    private static IReadOnlyList<object>? GetPendingHierarchicalSnapshot(DataGrid grid)
+    {
+        var field = typeof(DataGrid).GetField("_pendingHierarchicalSelectionSnapshot", BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.NotNull(field);
+        return (IReadOnlyList<object>?)field!.GetValue(grid);
+    }
+
+    private static IReadOnlyList<int>? GetPendingHierarchicalIndexes(DataGrid grid)
+    {
+        var field = typeof(DataGrid).GetField("_pendingHierarchicalSelectionIndexes", BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.NotNull(field);
+        return (IReadOnlyList<int>?)field!.GetValue(grid);
+    }
+
+    private static void InvokeSelectionModelSourceReset(DataGrid grid)
+    {
+        var method = typeof(DataGrid).GetMethod("SelectionModel_SourceReset", BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.NotNull(method);
+        method!.Invoke(grid, new object?[] { grid.Selection, EventArgs.Empty });
+    }
+
+    private static bool InvokeHasInvalidSelectionIndexes(ISelectionModel model)
+    {
+        var method = typeof(DataGrid).GetMethod("HasInvalidSelectionIndexes", BindingFlags.Static | BindingFlags.NonPublic);
+        Assert.NotNull(method);
+        return (bool)method!.Invoke(null, new object[] { model })!;
     }
 
     private static void ApplyIdSort(DataGridCollectionView view, ListSortDirection direction)
@@ -478,6 +604,77 @@ public class DataGridSelectedItemsTests
         {
             grid.SelectedItems.Add(item);
         }
+    }
+
+    private sealed class StubSelectionModel : ISelectionModel
+    {
+        public IEnumerable? Source { get; set; }
+
+        public bool SingleSelect { get; set; }
+
+        public int SelectedIndex { get; set; }
+
+        public IReadOnlyList<int> SelectedIndexes { get; set; } = Array.Empty<int>();
+
+        public object? SelectedItem { get; set; }
+
+        public IReadOnlyList<object?> SelectedItems { get; set; } = Array.Empty<object?>();
+
+        public int AnchorIndex { get; set; }
+
+        public int Count { get; set; }
+
+        public event EventHandler<SelectionModelIndexesChangedEventArgs>? IndexesChanged
+        {
+            add { }
+            remove { }
+        }
+
+        public event EventHandler<SelectionModelSelectionChangedEventArgs>? SelectionChanged
+        {
+            add { }
+            remove { }
+        }
+
+        public event EventHandler? LostSelection
+        {
+            add { }
+            remove { }
+        }
+
+        public event EventHandler? SourceReset
+        {
+            add { }
+            remove { }
+        }
+
+        public event PropertyChangedEventHandler? PropertyChanged
+        {
+            add { }
+            remove { }
+        }
+
+        public void BeginBatchUpdate()
+        {
+        }
+
+        public void EndBatchUpdate()
+        {
+        }
+
+        public bool IsSelected(int index) => SelectedIndexes.Contains(index);
+
+        public void Select(int index) => throw new NotSupportedException();
+
+        public void Deselect(int index) => throw new NotSupportedException();
+
+        public void SelectRange(int start, int end) => throw new NotSupportedException();
+
+        public void DeselectRange(int start, int end) => throw new NotSupportedException();
+
+        public void SelectAll() => throw new NotSupportedException();
+
+        public void Clear() => throw new NotSupportedException();
     }
 
     private class SortableItem
