@@ -85,6 +85,20 @@ dotnet add package ProDataGrid --source github --version 11.3.9-nightly.20241227
 - DocFX articles: `docfx/articles/intro.md`
 - DocFX entry page: `docfx/index.md`
 
+## Testing
+
+Run standard tests:
+
+```sh
+dotnet test
+```
+
+Leak tests use JetBrains dotMemory Unit and only run on Windows. Use the helper script:
+
+```powershell
+.\tools\run-leak-tests.ps1
+```
+
 ## ProDiagnostics
 
 `ProDiagnostics` provides Avalonia developer tools UI as a standalone package. It focuses on runtime inspection and debugging:
