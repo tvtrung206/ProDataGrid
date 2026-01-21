@@ -1578,6 +1578,327 @@ public class LeakTests
         GC.KeepAlive(result);
     }
 
+
+    [Fact]
+    [SuppressMessage("Usage", "xUnit1031:Do not use blocking task operations in test method", Justification = "Needed for dotMemoryUnit to work")]
+    public void DataGrid_SummaryRows_WithExternalColumns_DoesNotLeak()
+    {
+        if (!dotMemoryApi.IsEnabled)
+        {
+            return;
+        }
+
+        var columns = new ObservableCollection<DataGridColumn>();
+        var nameColumn = new DataGridTextColumn
+        {
+            Header = "Name",
+            Binding = new Binding(nameof(RowItem.Name))
+        };
+        nameColumn.Summaries.Add(new DataGridAggregateSummaryDescription
+        {
+            Aggregate = DataGridAggregateType.Count,
+            Scope = DataGridSummaryScope.Both
+        });
+        columns.Add(nameColumn);
+
+        var items = new ObservableCollection<RowItem>
+        {
+            new RowItem("A"),
+            new RowItem("B")
+        };
+
+        var run = async () =>
+        {
+            using var session = HeadlessUnitTestSession.StartNew(typeof(Application));
+
+            return await session.Dispatch(
+                () =>
+                {
+                    var grid = new DataGrid
+                    {
+                        AutoGenerateColumns = false,
+                        ItemsSource = items,
+                        Columns = columns,
+                        ShowTotalSummary = true,
+                        ShowGroupSummary = true,
+                        GroupSummaryPosition = DataGridGroupSummaryPosition.Both
+                    };
+
+                    if (grid.CollectionView is DataGridCollectionView view)
+                    {
+                        view.GroupDescriptions.Add(new DataGridPathGroupDescription(nameof(RowItem.Name)));
+                    }
+
+                    var window = new Window
+                    {
+                        Content = grid
+                    };
+
+                    window.SetThemeStyles();
+                    window.Show();
+                    Dispatcher.UIThread.RunJobs();
+                    Assert.IsType<DataGrid>(window.Presenter?.Child);
+                    Assert.NotNull(grid.TotalSummaryRow);
+
+                    window.Content = null;
+                    Dispatcher.UIThread.RunJobs();
+
+                    return window;
+                },
+                CancellationToken.None);
+        };
+
+        var result = run().GetAwaiter().GetResult();
+
+        dotMemory.Check(memory =>
+            Assert.Equal(0, memory.GetObjects(where => where.Type.Is<DataGrid>()).ObjectsCount));
+
+        GC.KeepAlive(columns);
+        GC.KeepAlive(items);
+        GC.KeepAlive(result);
+    }
+
+    [Fact]
+    [SuppressMessage("Usage", "xUnit1031:Do not use blocking task operations in test method", Justification = "Needed for dotMemoryUnit to work")]
+    public void DataGrid_SummaryRows_ToggleVisibility_DoesNotLeak()
+    {
+        if (!dotMemoryApi.IsEnabled)
+        {
+            return;
+        }
+
+        var columns = new ObservableCollection<DataGridColumn>();
+        var nameColumn = new DataGridTextColumn
+        {
+            Header = "Name",
+            Binding = new Binding(nameof(RowItem.Name))
+        };
+        nameColumn.Summaries.Add(new DataGridAggregateSummaryDescription
+        {
+            Aggregate = DataGridAggregateType.Count,
+            Scope = DataGridSummaryScope.Both
+        });
+        columns.Add(nameColumn);
+
+        var items = new ObservableCollection<RowItem>
+        {
+            new RowItem("A"),
+            new RowItem("B")
+        };
+
+        var run = async () =>
+        {
+            using var session = HeadlessUnitTestSession.StartNew(typeof(Application));
+
+            return await session.Dispatch(
+                () =>
+                {
+                    var grid = new DataGrid
+                    {
+                        AutoGenerateColumns = false,
+                        ItemsSource = items,
+                        Columns = columns
+                    };
+
+                    if (grid.CollectionView is DataGridCollectionView view)
+                    {
+                        view.GroupDescriptions.Add(new DataGridPathGroupDescription(nameof(RowItem.Name)));
+                    }
+
+                    var window = new Window
+                    {
+                        Content = grid
+                    };
+
+                    window.SetThemeStyles();
+                    window.Show();
+                    Dispatcher.UIThread.RunJobs();
+                    Assert.IsType<DataGrid>(window.Presenter?.Child);
+
+                    grid.GroupSummaryPosition = DataGridGroupSummaryPosition.Both;
+                    grid.ShowTotalSummary = true;
+                    grid.ShowGroupSummary = true;
+                    Dispatcher.UIThread.RunJobs();
+                    Assert.NotNull(grid.TotalSummaryRow);
+
+                    grid.ShowGroupSummary = false;
+                    grid.ShowTotalSummary = false;
+                    Dispatcher.UIThread.RunJobs();
+
+                    window.Content = null;
+                    Dispatcher.UIThread.RunJobs();
+
+                    return window;
+                },
+                CancellationToken.None);
+        };
+
+        var result = run().GetAwaiter().GetResult();
+
+        dotMemory.Check(memory =>
+            Assert.Equal(0, memory.GetObjects(where => where.Type.Is<DataGrid>()).ObjectsCount));
+
+        GC.KeepAlive(columns);
+        GC.KeepAlive(items);
+        GC.KeepAlive(result);
+    }
+
+    [Fact]
+    [SuppressMessage("Usage", "xUnit1031:Do not use blocking task operations in test method", Justification = "Needed for dotMemoryUnit to work")]
+    public void DataGrid_RowDetailsTemplate_DoesNotLeak()
+    {
+        if (!dotMemoryApi.IsEnabled)
+        {
+            return;
+        }
+
+        var items = new ObservableCollection<RowItem>
+        {
+            new RowItem("A"),
+            new RowItem("B")
+        };
+
+        var run = async () =>
+        {
+            using var session = HeadlessUnitTestSession.StartNew(typeof(Application));
+
+            return await session.Dispatch(
+                () =>
+                {
+                    var grid = new DataGrid
+                    {
+                        AutoGenerateColumns = false,
+                        ItemsSource = items,
+                        RowDetailsVisibilityMode = DataGridRowDetailsVisibilityMode.Visible,
+                        RowDetailsTemplate = new FuncDataTemplate<RowItem>((item, _) =>
+                        {
+                            var details = new Border
+                            {
+                                Margin = new Avalonia.Thickness(4),
+                                Child = new TextBlock { Text = "Details" }
+                            };
+                            return details;
+                        })
+                    };
+
+                    grid.Columns.Add(new DataGridTextColumn
+                    {
+                        Header = "Name",
+                        Binding = new Binding(nameof(RowItem.Name))
+                    });
+
+                    var window = new Window
+                    {
+                        Content = grid
+                    };
+
+                    window.SetThemeStyles();
+                    window.Show();
+                    Dispatcher.UIThread.RunJobs();
+                    Assert.IsType<DataGrid>(window.Presenter?.Child);
+
+                    window.Content = null;
+                    Dispatcher.UIThread.RunJobs();
+
+                    return window;
+                },
+                CancellationToken.None);
+        };
+
+        var result = run().GetAwaiter().GetResult();
+
+        dotMemory.Check(memory =>
+            Assert.Equal(0, memory.GetObjects(where => where.Type.Is<DataGrid>()).ObjectsCount));
+
+        GC.KeepAlive(items);
+        GC.KeepAlive(result);
+    }
+
+    [Fact]
+    [SuppressMessage("Usage", "xUnit1031:Do not use blocking task operations in test method", Justification = "Needed for dotMemoryUnit to work")]
+    public void DataGrid_RowDetailsTemplateSwap_DoesNotLeak()
+    {
+        if (!dotMemoryApi.IsEnabled)
+        {
+            return;
+        }
+
+        var items = new ObservableCollection<RowItem>
+        {
+            new RowItem("A"),
+            new RowItem("B")
+        };
+
+        var run = async () =>
+        {
+            using var session = HeadlessUnitTestSession.StartNew(typeof(Application));
+
+            return await session.Dispatch(
+                () =>
+                {
+                    var templateA = new FuncDataTemplate<RowItem>((item, _) =>
+                    {
+                        var details = new Border
+                        {
+                            Padding = new Avalonia.Thickness(2),
+                            Child = new TextBlock { Text = "Details A" }
+                        };
+                        return details;
+                    });
+
+                    var templateB = new FuncDataTemplate<RowItem>((item, _) =>
+                    {
+                        var panel = new StackPanel();
+                        panel.Children.Add(new TextBlock { Text = "Details B" });
+                        return panel;
+                    });
+
+                    var grid = new DataGrid
+                    {
+                        AutoGenerateColumns = false,
+                        ItemsSource = items,
+                        RowDetailsVisibilityMode = DataGridRowDetailsVisibilityMode.Visible,
+                        RowDetailsTemplate = templateA
+                    };
+
+                    grid.Columns.Add(new DataGridTextColumn
+                    {
+                        Header = "Name",
+                        Binding = new Binding(nameof(RowItem.Name))
+                    });
+
+                    var window = new Window
+                    {
+                        Content = grid
+                    };
+
+                    window.SetThemeStyles();
+                    window.Show();
+                    Dispatcher.UIThread.RunJobs();
+                    Assert.IsType<DataGrid>(window.Presenter?.Child);
+
+                    grid.RowDetailsTemplate = templateB;
+                    Dispatcher.UIThread.RunJobs();
+                    grid.RowDetailsTemplate = templateA;
+                    Dispatcher.UIThread.RunJobs();
+
+                    window.Content = null;
+                    Dispatcher.UIThread.RunJobs();
+
+                    return window;
+                },
+                CancellationToken.None);
+        };
+
+        var result = run().GetAwaiter().GetResult();
+
+        dotMemory.Check(memory =>
+            Assert.Equal(0, memory.GetObjects(where => where.Type.Is<DataGrid>()).ObjectsCount));
+
+        GC.KeepAlive(items);
+        GC.KeepAlive(result);
+    }
+
     private sealed class SwapItem
     {
         public SwapItem(string name)
