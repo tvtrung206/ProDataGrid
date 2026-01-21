@@ -22,33 +22,19 @@ using Avalonia.Controls.DataGridHierarchical;
 using Avalonia.Controls.DataGridSearching;
 using Avalonia.Controls.DataGridSorting;
 using Avalonia.Controls.Selection;
-using JetBrains.dotMemoryUnit;
-using JetBrains.dotMemoryUnit.Kernel;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace Avalonia.Controls.DataGridTests;
 
-[DotMemoryUnit(FailIfRunWithoutSupport = false)]
 public class LeakTests
 {
     // Need to have the collection as field, so GC will not free it
     private readonly ObservableCollection<string> _observableCollection = new();
 
-    public LeakTests(ITestOutputHelper output)
-    {
-        DotMemoryUnitTestOutput.SetOutputMethod(output.WriteLine);
-    }
-
     [Fact]
-    [SuppressMessage("Usage", "xUnit1031:Do not use blocking task operations in test method", Justification = "Needed for dotMemoryUnit to work")]
+    [SuppressMessage("Usage", "xUnit1031:Do not use blocking task operations in test method", Justification = "Needed for headless UI dispatch")]
     public void DataGrid_Is_Freed()
     {
-        if (!dotMemoryApi.IsEnabled)
-        {
-            return;
-        }
-
         // When attached to INotifyCollectionChanged, DataGrid will subscribe to its events, potentially causing leak
         var run = async () =>
         {
@@ -56,12 +42,13 @@ public class LeakTests
 
             return await session.Dispatch(
                 () => {
+                    var grid = new DataGrid
+                    {
+                        ItemsSource = _observableCollection
+                    };
                     var window = new Window
                     {
-                        Content = new DataGrid
-                        {
-                            ItemsSource = _observableCollection
-                        }
+                        Content = grid
                     };
 
                     window.SetThemeStyles();
@@ -71,36 +58,30 @@ public class LeakTests
                     window.Show();
                     Assert.IsType<DataGrid>(window.Presenter?.Child);
 
+                    var gridRef = new WeakReference(grid);
+                    var viewRef = new WeakReference(grid.CollectionView!);
+
                     // Clear the content and ensure the DataGrid is removed.
                     window.Content = null;
                     Dispatcher.UIThread.RunJobs();
                     Assert.Null(window.Presenter.Child);
 
-                    return window;
+                    return (gridRef, viewRef);
                 },
                 CancellationToken.None);
         };
 
-        var result = run().GetAwaiter().GetResult();
+        var (gridRef, viewRef) = run().GetAwaiter().GetResult();
 
-        dotMemory.Check(memory =>
-        {
-            Assert.Equal(0, memory.GetObjects(where => where.Type.Is<DataGrid>()).ObjectsCount);
-            Assert.Equal(0, memory.GetObjects(where => where.Type.Is<DataGridCollectionView>()).ObjectsCount);
-        });
+        AssertCollected(gridRef, viewRef);
 
-        GC.KeepAlive(result);
+        GC.KeepAlive(_observableCollection);
     }
 
     [Fact]
-    [SuppressMessage("Usage", "xUnit1031:Do not use blocking task operations in test method", Justification = "Needed for dotMemoryUnit to work")]
+    [SuppressMessage("Usage", "xUnit1031:Do not use blocking task operations in test method", Justification = "Needed for headless UI dispatch")]
     public void DataGrid_ItemsSourceSwap_DoesNotLeak()
     {
-        if (!dotMemoryApi.IsEnabled)
-        {
-            return;
-        }
-
         var itemsA = new ObservableCollection<RowItem>
         {
             new RowItem("A"),
@@ -147,41 +128,36 @@ public class LeakTests
                     grid.ItemsSource = null;
                     Dispatcher.UIThread.RunJobs();
 
+                    var gridRef = new WeakReference(grid);
+                    var viewRef = new WeakReference(grid.CollectionView!);
+
                     window.Content = null;
                     Dispatcher.UIThread.RunJobs();
 
-                    return window;
+                    return (gridRef, viewRef);
                 },
                 CancellationToken.None);
         };
 
-        var result = run().GetAwaiter().GetResult();
+        var (gridRef, viewRef) = run().GetAwaiter().GetResult();
 
-        dotMemory.Check(memory =>
-        {
-            Assert.Equal(0, memory.GetObjects(where => where.Type.Is<DataGrid>()).ObjectsCount);
-            Assert.Equal(0, memory.GetObjects(where => where.Type.Is<DataGridCollectionView>()).ObjectsCount);
-        });
+        AssertCollected(gridRef, viewRef);
 
         GC.KeepAlive(itemsA);
         GC.KeepAlive(itemsB);
-        GC.KeepAlive(result);
     }
 
     [Fact]
-    [SuppressMessage("Usage", "xUnit1031:Do not use blocking task operations in test method", Justification = "Needed for dotMemoryUnit to work")]
+    [SuppressMessage("Usage", "xUnit1031:Do not use blocking task operations in test method", Justification = "Needed for headless UI dispatch")]
     public void ContentControl_TemplateSwap_DoesNotLeak_DataGrid()
     {
-        if (!dotMemoryApi.IsEnabled)
-        {
-            return;
-        }
-
         var items = new[]
         {
             new SwapItem("A"),
             new SwapItem("B")
         };
+        var gridRefs = new List<WeakReference>();
+        var viewRefs = new List<WeakReference>();
 
         var run = async () =>
         {
@@ -203,6 +179,11 @@ public class LeakTests
                             Header = "Name",
                             Binding = new Binding(nameof(RowItem.Name))
                         });
+                        gridRefs.Add(new WeakReference(grid));
+                        if (grid.CollectionView != null)
+                        {
+                            viewRefs.Add(new WeakReference(grid.CollectionView));
+                        }
                         return grid;
                     }));
 
@@ -223,31 +204,26 @@ public class LeakTests
                     window.Content = null;
                     Dispatcher.UIThread.RunJobs();
 
-                    return window;
+                    return true;
                 },
                 CancellationToken.None);
         };
 
-        var result = run().GetAwaiter().GetResult();
+        run().GetAwaiter().GetResult();
 
-        dotMemory.Check(memory =>
+        AssertCollected(gridRefs);
+        if (viewRefs.Count > 0)
         {
-            Assert.Equal(0, memory.GetObjects(where => where.Type.Is<DataGrid>()).ObjectsCount);
-            Assert.Equal(0, memory.GetObjects(where => where.Type.Is<DataGridCollectionView>()).ObjectsCount);
-        });
-
-        GC.KeepAlive(result);
+            AssertCollected(viewRefs);
+        }
+        GC.KeepAlive(items);
     }
 
     [Fact]
-    [SuppressMessage("Usage", "xUnit1031:Do not use blocking task operations in test method", Justification = "Needed for dotMemoryUnit to work")]
+    [SuppressMessage("Usage", "xUnit1031:Do not use blocking task operations in test method", Justification = "Needed for headless UI dispatch")]
     public void ContentControl_TemplateSwap_BackgroundThread_DoesNotLeak_DataGrid()
     {
-        if (!dotMemoryApi.IsEnabled)
-        {
-            return;
-        }
-
+        var gridRefs = new List<WeakReference>();
         var run = async () =>
         {
             using var session = HeadlessUnitTestSession.StartNew(typeof(Application));
@@ -294,6 +270,7 @@ public class LeakTests
                             Header = "Name",
                             Binding = new Binding(nameof(ReproRowViewModel.Name))
                         });
+                        gridRefs.Add(new WeakReference(grid));
                         stack.Children.Add(grid);
 
                         return stack;
@@ -346,23 +323,15 @@ public class LeakTests
             return window!;
         };
 
-        var result = run().GetAwaiter().GetResult();
+        run().GetAwaiter().GetResult();
 
-        dotMemory.Check(memory =>
-            Assert.Equal(0, memory.GetObjects(where => where.Type.Is<DataGrid>()).ObjectsCount));
-
-        GC.KeepAlive(result);
+        AssertCollected(gridRefs);
     }
 
     [Fact]
-    [SuppressMessage("Usage", "xUnit1031:Do not use blocking task operations in test method", Justification = "Needed for dotMemoryUnit to work")]
+    [SuppressMessage("Usage", "xUnit1031:Do not use blocking task operations in test method", Justification = "Needed for headless UI dispatch")]
     public void DataGrid_ExternalCollectionView_Grouping_DoesNotLeak()
     {
-        if (!dotMemoryApi.IsEnabled)
-        {
-            return;
-        }
-
         var items = new ObservableCollection<GroupedRowItem>
         {
             new GroupedRowItem("A 1", "Group A"),
@@ -401,32 +370,27 @@ public class LeakTests
                     Dispatcher.UIThread.RunJobs();
                     Assert.IsType<DataGrid>(window.Presenter?.Child);
 
+                    var gridRef = new WeakReference(grid);
+
                     window.Content = null;
                     Dispatcher.UIThread.RunJobs();
 
-                    return window;
+                    return gridRef;
                 },
                 CancellationToken.None);
         };
 
-        var result = run().GetAwaiter().GetResult();
+        var gridRef = run().GetAwaiter().GetResult();
 
-        dotMemory.Check(memory =>
-            Assert.Equal(0, memory.GetObjects(where => where.Type.Is<DataGrid>()).ObjectsCount));
+        AssertCollected(gridRef);
 
         GC.KeepAlive(view);
-        GC.KeepAlive(result);
     }
 
     [Fact]
-    [SuppressMessage("Usage", "xUnit1031:Do not use blocking task operations in test method", Justification = "Needed for dotMemoryUnit to work")]
+    [SuppressMessage("Usage", "xUnit1031:Do not use blocking task operations in test method", Justification = "Needed for headless UI dispatch")]
     public void DataGrid_ExternalCollectionView_GroupingToggle_DoesNotLeak()
     {
-        if (!dotMemoryApi.IsEnabled)
-        {
-            return;
-        }
-
         var items = new ObservableCollection<GroupedRowItem>
         {
             new GroupedRowItem("A 1", "Group A"),
@@ -474,33 +438,28 @@ public class LeakTests
                     view.Refresh();
                     Dispatcher.UIThread.RunJobs();
 
+                    var gridRef = new WeakReference(grid);
+
                     window.Content = null;
                     Dispatcher.UIThread.RunJobs();
 
-                    return window;
+                    return gridRef;
                 },
                 CancellationToken.None);
         };
 
-        var result = run().GetAwaiter().GetResult();
+        var gridRef = run().GetAwaiter().GetResult();
 
-        dotMemory.Check(memory =>
-            Assert.Equal(0, memory.GetObjects(where => where.Type.Is<DataGrid>()).ObjectsCount));
+        AssertCollected(gridRef);
 
         GC.KeepAlive(view);
         GC.KeepAlive(items);
-        GC.KeepAlive(result);
     }
 
     [Fact]
-    [SuppressMessage("Usage", "xUnit1031:Do not use blocking task operations in test method", Justification = "Needed for dotMemoryUnit to work")]
+    [SuppressMessage("Usage", "xUnit1031:Do not use blocking task operations in test method", Justification = "Needed for headless UI dispatch")]
     public void DataGrid_BoundColumns_DoesNotLeak()
     {
-        if (!dotMemoryApi.IsEnabled)
-        {
-            return;
-        }
-
         var columns = new ObservableCollection<DataGridColumn>
         {
             new DataGridTextColumn
@@ -540,33 +499,28 @@ public class LeakTests
                     Dispatcher.UIThread.RunJobs();
                     Assert.IsType<DataGrid>(window.Presenter?.Child);
 
+                    var gridRef = new WeakReference(grid);
+
                     window.Content = null;
                     Dispatcher.UIThread.RunJobs();
 
-                    return window;
+                    return gridRef;
                 },
                 CancellationToken.None);
         };
 
-        var result = run().GetAwaiter().GetResult();
+        var gridRef = run().GetAwaiter().GetResult();
 
-        dotMemory.Check(memory =>
-            Assert.Equal(0, memory.GetObjects(where => where.Type.Is<DataGrid>()).ObjectsCount));
+        AssertCollected(gridRef);
 
         GC.KeepAlive(columns);
         GC.KeepAlive(items);
-        GC.KeepAlive(result);
     }
 
     [Fact]
-    [SuppressMessage("Usage", "xUnit1031:Do not use blocking task operations in test method", Justification = "Needed for dotMemoryUnit to work")]
+    [SuppressMessage("Usage", "xUnit1031:Do not use blocking task operations in test method", Justification = "Needed for headless UI dispatch")]
     public void DataGrid_ColumnsSwap_WithSpecializedColumns_DoesNotLeak()
     {
-        if (!dotMemoryApi.IsEnabled)
-        {
-            return;
-        }
-
         var columnsA = new ObservableCollection<DataGridColumn>
         {
             new DataGridCheckBoxColumn
@@ -621,34 +575,29 @@ public class LeakTests
                     grid.Columns = columnsB;
                     Dispatcher.UIThread.RunJobs();
 
+                    var gridRef = new WeakReference(grid);
+
                     window.Content = null;
                     Dispatcher.UIThread.RunJobs();
 
-                    return window;
+                    return gridRef;
                 },
                 CancellationToken.None);
         };
 
-        var result = run().GetAwaiter().GetResult();
+        var gridRef = run().GetAwaiter().GetResult();
 
-        dotMemory.Check(memory =>
-            Assert.Equal(0, memory.GetObjects(where => where.Type.Is<DataGrid>()).ObjectsCount));
+        AssertCollected(gridRef);
 
         GC.KeepAlive(columnsA);
         GC.KeepAlive(columnsB);
         GC.KeepAlive(items);
-        GC.KeepAlive(result);
     }
 
     [Fact]
-    [SuppressMessage("Usage", "xUnit1031:Do not use blocking task operations in test method", Justification = "Needed for dotMemoryUnit to work")]
+    [SuppressMessage("Usage", "xUnit1031:Do not use blocking task operations in test method", Justification = "Needed for headless UI dispatch")]
     public void DataGrid_ColumnDefinitionsSource_DoesNotLeak()
     {
-        if (!dotMemoryApi.IsEnabled)
-        {
-            return;
-        }
-
         var definitions = new ObservableCollection<DataGridColumnDefinition>
         {
             new DataGridTextColumnDefinition
@@ -688,33 +637,28 @@ public class LeakTests
                     Dispatcher.UIThread.RunJobs();
                     Assert.IsType<DataGrid>(window.Presenter?.Child);
 
+                    var gridRef = new WeakReference(grid);
+
                     window.Content = null;
                     Dispatcher.UIThread.RunJobs();
 
-                    return window;
+                    return gridRef;
                 },
                 CancellationToken.None);
         };
 
-        var result = run().GetAwaiter().GetResult();
+        var gridRef = run().GetAwaiter().GetResult();
 
-        dotMemory.Check(memory =>
-            Assert.Equal(0, memory.GetObjects(where => where.Type.Is<DataGrid>()).ObjectsCount));
+        AssertCollected(gridRef);
 
         GC.KeepAlive(definitions);
         GC.KeepAlive(items);
-        GC.KeepAlive(result);
     }
 
     [Fact]
-    [SuppressMessage("Usage", "xUnit1031:Do not use blocking task operations in test method", Justification = "Needed for dotMemoryUnit to work")]
+    [SuppressMessage("Usage", "xUnit1031:Do not use blocking task operations in test method", Justification = "Needed for headless UI dispatch")]
     public void DataGrid_ColumnDefinitionsSourceSwap_DoesNotLeak()
     {
-        if (!dotMemoryApi.IsEnabled)
-        {
-            return;
-        }
-
         var definitionsA = new ObservableCollection<DataGridColumnDefinition>
         {
             new DataGridTextColumnDefinition
@@ -767,34 +711,29 @@ public class LeakTests
                     grid.ColumnDefinitionsSource = definitionsB;
                     Dispatcher.UIThread.RunJobs();
 
+                    var gridRef = new WeakReference(grid);
+
                     window.Content = null;
                     Dispatcher.UIThread.RunJobs();
 
-                    return window;
+                    return gridRef;
                 },
                 CancellationToken.None);
         };
 
-        var result = run().GetAwaiter().GetResult();
+        var gridRef = run().GetAwaiter().GetResult();
 
-        dotMemory.Check(memory =>
-            Assert.Equal(0, memory.GetObjects(where => where.Type.Is<DataGrid>()).ObjectsCount));
+        AssertCollected(gridRef);
 
         GC.KeepAlive(definitionsA);
         GC.KeepAlive(definitionsB);
         GC.KeepAlive(items);
-        GC.KeepAlive(result);
     }
 
     [Fact]
-    [SuppressMessage("Usage", "xUnit1031:Do not use blocking task operations in test method", Justification = "Needed for dotMemoryUnit to work")]
+    [SuppressMessage("Usage", "xUnit1031:Do not use blocking task operations in test method", Justification = "Needed for headless UI dispatch")]
     public void DataGrid_SelectedItemsBinding_DoesNotLeak()
     {
-        if (!dotMemoryApi.IsEnabled)
-        {
-            return;
-        }
-
         var selectedItems = new ObservableCollection<object>();
         var items = new ObservableCollection<RowItem>
         {
@@ -825,33 +764,28 @@ public class LeakTests
                     Dispatcher.UIThread.RunJobs();
                     Assert.IsType<DataGrid>(window.Presenter?.Child);
 
+                    var gridRef = new WeakReference(grid);
+
                     window.Content = null;
                     Dispatcher.UIThread.RunJobs();
 
-                    return window;
+                    return gridRef;
                 },
                 CancellationToken.None);
         };
 
-        var result = run().GetAwaiter().GetResult();
+        var gridRef = run().GetAwaiter().GetResult();
 
-        dotMemory.Check(memory =>
-            Assert.Equal(0, memory.GetObjects(where => where.Type.Is<DataGrid>()).ObjectsCount));
+        AssertCollected(gridRef);
 
         GC.KeepAlive(selectedItems);
         GC.KeepAlive(items);
-        GC.KeepAlive(result);
     }
 
     [Fact]
-    [SuppressMessage("Usage", "xUnit1031:Do not use blocking task operations in test method", Justification = "Needed for dotMemoryUnit to work")]
+    [SuppressMessage("Usage", "xUnit1031:Do not use blocking task operations in test method", Justification = "Needed for headless UI dispatch")]
     public void DataGrid_SelectedCellsBinding_DoesNotLeak()
     {
-        if (!dotMemoryApi.IsEnabled)
-        {
-            return;
-        }
-
         var selectedCells = new ObservableCollection<DataGridCellInfo>();
         var items = new ObservableCollection<RowItem>
         {
@@ -882,33 +816,28 @@ public class LeakTests
                     Dispatcher.UIThread.RunJobs();
                     Assert.IsType<DataGrid>(window.Presenter?.Child);
 
+                    var gridRef = new WeakReference(grid);
+
                     window.Content = null;
                     Dispatcher.UIThread.RunJobs();
 
-                    return window;
+                    return gridRef;
                 },
                 CancellationToken.None);
         };
 
-        var result = run().GetAwaiter().GetResult();
+        var gridRef = run().GetAwaiter().GetResult();
 
-        dotMemory.Check(memory =>
-            Assert.Equal(0, memory.GetObjects(where => where.Type.Is<DataGrid>()).ObjectsCount));
+        AssertCollected(gridRef);
 
         GC.KeepAlive(selectedCells);
         GC.KeepAlive(items);
-        GC.KeepAlive(result);
     }
 
     [Fact]
-    [SuppressMessage("Usage", "xUnit1031:Do not use blocking task operations in test method", Justification = "Needed for dotMemoryUnit to work")]
+    [SuppressMessage("Usage", "xUnit1031:Do not use blocking task operations in test method", Justification = "Needed for headless UI dispatch")]
     public void DataGrid_ExternalSelectionModel_DoesNotLeak()
     {
-        if (!dotMemoryApi.IsEnabled)
-        {
-            return;
-        }
-
         var selectionModel = new SelectionModel<object>();
         var items = new ObservableCollection<RowItem>
         {
@@ -939,33 +868,28 @@ public class LeakTests
                     Dispatcher.UIThread.RunJobs();
                     Assert.IsType<DataGrid>(window.Presenter?.Child);
 
+                    var gridRef = new WeakReference(grid);
+
                     window.Content = null;
                     Dispatcher.UIThread.RunJobs();
 
-                    return window;
+                    return gridRef;
                 },
                 CancellationToken.None);
         };
 
-        var result = run().GetAwaiter().GetResult();
+        var gridRef = run().GetAwaiter().GetResult();
 
-        dotMemory.Check(memory =>
-            Assert.Equal(0, memory.GetObjects(where => where.Type.Is<DataGrid>()).ObjectsCount));
+        AssertCollected(gridRef);
 
         GC.KeepAlive(selectionModel);
         GC.KeepAlive(items);
-        GC.KeepAlive(result);
     }
 
     [Fact]
-    [SuppressMessage("Usage", "xUnit1031:Do not use blocking task operations in test method", Justification = "Needed for dotMemoryUnit to work")]
+    [SuppressMessage("Usage", "xUnit1031:Do not use blocking task operations in test method", Justification = "Needed for headless UI dispatch")]
     public void DataGrid_ExternalStateModels_DoesNotLeak()
     {
-        if (!dotMemoryApi.IsEnabled)
-        {
-            return;
-        }
-
         var sortingModel = new SortingModel();
         var filteringModel = new FilteringModel();
         var searchModel = new SearchModel();
@@ -1013,18 +937,19 @@ public class LeakTests
                     Dispatcher.UIThread.RunJobs();
                     Assert.IsType<DataGrid>(window.Presenter?.Child);
 
+                    var gridRef = new WeakReference(grid);
+
                     window.Content = null;
                     Dispatcher.UIThread.RunJobs();
 
-                    return window;
+                    return gridRef;
                 },
                 CancellationToken.None);
         };
 
-        var result = run().GetAwaiter().GetResult();
+        var gridRef = run().GetAwaiter().GetResult();
 
-        dotMemory.Check(memory =>
-            Assert.Equal(0, memory.GetObjects(where => where.Type.Is<DataGrid>()).ObjectsCount));
+        AssertCollected(gridRef);
 
         GC.KeepAlive(sortingModel);
         GC.KeepAlive(filteringModel);
@@ -1033,18 +958,12 @@ public class LeakTests
         GC.KeepAlive(hierarchicalModel);
         GC.KeepAlive(fastPathOptions);
         GC.KeepAlive(items);
-        GC.KeepAlive(result);
     }
 
     [Fact]
-    [SuppressMessage("Usage", "xUnit1031:Do not use blocking task operations in test method", Justification = "Needed for dotMemoryUnit to work")]
+    [SuppressMessage("Usage", "xUnit1031:Do not use blocking task operations in test method", Justification = "Needed for headless UI dispatch")]
     public void DataGrid_ExternalEditingElement_DoesNotLeak()
     {
-        if (!dotMemoryApi.IsEnabled)
-        {
-            return;
-        }
-
         var items = new ObservableCollection<RowItem>
         {
             new RowItem("A")
@@ -1108,29 +1027,22 @@ public class LeakTests
                     panel.Children.Remove(grid);
                     Dispatcher.UIThread.RunJobs();
 
-                    return window;
+                    return new WeakReference(grid);
                 },
                 CancellationToken.None);
         };
 
-        var result = run().GetAwaiter().GetResult();
+        var gridRef = run().GetAwaiter().GetResult();
 
-        dotMemory.Check(memory =>
-            Assert.Equal(0, memory.GetObjects(where => where.Type.Is<DataGrid>()).ObjectsCount));
+        AssertCollected(gridRef);
 
         GC.KeepAlive(items);
-        GC.KeepAlive(result);
     }
 
     [Fact]
-    [SuppressMessage("Usage", "xUnit1031:Do not use blocking task operations in test method", Justification = "Needed for dotMemoryUnit to work")]
+    [SuppressMessage("Usage", "xUnit1031:Do not use blocking task operations in test method", Justification = "Needed for headless UI dispatch")]
     public void DataGrid_ValidationSubscription_DoesNotLeak()
     {
-        if (!dotMemoryApi.IsEnabled)
-        {
-            return;
-        }
-
         var items = new ObservableCollection<ValidatingRowItem>
         {
             new ValidatingRowItem("ok")
@@ -1186,32 +1098,27 @@ public class LeakTests
                     Assert.False(grid.CommitEdit());
                     Dispatcher.UIThread.RunJobs();
 
+                    var gridRef = new WeakReference(grid);
+
                     window.Content = null;
                     Dispatcher.UIThread.RunJobs();
 
-                    return window;
+                    return gridRef;
                 },
                 CancellationToken.None);
         };
 
-        var result = run().GetAwaiter().GetResult();
+        var gridRef = run().GetAwaiter().GetResult();
 
-        dotMemory.Check(memory =>
-            Assert.Equal(0, memory.GetObjects(where => where.Type.Is<DataGrid>()).ObjectsCount));
+        AssertCollected(gridRef);
 
         GC.KeepAlive(items);
-        GC.KeepAlive(result);
     }
 
     [Fact]
-    [SuppressMessage("Usage", "xUnit1031:Do not use blocking task operations in test method", Justification = "Needed for dotMemoryUnit to work")]
+    [SuppressMessage("Usage", "xUnit1031:Do not use blocking task operations in test method", Justification = "Needed for headless UI dispatch")]
     public void DataGrid_NotifyDataErrorInfoValidation_DoesNotLeak()
     {
-        if (!dotMemoryApi.IsEnabled)
-        {
-            return;
-        }
-
         var items = new ObservableCollection<NotifyDataErrorRowItem>
         {
             new NotifyDataErrorRowItem("A")
@@ -1254,32 +1161,27 @@ public class LeakTests
                     Assert.NotNull(row);
                     Assert.False(row!.IsValid);
 
+                    var gridRef = new WeakReference(grid);
+
                     window.Content = null;
                     Dispatcher.UIThread.RunJobs();
 
-                    return window;
+                    return gridRef;
                 },
                 CancellationToken.None);
         };
 
-        var result = run().GetAwaiter().GetResult();
+        var gridRef = run().GetAwaiter().GetResult();
 
-        dotMemory.Check(memory =>
-            Assert.Equal(0, memory.GetObjects(where => where.Type.Is<DataGrid>()).ObjectsCount));
+        AssertCollected(gridRef);
 
         GC.KeepAlive(items);
-        GC.KeepAlive(result);
     }
 
     [Fact]
-    [SuppressMessage("Usage", "xUnit1031:Do not use blocking task operations in test method", Justification = "Needed for dotMemoryUnit to work")]
+    [SuppressMessage("Usage", "xUnit1031:Do not use blocking task operations in test method", Justification = "Needed for headless UI dispatch")]
     public void DataGrid_NotifyDataErrorInfo_ErrorsChanged_DoesNotLeak()
     {
-        if (!dotMemoryApi.IsEnabled)
-        {
-            return;
-        }
-
         var items = new ObservableCollection<NotifyDataErrorRowItem>
         {
             new NotifyDataErrorRowItem("A")
@@ -1330,32 +1232,27 @@ public class LeakTests
                     grid.CancelEdit();
                     Dispatcher.UIThread.RunJobs();
 
+                    var gridRef = new WeakReference(grid);
+
                     window.Content = null;
                     Dispatcher.UIThread.RunJobs();
 
-                    return window;
+                    return gridRef;
                 },
                 CancellationToken.None);
         };
 
-        var result = run().GetAwaiter().GetResult();
+        var gridRef = run().GetAwaiter().GetResult();
 
-        dotMemory.Check(memory =>
-            Assert.Equal(0, memory.GetObjects(where => where.Type.Is<DataGrid>()).ObjectsCount));
+        AssertCollected(gridRef);
 
         GC.KeepAlive(items);
-        GC.KeepAlive(result);
     }
 
     [Fact]
-    [SuppressMessage("Usage", "xUnit1031:Do not use blocking task operations in test method", Justification = "Needed for dotMemoryUnit to work")]
+    [SuppressMessage("Usage", "xUnit1031:Do not use blocking task operations in test method", Justification = "Needed for headless UI dispatch")]
     public void DataGrid_ClipboardImport_DoesNotLeak()
     {
-        if (!dotMemoryApi.IsEnabled)
-        {
-            return;
-        }
-
         var items = new ObservableCollection<EditableRowItem>
         {
             new EditableRowItem("A"),
@@ -1401,32 +1298,27 @@ public class LeakTests
                     Dispatcher.UIThread.RunJobs();
                     Assert.Equal("Pasted", items[0].Name);
 
+                    var gridRef = new WeakReference(grid);
+
                     window.Content = null;
                     Dispatcher.UIThread.RunJobs();
 
-                    return window;
+                    return gridRef;
                 },
                 CancellationToken.None);
         };
 
-        var result = run().GetAwaiter().GetResult();
+        var gridRef = run().GetAwaiter().GetResult();
 
-        dotMemory.Check(memory =>
-            Assert.Equal(0, memory.GetObjects(where => where.Type.Is<DataGrid>()).ObjectsCount));
+        AssertCollected(gridRef);
 
         GC.KeepAlive(items);
-        GC.KeepAlive(result);
     }
 
     [Fact]
-    [SuppressMessage("Usage", "xUnit1031:Do not use blocking task operations in test method", Justification = "Needed for dotMemoryUnit to work")]
+    [SuppressMessage("Usage", "xUnit1031:Do not use blocking task operations in test method", Justification = "Needed for headless UI dispatch")]
     public void DataGrid_ClipboardImportModelSwap_DoesNotLeak()
     {
-        if (!dotMemoryApi.IsEnabled)
-        {
-            return;
-        }
-
         var items = new ObservableCollection<EditableRowItem>
         {
             new EditableRowItem("A"),
@@ -1485,32 +1377,27 @@ public class LeakTests
                     Assert.NotNull(customImportFactory.Model);
                     Assert.True(customImportFactory.Model!.Calls > 0);
 
+                    var gridRef = new WeakReference(grid);
+
                     window.Content = null;
                     Dispatcher.UIThread.RunJobs();
 
-                    return window;
+                    return gridRef;
                 },
                 CancellationToken.None);
         };
 
-        var result = run().GetAwaiter().GetResult();
+        var gridRef = run().GetAwaiter().GetResult();
 
-        dotMemory.Check(memory =>
-            Assert.Equal(0, memory.GetObjects(where => where.Type.Is<DataGrid>()).ObjectsCount));
+        AssertCollected(gridRef);
 
         GC.KeepAlive(items);
-        GC.KeepAlive(result);
     }
 
     [Fact]
-    [SuppressMessage("Usage", "xUnit1031:Do not use blocking task operations in test method", Justification = "Needed for dotMemoryUnit to work")]
+    [SuppressMessage("Usage", "xUnit1031:Do not use blocking task operations in test method", Justification = "Needed for headless UI dispatch")]
     public void DataGrid_ClipboardExporterSwap_DoesNotLeak()
     {
-        if (!dotMemoryApi.IsEnabled)
-        {
-            return;
-        }
-
         var items = new ObservableCollection<EditableRowItem>
         {
             new EditableRowItem("A"),
@@ -1569,32 +1456,27 @@ public class LeakTests
                     Dispatcher.UIThread.RunJobs();
                     Assert.True(customFormatExporter.Calls > 0);
 
+                    var gridRef = new WeakReference(grid);
+
                     window.Content = null;
                     Dispatcher.UIThread.RunJobs();
 
-                    return window;
+                    return gridRef;
                 },
                 CancellationToken.None);
         };
 
-        var result = run().GetAwaiter().GetResult();
+        var gridRef = run().GetAwaiter().GetResult();
 
-        dotMemory.Check(memory =>
-            Assert.Equal(0, memory.GetObjects(where => where.Type.Is<DataGrid>()).ObjectsCount));
+        AssertCollected(gridRef);
 
         GC.KeepAlive(items);
-        GC.KeepAlive(result);
     }
 
     [Fact]
-    [SuppressMessage("Usage", "xUnit1031:Do not use blocking task operations in test method", Justification = "Needed for dotMemoryUnit to work")]
+    [SuppressMessage("Usage", "xUnit1031:Do not use blocking task operations in test method", Justification = "Needed for headless UI dispatch")]
     public void DataGrid_SummaryRows_WithExternalColumns_DoesNotLeak()
     {
-        if (!dotMemoryApi.IsEnabled)
-        {
-            return;
-        }
-
         var columns = new ObservableCollection<DataGridColumn>();
         var nameColumn = new DataGridTextColumn
         {
@@ -1647,33 +1529,28 @@ public class LeakTests
                     Assert.IsType<DataGrid>(window.Presenter?.Child);
                     Assert.NotNull(grid.TotalSummaryRow);
 
+                    var gridRef = new WeakReference(grid);
+
                     window.Content = null;
                     Dispatcher.UIThread.RunJobs();
 
-                    return window;
+                    return gridRef;
                 },
                 CancellationToken.None);
         };
 
-        var result = run().GetAwaiter().GetResult();
+        var gridRef = run().GetAwaiter().GetResult();
 
-        dotMemory.Check(memory =>
-            Assert.Equal(0, memory.GetObjects(where => where.Type.Is<DataGrid>()).ObjectsCount));
+        AssertCollected(gridRef);
 
         GC.KeepAlive(columns);
         GC.KeepAlive(items);
-        GC.KeepAlive(result);
     }
 
     [Fact]
-    [SuppressMessage("Usage", "xUnit1031:Do not use blocking task operations in test method", Justification = "Needed for dotMemoryUnit to work")]
+    [SuppressMessage("Usage", "xUnit1031:Do not use blocking task operations in test method", Justification = "Needed for headless UI dispatch")]
     public void DataGrid_SummaryRows_ToggleVisibility_DoesNotLeak()
     {
-        if (!dotMemoryApi.IsEnabled)
-        {
-            return;
-        }
-
         var columns = new ObservableCollection<DataGridColumn>();
         var nameColumn = new DataGridTextColumn
         {
@@ -1732,33 +1609,28 @@ public class LeakTests
                     grid.ShowTotalSummary = false;
                     Dispatcher.UIThread.RunJobs();
 
+                    var gridRef = new WeakReference(grid);
+
                     window.Content = null;
                     Dispatcher.UIThread.RunJobs();
 
-                    return window;
+                    return gridRef;
                 },
                 CancellationToken.None);
         };
 
-        var result = run().GetAwaiter().GetResult();
+        var gridRef = run().GetAwaiter().GetResult();
 
-        dotMemory.Check(memory =>
-            Assert.Equal(0, memory.GetObjects(where => where.Type.Is<DataGrid>()).ObjectsCount));
+        AssertCollected(gridRef);
 
         GC.KeepAlive(columns);
         GC.KeepAlive(items);
-        GC.KeepAlive(result);
     }
 
     [Fact]
-    [SuppressMessage("Usage", "xUnit1031:Do not use blocking task operations in test method", Justification = "Needed for dotMemoryUnit to work")]
+    [SuppressMessage("Usage", "xUnit1031:Do not use blocking task operations in test method", Justification = "Needed for headless UI dispatch")]
     public void DataGrid_RowDetailsTemplate_DoesNotLeak()
     {
-        if (!dotMemoryApi.IsEnabled)
-        {
-            return;
-        }
-
         var items = new ObservableCollection<RowItem>
         {
             new RowItem("A"),
@@ -1804,32 +1676,27 @@ public class LeakTests
                     Dispatcher.UIThread.RunJobs();
                     Assert.IsType<DataGrid>(window.Presenter?.Child);
 
+                    var gridRef = new WeakReference(grid);
+
                     window.Content = null;
                     Dispatcher.UIThread.RunJobs();
 
-                    return window;
+                    return gridRef;
                 },
                 CancellationToken.None);
         };
 
-        var result = run().GetAwaiter().GetResult();
+        var gridRef = run().GetAwaiter().GetResult();
 
-        dotMemory.Check(memory =>
-            Assert.Equal(0, memory.GetObjects(where => where.Type.Is<DataGrid>()).ObjectsCount));
+        AssertCollected(gridRef);
 
         GC.KeepAlive(items);
-        GC.KeepAlive(result);
     }
 
     [Fact]
-    [SuppressMessage("Usage", "xUnit1031:Do not use blocking task operations in test method", Justification = "Needed for dotMemoryUnit to work")]
+    [SuppressMessage("Usage", "xUnit1031:Do not use blocking task operations in test method", Justification = "Needed for headless UI dispatch")]
     public void DataGrid_RowDetailsTemplateSwap_DoesNotLeak()
     {
-        if (!dotMemoryApi.IsEnabled)
-        {
-            return;
-        }
-
         var items = new ObservableCollection<RowItem>
         {
             new RowItem("A"),
@@ -1889,32 +1756,27 @@ public class LeakTests
                     grid.RowDetailsTemplate = templateA;
                     Dispatcher.UIThread.RunJobs();
 
+                    var gridRef = new WeakReference(grid);
+
                     window.Content = null;
                     Dispatcher.UIThread.RunJobs();
 
-                    return window;
+                    return gridRef;
                 },
                 CancellationToken.None);
         };
 
-        var result = run().GetAwaiter().GetResult();
+        var gridRef = run().GetAwaiter().GetResult();
 
-        dotMemory.Check(memory =>
-            Assert.Equal(0, memory.GetObjects(where => where.Type.Is<DataGrid>()).ObjectsCount));
+        AssertCollected(gridRef);
 
         GC.KeepAlive(items);
-        GC.KeepAlive(result);
     }
 
     [Fact]
-    [SuppressMessage("Usage", "xUnit1031:Do not use blocking task operations in test method", Justification = "Needed for dotMemoryUnit to work")]
+    [SuppressMessage("Usage", "xUnit1031:Do not use blocking task operations in test method", Justification = "Needed for headless UI dispatch")]
     public void DataGrid_DragSelectionAutoScroll_DoesNotLeak()
     {
-        if (!dotMemoryApi.IsEnabled)
-        {
-            return;
-        }
-
         var items = new ObservableCollection<RowItem>
         {
             new RowItem("A"),
@@ -1946,32 +1808,27 @@ public class LeakTests
 
                     StartDragAutoScroll(grid);
 
+                    var gridRef = new WeakReference(grid);
+
                     window.Content = null;
                     Dispatcher.UIThread.RunJobs();
 
-                    return window;
+                    return gridRef;
                 },
                 CancellationToken.None);
         };
 
-        var result = run().GetAwaiter().GetResult();
+        var gridRef = run().GetAwaiter().GetResult();
 
-        dotMemory.Check(memory =>
-            Assert.Equal(0, memory.GetObjects(where => where.Type.Is<DataGrid>()).ObjectsCount));
+        AssertCollected(gridRef);
 
         GC.KeepAlive(items);
-        GC.KeepAlive(result);
     }
 
     [Fact]
-    [SuppressMessage("Usage", "xUnit1031:Do not use blocking task operations in test method", Justification = "Needed for dotMemoryUnit to work")]
+    [SuppressMessage("Usage", "xUnit1031:Do not use blocking task operations in test method", Justification = "Needed for headless UI dispatch")]
     public void DataGrid_FillHandleAutoScroll_DoesNotLeak()
     {
-        if (!dotMemoryApi.IsEnabled)
-        {
-            return;
-        }
-
         var items = new ObservableCollection<RowItem>
         {
             new RowItem("A"),
@@ -2003,32 +1860,27 @@ public class LeakTests
 
                     StartFillAutoScroll(grid);
 
+                    var gridRef = new WeakReference(grid);
+
                     window.Content = null;
                     Dispatcher.UIThread.RunJobs();
 
-                    return window;
+                    return gridRef;
                 },
                 CancellationToken.None);
         };
 
-        var result = run().GetAwaiter().GetResult();
+        var gridRef = run().GetAwaiter().GetResult();
 
-        dotMemory.Check(memory =>
-            Assert.Equal(0, memory.GetObjects(where => where.Type.Is<DataGrid>()).ObjectsCount));
+        AssertCollected(gridRef);
 
         GC.KeepAlive(items);
-        GC.KeepAlive(result);
     }
 
     [Fact]
-    [SuppressMessage("Usage", "xUnit1031:Do not use blocking task operations in test method", Justification = "Needed for dotMemoryUnit to work")]
+    [SuppressMessage("Usage", "xUnit1031:Do not use blocking task operations in test method", Justification = "Needed for headless UI dispatch")]
     public void DataGrid_RowDragDropAutoScroll_DoesNotLeak()
     {
-        if (!dotMemoryApi.IsEnabled)
-        {
-            return;
-        }
-
         var items = new ObservableCollection<RowItem>
         {
             new RowItem("A"),
@@ -2061,32 +1913,27 @@ public class LeakTests
 
                     StartRowDragDropAutoScroll(grid);
 
+                    var gridRef = new WeakReference(grid);
+
                     window.Content = null;
                     Dispatcher.UIThread.RunJobs();
 
-                    return window;
+                    return gridRef;
                 },
                 CancellationToken.None);
         };
 
-        var result = run().GetAwaiter().GetResult();
+        var gridRef = run().GetAwaiter().GetResult();
 
-        dotMemory.Check(memory =>
-            Assert.Equal(0, memory.GetObjects(where => where.Type.Is<DataGrid>()).ObjectsCount));
+        AssertCollected(gridRef);
 
         GC.KeepAlive(items);
-        GC.KeepAlive(result);
     }
 
     [Fact]
-    [SuppressMessage("Usage", "xUnit1031:Do not use blocking task operations in test method", Justification = "Needed for dotMemoryUnit to work")]
+    [SuppressMessage("Usage", "xUnit1031:Do not use blocking task operations in test method", Justification = "Needed for headless UI dispatch")]
     public void DataGrid_HierarchicalGuardTimer_DoesNotLeak()
     {
-        if (!dotMemoryApi.IsEnabled)
-        {
-            return;
-        }
-
         var roots = new ObservableCollection<TreeItem>
         {
             new TreeItem("Root", new List<TreeItem>
@@ -2133,22 +1980,52 @@ public class LeakTests
 
                     Assert.True(grid.TryToggleHierarchicalAtSlot(0));
 
+                    var gridRef = new WeakReference(grid);
+
                     window.Content = null;
                     Dispatcher.UIThread.RunJobs();
 
-                    return window;
+                    return gridRef;
                 },
                 CancellationToken.None);
         };
 
-        var result = run().GetAwaiter().GetResult();
+        var gridRef = run().GetAwaiter().GetResult();
 
-        dotMemory.Check(memory =>
-            Assert.Equal(0, memory.GetObjects(where => where.Type.Is<DataGrid>()).ObjectsCount));
+        AssertCollected(gridRef);
 
         GC.KeepAlive(roots);
         GC.KeepAlive(model);
-        GC.KeepAlive(result);
+    }
+
+    private static void AssertCollected(params WeakReference[] references)
+    {
+        foreach (var reference in references)
+        {
+            Assert.True(reference.IsAlive);
+        }
+
+        CollectGarbage();
+
+        foreach (var reference in references)
+        {
+            Assert.False(reference.IsAlive);
+        }
+    }
+
+    private static void AssertCollected(IEnumerable<WeakReference> references)
+    {
+        var list = references.ToList();
+        AssertCollected(list.ToArray());
+    }
+
+    private static void CollectGarbage()
+    {
+        Dispatcher.UIThread.RunJobs(DispatcherPriority.Loaded);
+        GC.Collect();
+
+        Dispatcher.UIThread.RunJobs();
+        GC.Collect();
     }
 
     private static void StartDragAutoScroll(DataGrid grid)
