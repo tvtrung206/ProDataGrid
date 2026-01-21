@@ -486,7 +486,8 @@ public class LeakTests
                     {
                         AutoGenerateColumns = false,
                         ItemsSource = items,
-                        Columns = columns
+                        Columns = columns,
+                        SummaryRecalculationDelayMs = 0
                     };
 
                     var window = new Window
@@ -1602,11 +1603,13 @@ public class LeakTests
                     grid.GroupSummaryPosition = DataGridGroupSummaryPosition.Both;
                     grid.ShowTotalSummary = true;
                     grid.ShowGroupSummary = true;
+                    grid.RecalculateSummaries();
                     Dispatcher.UIThread.RunJobs();
                     Assert.NotNull(grid.TotalSummaryRow);
 
                     grid.ShowGroupSummary = false;
                     grid.ShowTotalSummary = false;
+                    grid.RecalculateSummaries();
                     Dispatcher.UIThread.RunJobs();
 
                     var gridRef = new WeakReference(grid);
