@@ -211,10 +211,10 @@ public class LeakTests
 
         run().GetAwaiter().GetResult();
 
-        AssertCollected(gridRefs);
+        AssertCollected(gridRefs.ToArray());
         if (viewRefs.Count > 0)
         {
-            AssertCollected(viewRefs);
+            AssertCollected(viewRefs.ToArray());
         }
         GC.KeepAlive(items);
     }
@@ -325,7 +325,7 @@ public class LeakTests
 
         run().GetAwaiter().GetResult();
 
-        AssertCollected(gridRefs);
+        AssertCollected(gridRefs.ToArray());
     }
 
     [Fact]
@@ -2011,12 +2011,6 @@ public class LeakTests
         {
             Assert.False(reference.IsAlive);
         }
-    }
-
-    private static void AssertCollected(IEnumerable<WeakReference> references)
-    {
-        var list = references.ToList();
-        AssertCollected(list.ToArray());
     }
 
     private static void CollectGarbage()
