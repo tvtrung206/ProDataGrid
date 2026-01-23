@@ -74,6 +74,7 @@ internal
                 if (_cellsPresenter != null)
                 {
                     _cellsPresenter.OwningGrid = value;
+                    _cellsPresenter.OwnerRow = value == null ? null : this;
                 }
             }
         }
