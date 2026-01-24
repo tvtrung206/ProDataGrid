@@ -2094,14 +2094,20 @@ internal
 
                 if (_fastPathOptions != null)
                 {
-                    _fastPathOptions.PropertyChanged -= FastPathOptions_PropertyChanged;
+                    WeakEventHandlerManager.Unsubscribe<PropertyChangedEventArgs, DataGrid>(
+                        _fastPathOptions,
+                        nameof(INotifyPropertyChanged.PropertyChanged),
+                        FastPathOptions_PropertyChanged);
                 }
 
                 _fastPathOptions = value;
 
                 if (_fastPathOptions != null)
                 {
-                    _fastPathOptions.PropertyChanged += FastPathOptions_PropertyChanged;
+                    WeakEventHandlerManager.Subscribe<DataGridFastPathOptions, PropertyChangedEventArgs, DataGrid>(
+                        _fastPathOptions,
+                        nameof(INotifyPropertyChanged.PropertyChanged),
+                        FastPathOptions_PropertyChanged);
                 }
 
                 RefreshFastPathAdapters();
@@ -2545,11 +2551,46 @@ internal
             {
                 _selectionModelAdapter = CreateSelectionModelAdapter(_selectionModel);
                 _selectionModelAdapter.Model.SingleSelect = SelectionMode == DataGridSelectionMode.Single;
-                _selectionModelAdapter.Model.SelectionChanged += SelectionModel_SelectionChanged;
-                _selectionModelAdapter.Model.LostSelection += SelectionModel_LostSelection;
-                _selectionModelAdapter.Model.IndexesChanged += SelectionModel_IndexesChanged;
-                _selectionModelAdapter.Model.PropertyChanged += SelectionModel_PropertyChanged;
-                _selectionModelAdapter.Model.SourceReset += SelectionModel_SourceReset;
+                WeakEventHandlerManager.Unsubscribe<SelectionModelSelectionChangedEventArgs, DataGrid>(
+                    _selectionModelAdapter.Model,
+                    nameof(ISelectionModel.SelectionChanged),
+                    SelectionModel_SelectionChanged);
+                WeakEventHandlerManager.Subscribe<ISelectionModel, SelectionModelSelectionChangedEventArgs, DataGrid>(
+                    _selectionModelAdapter.Model,
+                    nameof(ISelectionModel.SelectionChanged),
+                    SelectionModel_SelectionChanged);
+                WeakEventHandlerManager.Unsubscribe<EventArgs, DataGrid>(
+                    _selectionModelAdapter.Model,
+                    nameof(ISelectionModel.LostSelection),
+                    SelectionModel_LostSelection);
+                WeakEventHandlerManager.Subscribe<ISelectionModel, EventArgs, DataGrid>(
+                    _selectionModelAdapter.Model,
+                    nameof(ISelectionModel.LostSelection),
+                    SelectionModel_LostSelection);
+                WeakEventHandlerManager.Unsubscribe<SelectionModelIndexesChangedEventArgs, DataGrid>(
+                    _selectionModelAdapter.Model,
+                    nameof(ISelectionModel.IndexesChanged),
+                    SelectionModel_IndexesChanged);
+                WeakEventHandlerManager.Subscribe<ISelectionModel, SelectionModelIndexesChangedEventArgs, DataGrid>(
+                    _selectionModelAdapter.Model,
+                    nameof(ISelectionModel.IndexesChanged),
+                    SelectionModel_IndexesChanged);
+                WeakEventHandlerManager.Unsubscribe<PropertyChangedEventArgs, DataGrid>(
+                    _selectionModelAdapter.Model,
+                    nameof(INotifyPropertyChanged.PropertyChanged),
+                    SelectionModel_PropertyChanged);
+                WeakEventHandlerManager.Subscribe<INotifyPropertyChanged, PropertyChangedEventArgs, DataGrid>(
+                    (INotifyPropertyChanged)_selectionModelAdapter.Model,
+                    nameof(INotifyPropertyChanged.PropertyChanged),
+                    SelectionModel_PropertyChanged);
+                WeakEventHandlerManager.Unsubscribe<EventArgs, DataGrid>(
+                    _selectionModelAdapter.Model,
+                    nameof(ISelectionModel.SourceReset),
+                    SelectionModel_SourceReset);
+                WeakEventHandlerManager.Subscribe<ISelectionModel, EventArgs, DataGrid>(
+                    _selectionModelAdapter.Model,
+                    nameof(ISelectionModel.SourceReset),
+                    SelectionModel_SourceReset);
 
                 UpdateSelectionModelSource();
             }
@@ -3868,16 +3909,46 @@ internal
                 var model = _selectionModelAdapter.Model;
                 model.SingleSelect = SelectionMode == DataGridSelectionMode.Single;
 
-                model.SelectionChanged -= SelectionModel_SelectionChanged;
-                model.SelectionChanged += SelectionModel_SelectionChanged;
-                model.LostSelection -= SelectionModel_LostSelection;
-                model.LostSelection += SelectionModel_LostSelection;
-                model.IndexesChanged -= SelectionModel_IndexesChanged;
-                model.IndexesChanged += SelectionModel_IndexesChanged;
-                model.PropertyChanged -= SelectionModel_PropertyChanged;
-                model.PropertyChanged += SelectionModel_PropertyChanged;
-                model.SourceReset -= SelectionModel_SourceReset;
-                model.SourceReset += SelectionModel_SourceReset;
+                WeakEventHandlerManager.Unsubscribe<SelectionModelSelectionChangedEventArgs, DataGrid>(
+                    model,
+                    nameof(ISelectionModel.SelectionChanged),
+                    SelectionModel_SelectionChanged);
+                WeakEventHandlerManager.Subscribe<ISelectionModel, SelectionModelSelectionChangedEventArgs, DataGrid>(
+                    model,
+                    nameof(ISelectionModel.SelectionChanged),
+                    SelectionModel_SelectionChanged);
+                WeakEventHandlerManager.Unsubscribe<EventArgs, DataGrid>(
+                    model,
+                    nameof(ISelectionModel.LostSelection),
+                    SelectionModel_LostSelection);
+                WeakEventHandlerManager.Subscribe<ISelectionModel, EventArgs, DataGrid>(
+                    model,
+                    nameof(ISelectionModel.LostSelection),
+                    SelectionModel_LostSelection);
+                WeakEventHandlerManager.Unsubscribe<SelectionModelIndexesChangedEventArgs, DataGrid>(
+                    model,
+                    nameof(ISelectionModel.IndexesChanged),
+                    SelectionModel_IndexesChanged);
+                WeakEventHandlerManager.Subscribe<ISelectionModel, SelectionModelIndexesChangedEventArgs, DataGrid>(
+                    model,
+                    nameof(ISelectionModel.IndexesChanged),
+                    SelectionModel_IndexesChanged);
+                WeakEventHandlerManager.Unsubscribe<PropertyChangedEventArgs, DataGrid>(
+                    model,
+                    nameof(INotifyPropertyChanged.PropertyChanged),
+                    SelectionModel_PropertyChanged);
+                WeakEventHandlerManager.Subscribe<INotifyPropertyChanged, PropertyChangedEventArgs, DataGrid>(
+                    (INotifyPropertyChanged)model,
+                    nameof(INotifyPropertyChanged.PropertyChanged),
+                    SelectionModel_PropertyChanged);
+                WeakEventHandlerManager.Unsubscribe<EventArgs, DataGrid>(
+                    model,
+                    nameof(ISelectionModel.SourceReset),
+                    SelectionModel_SourceReset);
+                WeakEventHandlerManager.Subscribe<ISelectionModel, EventArgs, DataGrid>(
+                    model,
+                    nameof(ISelectionModel.SourceReset),
+                    SelectionModel_SourceReset);
 
                 UpdateSelectionModelSource();
             }
@@ -3903,8 +3974,14 @@ internal
                 return;
             }
 
-            _sortingModel.SortingChanged -= SortingModel_SortingChanged;
-            _sortingModel.SortingChanged += SortingModel_SortingChanged;
+            WeakEventHandlerManager.Unsubscribe<SortingChangedEventArgs, DataGrid>(
+                _sortingModel,
+                nameof(ISortingModel.SortingChanged),
+                SortingModel_SortingChanged);
+            WeakEventHandlerManager.Subscribe<ISortingModel, SortingChangedEventArgs, DataGrid>(
+                _sortingModel,
+                nameof(ISortingModel.SortingChanged),
+                SortingModel_SortingChanged);
 
             if (_sortingAdapter == null)
             {
@@ -3916,7 +3993,10 @@ internal
         {
             if (_sortingModel != null)
             {
-                _sortingModel.SortingChanged -= SortingModel_SortingChanged;
+                WeakEventHandlerManager.Unsubscribe<SortingChangedEventArgs, DataGrid>(
+                    _sortingModel,
+                    nameof(ISortingModel.SortingChanged),
+                    SortingModel_SortingChanged);
             }
 
             if (_sortingAdapter != null)
@@ -3933,10 +4013,22 @@ internal
                 return;
             }
 
-            _filteringModel.FilteringChanged -= FilteringModel_FilteringChanged;
-            _filteringModel.FilteringChanged += FilteringModel_FilteringChanged;
-            _filteringModel.PropertyChanged -= FilteringModel_PropertyChanged;
-            _filteringModel.PropertyChanged += FilteringModel_PropertyChanged;
+            WeakEventHandlerManager.Unsubscribe<FilteringChangedEventArgs, DataGrid>(
+                _filteringModel,
+                nameof(IFilteringModel.FilteringChanged),
+                FilteringModel_FilteringChanged);
+            WeakEventHandlerManager.Subscribe<IFilteringModel, FilteringChangedEventArgs, DataGrid>(
+                _filteringModel,
+                nameof(IFilteringModel.FilteringChanged),
+                FilteringModel_FilteringChanged);
+            WeakEventHandlerManager.Unsubscribe<PropertyChangedEventArgs, DataGrid>(
+                _filteringModel,
+                nameof(INotifyPropertyChanged.PropertyChanged),
+                FilteringModel_PropertyChanged);
+            WeakEventHandlerManager.Subscribe<INotifyPropertyChanged, PropertyChangedEventArgs, DataGrid>(
+                (INotifyPropertyChanged)_filteringModel,
+                nameof(INotifyPropertyChanged.PropertyChanged),
+                FilteringModel_PropertyChanged);
 
             if (_filteringAdapter == null)
             {
@@ -3948,8 +4040,14 @@ internal
         {
             if (_filteringModel != null)
             {
-                _filteringModel.FilteringChanged -= FilteringModel_FilteringChanged;
-                _filteringModel.PropertyChanged -= FilteringModel_PropertyChanged;
+                WeakEventHandlerManager.Unsubscribe<FilteringChangedEventArgs, DataGrid>(
+                    _filteringModel,
+                    nameof(IFilteringModel.FilteringChanged),
+                    FilteringModel_FilteringChanged);
+                WeakEventHandlerManager.Unsubscribe<PropertyChangedEventArgs, DataGrid>(
+                    _filteringModel,
+                    nameof(INotifyPropertyChanged.PropertyChanged),
+                    FilteringModel_PropertyChanged);
             }
 
             if (_filteringAdapter != null)
@@ -3966,12 +4064,30 @@ internal
                 return;
             }
 
-            _searchModel.ResultsChanged -= SearchModel_ResultsChanged;
-            _searchModel.ResultsChanged += SearchModel_ResultsChanged;
-            _searchModel.CurrentChanged -= SearchModel_CurrentChanged;
-            _searchModel.CurrentChanged += SearchModel_CurrentChanged;
-            _searchModel.PropertyChanged -= SearchModel_PropertyChanged;
-            _searchModel.PropertyChanged += SearchModel_PropertyChanged;
+            WeakEventHandlerManager.Unsubscribe<SearchResultsChangedEventArgs, DataGrid>(
+                _searchModel,
+                nameof(ISearchModel.ResultsChanged),
+                SearchModel_ResultsChanged);
+            WeakEventHandlerManager.Subscribe<ISearchModel, SearchResultsChangedEventArgs, DataGrid>(
+                _searchModel,
+                nameof(ISearchModel.ResultsChanged),
+                SearchModel_ResultsChanged);
+            WeakEventHandlerManager.Unsubscribe<SearchCurrentChangedEventArgs, DataGrid>(
+                _searchModel,
+                nameof(ISearchModel.CurrentChanged),
+                SearchModel_CurrentChanged);
+            WeakEventHandlerManager.Subscribe<ISearchModel, SearchCurrentChangedEventArgs, DataGrid>(
+                _searchModel,
+                nameof(ISearchModel.CurrentChanged),
+                SearchModel_CurrentChanged);
+            WeakEventHandlerManager.Unsubscribe<PropertyChangedEventArgs, DataGrid>(
+                _searchModel,
+                nameof(INotifyPropertyChanged.PropertyChanged),
+                SearchModel_PropertyChanged);
+            WeakEventHandlerManager.Subscribe<INotifyPropertyChanged, PropertyChangedEventArgs, DataGrid>(
+                (INotifyPropertyChanged)_searchModel,
+                nameof(INotifyPropertyChanged.PropertyChanged),
+                SearchModel_PropertyChanged);
 
             if (_searchAdapter == null)
             {
@@ -3983,9 +4099,18 @@ internal
         {
             if (_searchModel != null)
             {
-                _searchModel.ResultsChanged -= SearchModel_ResultsChanged;
-                _searchModel.CurrentChanged -= SearchModel_CurrentChanged;
-                _searchModel.PropertyChanged -= SearchModel_PropertyChanged;
+                WeakEventHandlerManager.Unsubscribe<SearchResultsChangedEventArgs, DataGrid>(
+                    _searchModel,
+                    nameof(ISearchModel.ResultsChanged),
+                    SearchModel_ResultsChanged);
+                WeakEventHandlerManager.Unsubscribe<SearchCurrentChangedEventArgs, DataGrid>(
+                    _searchModel,
+                    nameof(ISearchModel.CurrentChanged),
+                    SearchModel_CurrentChanged);
+                WeakEventHandlerManager.Unsubscribe<PropertyChangedEventArgs, DataGrid>(
+                    _searchModel,
+                    nameof(INotifyPropertyChanged.PropertyChanged),
+                    SearchModel_PropertyChanged);
             }
 
             if (_searchAdapter != null)
@@ -4028,8 +4153,14 @@ internal
                 return;
             }
 
-            _hierarchicalModel.FlattenedChanged -= HierarchicalAdapter_FlattenedChanged;
-            _hierarchicalModel.FlattenedChanged += HierarchicalAdapter_FlattenedChanged;
+            WeakEventHandlerManager.Unsubscribe<FlattenedChangedEventArgs, DataGrid>(
+                _hierarchicalModel,
+                nameof(Avalonia.Controls.DataGridHierarchical.IHierarchicalModel.FlattenedChanged),
+                HierarchicalAdapter_FlattenedChanged);
+            WeakEventHandlerManager.Subscribe<Avalonia.Controls.DataGridHierarchical.IHierarchicalModel, FlattenedChangedEventArgs, DataGrid>(
+                _hierarchicalModel,
+                nameof(Avalonia.Controls.DataGridHierarchical.IHierarchicalModel.FlattenedChanged),
+                HierarchicalAdapter_FlattenedChanged);
 
             if (_hierarchicalAdapter == null)
             {
@@ -4051,7 +4182,10 @@ internal
 
             if (_hierarchicalModel != null)
             {
-                _hierarchicalModel.FlattenedChanged -= HierarchicalAdapter_FlattenedChanged;
+                WeakEventHandlerManager.Unsubscribe<FlattenedChangedEventArgs, DataGrid>(
+                    _hierarchicalModel,
+                    nameof(Avalonia.Controls.DataGridHierarchical.IHierarchicalModel.FlattenedChanged),
+                    HierarchicalAdapter_FlattenedChanged);
             }
         }
 
@@ -4062,15 +4196,24 @@ internal
                 return;
             }
 
-            _fastPathOptions.PropertyChanged -= FastPathOptions_PropertyChanged;
-            _fastPathOptions.PropertyChanged += FastPathOptions_PropertyChanged;
+            WeakEventHandlerManager.Unsubscribe<PropertyChangedEventArgs, DataGrid>(
+                _fastPathOptions,
+                nameof(INotifyPropertyChanged.PropertyChanged),
+                FastPathOptions_PropertyChanged);
+            WeakEventHandlerManager.Subscribe<DataGridFastPathOptions, PropertyChangedEventArgs, DataGrid>(
+                _fastPathOptions,
+                nameof(INotifyPropertyChanged.PropertyChanged),
+                FastPathOptions_PropertyChanged);
         }
 
         private void DetachFastPathOptionsHandlers()
         {
             if (_fastPathOptions != null)
             {
-                _fastPathOptions.PropertyChanged -= FastPathOptions_PropertyChanged;
+                WeakEventHandlerManager.Unsubscribe<PropertyChangedEventArgs, DataGrid>(
+                    _fastPathOptions,
+                    nameof(INotifyPropertyChanged.PropertyChanged),
+                    FastPathOptions_PropertyChanged);
             }
         }
 
@@ -4392,14 +4535,20 @@ internal
 
             if (oldModel != null)
             {
-                oldModel.SortingChanged -= SortingModel_SortingChanged;
+                WeakEventHandlerManager.Unsubscribe<SortingChangedEventArgs, DataGrid>(
+                    oldModel,
+                    nameof(ISortingModel.SortingChanged),
+                    SortingModel_SortingChanged);
             }
 
             _sortingModel = newModel;
             _sortingModel.MultiSort = multiSort;
             _sortingModel.CycleMode = cycleMode;
             _sortingModel.OwnsViewSorts = ownsViewSorts;
-            _sortingModel.SortingChanged += SortingModel_SortingChanged;
+            WeakEventHandlerManager.Subscribe<ISortingModel, SortingChangedEventArgs, DataGrid>(
+                _sortingModel,
+                nameof(ISortingModel.SortingChanged),
+                SortingModel_SortingChanged);
 
             _sortingAdapter = CreateSortingAdapter(_sortingModel);
 
@@ -4431,14 +4580,26 @@ internal
 
             if (oldModel != null)
             {
-                oldModel.FilteringChanged -= FilteringModel_FilteringChanged;
-                oldModel.PropertyChanged -= FilteringModel_PropertyChanged;
+                WeakEventHandlerManager.Unsubscribe<FilteringChangedEventArgs, DataGrid>(
+                    oldModel,
+                    nameof(IFilteringModel.FilteringChanged),
+                    FilteringModel_FilteringChanged);
+                WeakEventHandlerManager.Unsubscribe<PropertyChangedEventArgs, DataGrid>(
+                    oldModel,
+                    nameof(INotifyPropertyChanged.PropertyChanged),
+                    FilteringModel_PropertyChanged);
             }
 
             _filteringModel = newModel;
             _filteringModel.OwnsViewFilter = ownsView;
-            _filteringModel.FilteringChanged += FilteringModel_FilteringChanged;
-            _filteringModel.PropertyChanged += FilteringModel_PropertyChanged;
+            WeakEventHandlerManager.Subscribe<IFilteringModel, FilteringChangedEventArgs, DataGrid>(
+                _filteringModel,
+                nameof(IFilteringModel.FilteringChanged),
+                FilteringModel_FilteringChanged);
+            WeakEventHandlerManager.Subscribe<INotifyPropertyChanged, PropertyChangedEventArgs, DataGrid>(
+                (INotifyPropertyChanged)_filteringModel,
+                nameof(INotifyPropertyChanged.PropertyChanged),
+                FilteringModel_PropertyChanged);
 
             _filteringAdapter = CreateFilteringAdapter(_filteringModel);
 
@@ -4470,9 +4631,18 @@ internal
 
             if (oldModel != null)
             {
-                oldModel.ResultsChanged -= SearchModel_ResultsChanged;
-                oldModel.CurrentChanged -= SearchModel_CurrentChanged;
-                oldModel.PropertyChanged -= SearchModel_PropertyChanged;
+                WeakEventHandlerManager.Unsubscribe<SearchResultsChangedEventArgs, DataGrid>(
+                    oldModel,
+                    nameof(ISearchModel.ResultsChanged),
+                    SearchModel_ResultsChanged);
+                WeakEventHandlerManager.Unsubscribe<SearchCurrentChangedEventArgs, DataGrid>(
+                    oldModel,
+                    nameof(ISearchModel.CurrentChanged),
+                    SearchModel_CurrentChanged);
+                WeakEventHandlerManager.Unsubscribe<PropertyChangedEventArgs, DataGrid>(
+                    oldModel,
+                    nameof(INotifyPropertyChanged.PropertyChanged),
+                    SearchModel_PropertyChanged);
             }
 
             _searchModel = newModel;
@@ -4481,9 +4651,18 @@ internal
             _searchModel.UpdateSelectionOnNavigate = updateSelection;
             _searchModel.WrapNavigation = wrapNavigation;
 
-            _searchModel.ResultsChanged += SearchModel_ResultsChanged;
-            _searchModel.CurrentChanged += SearchModel_CurrentChanged;
-            _searchModel.PropertyChanged += SearchModel_PropertyChanged;
+            WeakEventHandlerManager.Subscribe<ISearchModel, SearchResultsChangedEventArgs, DataGrid>(
+                _searchModel,
+                nameof(ISearchModel.ResultsChanged),
+                SearchModel_ResultsChanged);
+            WeakEventHandlerManager.Subscribe<ISearchModel, SearchCurrentChangedEventArgs, DataGrid>(
+                _searchModel,
+                nameof(ISearchModel.CurrentChanged),
+                SearchModel_CurrentChanged);
+            WeakEventHandlerManager.Subscribe<INotifyPropertyChanged, PropertyChangedEventArgs, DataGrid>(
+                (INotifyPropertyChanged)_searchModel,
+                nameof(INotifyPropertyChanged.PropertyChanged),
+                SearchModel_PropertyChanged);
 
             _searchAdapter = CreateSearchAdapter(_searchModel);
 
@@ -4617,14 +4796,20 @@ internal
 
             if (_hierarchicalModel != null)
             {
-                _hierarchicalModel.FlattenedChanged -= HierarchicalAdapter_FlattenedChanged;
+                WeakEventHandlerManager.Unsubscribe<FlattenedChangedEventArgs, DataGrid>(
+                    _hierarchicalModel,
+                    nameof(Avalonia.Controls.DataGridHierarchical.IHierarchicalModel.FlattenedChanged),
+                    HierarchicalAdapter_FlattenedChanged);
             }
 
             _hierarchicalModel = newModel;
 
             if (_hierarchicalModel != null)
             {
-                _hierarchicalModel.FlattenedChanged += HierarchicalAdapter_FlattenedChanged;
+                WeakEventHandlerManager.Subscribe<Avalonia.Controls.DataGridHierarchical.IHierarchicalModel, FlattenedChangedEventArgs, DataGrid>(
+                    _hierarchicalModel,
+                    nameof(Avalonia.Controls.DataGridHierarchical.IHierarchicalModel.FlattenedChanged),
+                    HierarchicalAdapter_FlattenedChanged);
                 _hierarchicalAdapter = CreateHierarchicalAdapter(_hierarchicalModel);
             }
 
@@ -4957,11 +5142,26 @@ internal
                 {
                     UpdateSelectionSnapshot();
                 }
-                model.SelectionChanged -= SelectionModel_SelectionChanged;
-                model.LostSelection -= SelectionModel_LostSelection;
-                model.IndexesChanged -= SelectionModel_IndexesChanged;
-                model.PropertyChanged -= SelectionModel_PropertyChanged;
-                model.SourceReset -= SelectionModel_SourceReset;
+                WeakEventHandlerManager.Unsubscribe<SelectionModelSelectionChangedEventArgs, DataGrid>(
+                    model,
+                    nameof(ISelectionModel.SelectionChanged),
+                    SelectionModel_SelectionChanged);
+                WeakEventHandlerManager.Unsubscribe<EventArgs, DataGrid>(
+                    model,
+                    nameof(ISelectionModel.LostSelection),
+                    SelectionModel_LostSelection);
+                WeakEventHandlerManager.Unsubscribe<SelectionModelIndexesChangedEventArgs, DataGrid>(
+                    model,
+                    nameof(ISelectionModel.IndexesChanged),
+                    SelectionModel_IndexesChanged);
+                WeakEventHandlerManager.Unsubscribe<PropertyChangedEventArgs, DataGrid>(
+                    model,
+                    nameof(INotifyPropertyChanged.PropertyChanged),
+                    SelectionModel_PropertyChanged);
+                WeakEventHandlerManager.Unsubscribe<EventArgs, DataGrid>(
+                    model,
+                    nameof(ISelectionModel.SourceReset),
+                    SelectionModel_SourceReset);
                 _selectionModelAdapter.Dispose();
                 _selectionModelAdapter = null;
                 model.Source = null;
