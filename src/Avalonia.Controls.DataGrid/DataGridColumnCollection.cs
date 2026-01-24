@@ -604,6 +604,7 @@ namespace Avalonia.Controls
                 }
 
                 DataGridColumn dataGridColumn = ItemsInternal[columnIndexWithFiller];
+                var headerCell = dataGridColumn.HasHeaderCell ? dataGridColumn.HeaderCell : null;
                 DataGridCellCoordinates newCurrentCellCoordinates = _owningGrid.OnRemovingColumn(dataGridColumn);
                 ItemsInternal.RemoveAt(columnIndexWithFiller);
                 if (dataGridColumn.IsVisible)
@@ -611,8 +612,8 @@ namespace Avalonia.Controls
                     VisibleEdgedColumnsWidth -= dataGridColumn.ActualWidth;
                 }
                 // continue with the base remove
-                _owningGrid.OnRemovedColumn_PreNotification(dataGridColumn);
                 dataGridColumn.OwningGrid = null;
+                _owningGrid.OnRemovedColumn_PreNotification(dataGridColumn, headerCell);
                 _owningGrid.OnColumnCollectionChanged_PreNotification(false /*columnsGrew*/);
                 if (!isSpacer)
                 {

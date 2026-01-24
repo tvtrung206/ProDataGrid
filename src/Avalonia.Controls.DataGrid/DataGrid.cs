@@ -5712,6 +5712,22 @@ internal
             }
         }
 
+        private void RemoveDisplayedColumnHeader(DataGridColumn dataGridColumn, DataGridColumnHeader header)
+        {
+            if (_columnHeadersPresenter == null)
+            {
+                return;
+            }
+
+            if (header != null)
+            {
+                _columnHeadersPresenter.Children.Remove(header);
+                return;
+            }
+
+            RemoveDisplayedColumnHeader(dataGridColumn);
+        }
+
         private void RemoveDisplayedColumnHeaders()
         {
             if (_columnHeadersPresenter != null)

@@ -693,7 +693,7 @@ internal
             }
         }
 
-        internal void OnRemovedColumn_PreNotification(DataGridColumn removedColumn)
+        internal void OnRemovedColumn_PreNotification(DataGridColumn removedColumn, DataGridColumnHeader removedHeader)
         {
             Debug.Assert(removedColumn.Index >= 0);
             Debug.Assert(removedColumn.OwningGrid == null || ReferenceEquals(removedColumn.OwningGrid, this));
@@ -733,7 +733,7 @@ internal
             _totalSummaryRow?.OnColumnRemoved(removedColumn);
             OnGroupSummaryColumnRemoved(removedColumn);
 
-            RemoveDisplayedColumnHeader(removedColumn);
+            RemoveDisplayedColumnHeader(removedColumn, removedHeader);
         }
 
         internal DataGridCellCoordinates OnRemovingColumn(DataGridColumn dataGridColumn)
