@@ -12,13 +12,15 @@ internal static class LeakTestSession
 
     internal static void RunInSession(Type appType, Action action)
     {
-        using var session = HeadlessUnitTestSession.StartNew(appType);
+        HeadlessUnitTestSession? session = null;
         try
         {
+            session = HeadlessUnitTestSession.StartNew(appType);
             session.Dispatch(action, CancellationToken.None).GetAwaiter().GetResult();
         }
         finally
         {
+            session?.Dispose();
             LeakTestHelpers.ResetHeadlessCompositor();
             LeakTestHelpers.ResetLoadedQueueForUnitTests();
             LeakTestHelpers.StopDispatcherTimers();
@@ -30,13 +32,15 @@ internal static class LeakTestSession
 
     internal static T RunInSession<T>(Type appType, Func<T> action)
     {
-        using var session = HeadlessUnitTestSession.StartNew(appType);
+        HeadlessUnitTestSession? session = null;
         try
         {
+            session = HeadlessUnitTestSession.StartNew(appType);
             return session.Dispatch(action, CancellationToken.None).GetAwaiter().GetResult();
         }
         finally
         {
+            session?.Dispose();
             LeakTestHelpers.ResetHeadlessCompositor();
             LeakTestHelpers.ResetLoadedQueueForUnitTests();
             LeakTestHelpers.StopDispatcherTimers();
@@ -48,13 +52,15 @@ internal static class LeakTestSession
 
     internal static async Task RunInSessionAsync(Type appType, Func<Task> action)
     {
-        using var session = HeadlessUnitTestSession.StartNew(appType);
+        HeadlessUnitTestSession? session = null;
         try
         {
+            session = HeadlessUnitTestSession.StartNew(appType);
             await session.Dispatch(action, CancellationToken.None);
         }
         finally
         {
+            session?.Dispose();
             LeakTestHelpers.ResetHeadlessCompositor();
             LeakTestHelpers.ResetLoadedQueueForUnitTests();
             LeakTestHelpers.StopDispatcherTimers();
@@ -66,13 +72,15 @@ internal static class LeakTestSession
 
     internal static async Task<T> RunInSessionAsync<T>(Type appType, Func<Task<T>> action)
     {
-        using var session = HeadlessUnitTestSession.StartNew(appType);
+        HeadlessUnitTestSession? session = null;
         try
         {
+            session = HeadlessUnitTestSession.StartNew(appType);
             return await session.Dispatch(action, CancellationToken.None);
         }
         finally
         {
+            session?.Dispose();
             LeakTestHelpers.ResetHeadlessCompositor();
             LeakTestHelpers.ResetLoadedQueueForUnitTests();
             LeakTestHelpers.StopDispatcherTimers();
