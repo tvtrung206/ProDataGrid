@@ -25,4 +25,8 @@ public enum DevToolsViewKind
     /// Resources diagnostic view
     /// </summary>
     Resources = 4,
+    /// <summary>
+    /// Assets diagnostic view
+    /// </summary>
+    Assets = 5,
 }

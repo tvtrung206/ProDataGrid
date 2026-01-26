@@ -20,6 +20,7 @@ namespace Avalonia.Diagnostics.ViewModels
         private readonly TreePageViewModel _visualTree;
         private readonly TreePageViewModel _combinedTree;
         private readonly ResourcesPageViewModel _resources;
+        private readonly AssetsPageViewModel _assets;
         private readonly EventsPageViewModel _events;
         private readonly HotKeyPageViewModel _hotKeys;
         private readonly IDisposable _pointerOverSubscription;
@@ -54,6 +55,7 @@ namespace Avalonia.Diagnostics.ViewModels
             _visualTree = new TreePageViewModel(this, visualProvider.Create(root), treeModelFactory, _pinnedProperties);
             _combinedTree = new TreePageViewModel(this, combinedProvider.Create(root), treeModelFactory, _pinnedProperties);
             _resources = new ResourcesPageViewModel(this, resourceProvider.Create(root), resourceModelFactory, resourceFormatter);
+            _assets = new AssetsPageViewModel(this);
             _events = new EventsPageViewModel(this);
             _hotKeys = new HotKeyPageViewModel();
 
@@ -214,9 +216,12 @@ namespace Avalonia.Diagnostics.ViewModels
                         Content = _resources;
                         break;
                     case 4:
-                        Content = _events;
+                        Content = _assets;
                         break;
                     case 5:
+                        Content = _events;
+                        break;
+                    case 6:
                         Content = _hotKeys;
                         break;
                     default:
@@ -258,7 +263,7 @@ namespace Avalonia.Diagnostics.ViewModels
 
         public void ShowHotKeys()
         {
-            SelectedTab = 5;
+            SelectedTab = 6;
         }
 
         public void SelectControl(Control control)
@@ -425,7 +430,8 @@ namespace Avalonia.Diagnostics.ViewModels
                 DevToolsViewKind.LogicalTree => 1,
                 DevToolsViewKind.VisualTree => 2,
                 DevToolsViewKind.Resources => 3,
-                DevToolsViewKind.Events => 4,
+                DevToolsViewKind.Assets => 4,
+                DevToolsViewKind.Events => 5,
                 _ => 0
             };
         }
