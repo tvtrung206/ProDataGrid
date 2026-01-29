@@ -1084,6 +1084,17 @@ internal
                 defaultBindingMode: BindingMode.TwoWay);
 
         /// <summary>
+        /// Gets or sets the formula model that provides calculated column values. If not provided, a default
+        /// model is created.
+        /// </summary>
+        public static readonly DirectProperty<DataGrid, Avalonia.Controls.DataGridFormulas.IDataGridFormulaModel> FormulaModelProperty =
+            AvaloniaProperty.RegisterDirect<DataGrid, Avalonia.Controls.DataGridFormulas.IDataGridFormulaModel>(
+                nameof(FormulaModel),
+                o => o.FormulaModel,
+                (o, v) => o.FormulaModel = v,
+                defaultBindingMode: BindingMode.TwoWay);
+
+        /// <summary>
         /// Gets or sets the fill model that drives the fill handle behavior. If not provided, a default
         /// fill model is created.
         /// </summary>

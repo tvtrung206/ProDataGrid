@@ -1,0 +1,295 @@
+{
+  "cases": [
+    {
+      "formula": "MEDIAN(1,2,3,4)",
+      "result": { "kind": "Number", "value": 2.5 }
+    },
+    {
+      "formula": "MODE.SNGL(1,2,2,3)",
+      "result": { "kind": "Number", "value": 2 }
+    },
+    {
+      "formula": "MODE.SNGL(1,2,3)",
+      "result": { "kind": "Error", "value": "#N/A" }
+    },
+    {
+      "formula": "STDEV.S(1,2,3)",
+      "result": { "kind": "Number", "value": 1 }
+    },
+    {
+      "formula": "STDEV.P(1,2,3)",
+      "result": { "kind": "Number", "value": 0.816496580927726, "tolerance": 1e-9 }
+    },
+    {
+      "formula": "VAR.S(1,2,3)",
+      "result": { "kind": "Number", "value": 1 }
+    },
+    {
+      "formula": "VAR.P(1,2,3)",
+      "result": { "kind": "Number", "value": 0.6666666666666666, "tolerance": 1e-9 }
+    },
+    {
+      "formula": "LARGE({1,2,3,4,5},2)",
+      "result": { "kind": "Number", "value": 4 }
+    },
+    {
+      "formula": "SMALL({1,2,3,4,5},2)",
+      "result": { "kind": "Number", "value": 2 }
+    },
+    {
+      "formula": "PERCENTILE.INC({1,2,3,4},0.25)",
+      "result": { "kind": "Number", "value": 1.75 }
+    },
+    {
+      "formula": "QUARTILE.INC({1,2,3,4},1)",
+      "result": { "kind": "Number", "value": 1.75 }
+    },
+    {
+      "formula": "RANK.EQ(3,{1,2,3,4,5})",
+      "result": { "kind": "Number", "value": 3 }
+    },
+    {
+      "formula": "RANK.EQ(3,{1,2,3,4,5},1)",
+      "result": { "kind": "Number", "value": 3 }
+    },
+    {
+      "formula": "RANK.AVG(3,{1,2,3,3,4})",
+      "result": { "kind": "Number", "value": 2.5 }
+    },
+    {
+      "formula": "COUNTBLANK({1,\"\";\"a\",\"\"})",
+      "result": { "kind": "Number", "value": 2 }
+    },
+    {
+      "formula": "AVERAGEIF({1,2,3,4},\">2\")",
+      "result": { "kind": "Number", "value": 3.5 }
+    },
+    {
+      "formula": "AVERAGEIF({1,2,3,4},\">2\",{10,20,30,40})",
+      "result": { "kind": "Number", "value": 35 }
+    },
+    {
+      "formula": "AVERAGEIFS({10,20,30,40},{1,2,3,4},\">=2\",{1,2,3,4},\"<=3\")",
+      "result": { "kind": "Number", "value": 25 }
+    },
+    {
+      "formula": "PV(0,10,-100)",
+      "result": { "kind": "Number", "value": 1000 }
+    },
+    {
+      "formula": "FV(0,10,-100)",
+      "result": { "kind": "Number", "value": 1000 }
+    },
+    {
+      "formula": "PMT(0,10,1000)",
+      "result": { "kind": "Number", "value": -100 }
+    },
+    {
+      "formula": "NPER(0,-100,1000)",
+      "result": { "kind": "Number", "value": 10 }
+    },
+    {
+      "formula": "PMT(0.1,2,1000)",
+      "result": { "kind": "Number", "value": -576.1904761904761, "tolerance": 1e-6 }
+    },
+    {
+      "formula": "NPV(0.1,{100,100})",
+      "result": { "kind": "Number", "value": 173.55371900826447, "tolerance": 1e-9 }
+    },
+    {
+      "formula": "IRR({-100,60,60})",
+      "result": { "kind": "Number", "value": 0.1306623862918075, "tolerance": 1e-6 }
+    },
+    {
+      "formula": "RATE(10,-100,1000)",
+      "result": { "kind": "Number", "value": 0, "tolerance": 1e-6 }
+    },
+    {
+      "formula": "ISERR(#DIV/0!)",
+      "result": { "kind": "Boolean", "value": true }
+    },
+    {
+      "formula": "ISERR(#N/A)",
+      "result": { "kind": "Boolean", "value": false }
+    },
+    {
+      "formula": "ISNONTEXT(\"hello\")",
+      "result": { "kind": "Boolean", "value": false }
+    },
+    {
+      "formula": "ISNONTEXT(1)",
+      "result": { "kind": "Boolean", "value": true }
+    },
+    {
+      "formula": "ISEVEN(4)",
+      "result": { "kind": "Boolean", "value": true }
+    },
+    {
+      "formula": "ISODD(4)",
+      "result": { "kind": "Boolean", "value": false }
+    },
+    {
+      "formula": "TYPE(1)",
+      "result": { "kind": "Number", "value": 1 }
+    },
+    {
+      "formula": "TYPE(TRUE)",
+      "result": { "kind": "Number", "value": 4 }
+    },
+    {
+      "formula": "TYPE(\"x\")",
+      "result": { "kind": "Number", "value": 2 }
+    },
+    {
+      "formula": "TYPE(#DIV/0!)",
+      "result": { "kind": "Number", "value": 16 }
+    },
+    {
+      "formula": "ERROR.TYPE(#DIV/0!)",
+      "result": { "kind": "Number", "value": 2 }
+    },
+    {
+      "formula": "NA()",
+      "result": { "kind": "Error", "value": "#N/A" }
+    },
+    {
+      "formula": "STDEV.S(1)",
+      "result": { "kind": "Error", "value": "#DIV/0!" }
+    },
+    {
+      "formula": "VAR.S(1)",
+      "result": { "kind": "Error", "value": "#DIV/0!" }
+    },
+    {
+      "formula": "VAR.P({1})",
+      "result": { "kind": "Number", "value": 0 }
+    },
+    {
+      "formula": "LARGE({1,2,3},4)",
+      "result": { "kind": "Error", "value": "#NUM!" }
+    },
+    {
+      "formula": "SMALL({1,2,3},0)",
+      "result": { "kind": "Error", "value": "#NUM!" }
+    },
+    {
+      "formula": "PERCENTILE.INC({1,2,3},-0.1)",
+      "result": { "kind": "Error", "value": "#NUM!" }
+    },
+    {
+      "formula": "QUARTILE.INC({1,2,3,4},5)",
+      "result": { "kind": "Error", "value": "#NUM!" }
+    },
+    {
+      "formula": "RANK.EQ(2,{1,2,2,3},0)",
+      "result": { "kind": "Number", "value": 2 }
+    },
+    {
+      "formula": "RANK.AVG(2,{1,2,2,3},0)",
+      "result": { "kind": "Number", "value": 2.5 }
+    },
+    {
+      "formula": "PMT(0,0,100)",
+      "result": { "kind": "Error", "value": "#DIV/0!" }
+    },
+    {
+      "formula": "NPER(0,0,100)",
+      "result": { "kind": "Error", "value": "#DIV/0!" }
+    },
+    {
+      "formula": "NPER(0.1,0,100)",
+      "result": { "kind": "Error", "value": "#NUM!" }
+    },
+    {
+      "formula": "RATE(0,-100,1000)",
+      "result": { "kind": "Error", "value": "#NUM!" }
+    },
+    {
+      "formula": "IRR({100,120})",
+      "result": { "kind": "Error", "value": "#NUM!" }
+    },
+    {
+      "formula": "IRR({-100,-20})",
+      "result": { "kind": "Error", "value": "#NUM!" }
+    },
+    {
+      "formula": "DATEVALUE(\"01/31/2024\")",
+      "culture": "en-US",
+      "result": { "kind": "Number", "value": 45322 }
+    },
+    {
+      "formula": "DATEVALUE(\"31/01/2024\")",
+      "culture": "en-GB",
+      "result": { "kind": "Number", "value": 45322 }
+    },
+    {
+      "formula": "DATEVALUE(\"31.01.2024\")",
+      "culture": "de-DE",
+      "result": { "kind": "Number", "value": 45322 }
+    },
+    {
+      "formula": "DATEVALUE(\"13/31/2024\")",
+      "culture": "en-US",
+      "result": { "kind": "Error", "value": "#VALUE!" }
+    },
+    {
+      "formula": "TIMEVALUE(\"18:30\")",
+      "culture": "en-US",
+      "result": { "kind": "Number", "value": 0.7708333333333334, "tolerance": 1e-9 }
+    },
+    {
+      "formula": "SUM(SEQUENCE(3))",
+      "result": { "kind": "Number", "value": 6 }
+    },
+    {
+      "formula": "INDEX(SEQUENCE(3,2,1,2),3,2)",
+      "result": { "kind": "Number", "value": 11 }
+    },
+    {
+      "formula": "SUM(FILTER({1,2,3},{1,0,1}))",
+      "result": { "kind": "Number", "value": 4 }
+    },
+    {
+      "formula": "INDEX(SORT({3,1,2}),1)",
+      "result": { "kind": "Number", "value": 1 }
+    },
+    {
+      "formula": "INDEX(UNIQUE({1,2,2,3}),2)",
+      "result": { "kind": "Number", "value": 2 }
+    },
+    {
+      "formula": "TEXTJOIN(\"-\",TRUE,{\"a\",\"\",\"b\"})",
+      "result": { "kind": "Text", "value": "a-b" }
+    },
+    {
+      "formula": "INDEX(TEXTSPLIT(\"a,b,c\",\",\"),2)",
+      "result": { "kind": "Text", "value": "b" }
+    },
+    {
+      "formula": "XLOOKUP(2,{1,2,3},{\"a\",\"b\",\"c\"})",
+      "result": { "kind": "Text", "value": "b" }
+    },
+    {
+      "formula": "XMATCH(3,{1,2,3},0)",
+      "result": { "kind": "Number", "value": 3 }
+    },
+    {
+      "formula": "COUNTIF({\"a\",\"b\",\"aa\"},\"a*\")",
+      "result": { "kind": "Number", "value": 2 }
+    },
+    {
+      "formula": "COUNTIFS({1,2,3,4},{\">=2\"},{1,0,1,0},{\">0\"})",
+      "result": { "kind": "Number", "value": 1 }
+    },
+    {
+      "formula": "INDIRECT(\"B2\")",
+      "cells": { "B2": 99 },
+      "result": { "kind": "Number", "value": 99 }
+    },
+    {
+      "formula": "OFFSET(A1,1,1)",
+      "cells": { "A1": 10, "B2": 42 },
+      "result": { "kind": "Number", "value": 42 }
+    }
+  ]
+}
