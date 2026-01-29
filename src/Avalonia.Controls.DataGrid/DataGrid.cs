@@ -2677,6 +2677,8 @@ internal
                         RefreshSelectionFromModel();
                     }
                 }, DispatcherPriority.Background);
+
+                TryRestorePendingScrollStateAfterViewRefresh();
             }
         }
 
@@ -2695,6 +2697,7 @@ internal
                 RefreshColumnSortStates();
                 RefreshColumnFilterStates();
                 OnFilterChangedForSummaries();
+                TryRestorePendingScrollStateAfterViewRefresh();
             }
         }
 
@@ -2863,6 +2866,17 @@ internal
                 }
 
                 if (change.OldCount > count - change.Index)
+                {
+                    return false;
+                }
+
+                var slot = SlotFromRowIndex(change.Index);
+                if (slot < 0 || slot > SlotCount)
+                {
+                    return false;
+                }
+
+                if (change.OldCount > 0 && slot >= SlotCount)
                 {
                     return false;
                 }
@@ -4347,7 +4361,10 @@ internal
                 var slot = SlotFromRowIndex(result.RowIndex);
                 if (slot >= 0 && !IsSlotOutOfBounds(slot))
                 {
-                    ScrollIntoView(result.Item, column);
+                    if (!_suppressSearchScroll)
+                    {
+                        ScrollIntoView(result.Item, column);
+                    }
 
                     if (_searchModel?.UpdateSelectionOnNavigate == true)
                     {

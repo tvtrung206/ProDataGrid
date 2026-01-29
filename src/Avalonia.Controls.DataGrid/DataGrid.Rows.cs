@@ -18,6 +18,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
 using Avalonia.Data;
+using Avalonia.Data.Core;
 using Avalonia.Styling;
 
 namespace Avalonia.Controls
@@ -40,16 +41,27 @@ internal
 
         private sealed class RowHeaderSnapshot
         {
-            public RowHeaderSnapshot(object value, bool hadLocalValue, object dataContext)
+            public RowHeaderSnapshot(
+                object value,
+                bool hadLocalValue,
+                bool hadBinding,
+                UntypedBindingExpressionBase bindingExpression,
+                object dataContext)
             {
                 Value = value;
                 HadLocalValue = hadLocalValue;
+                HadBinding = hadBinding;
+                BindingExpression = bindingExpression;
                 DataContext = dataContext;
             }
 
             public object Value { get; }
 
             public bool HadLocalValue { get; }
+
+            public bool HadBinding { get; }
+
+            public UntypedBindingExpressionBase BindingExpression { get; }
 
             public object DataContext { get; }
         }
@@ -106,9 +118,14 @@ internal
             var hadLocalValue = row.IsSet(DataGridRow.HeaderProperty) && !hasBinding;
             var value = hadLocalValue ? row.GetValue(DataGridRow.HeaderProperty) : null;
 
+            var bindingExpression = BindingOperations.GetBindingExpressionBase(row, DataGridRow.HeaderProperty)
+                as UntypedBindingExpressionBase;
+
             var snapshot = new RowHeaderSnapshot(
                 value,
                 hadLocalValue,
+                hasBinding,
+                bindingExpression,
                 row.DataContext);
 
             SetStoredRowHeaderSnapshot(row, snapshot);
@@ -123,12 +140,26 @@ internal
             }
             else
             {
-                var binding = BindingOperations.GetBindingExpressionBase(row, DataGridRow.HeaderProperty);
+                var binding = BindingOperations.GetBindingExpressionBase(row, DataGridRow.HeaderProperty)
+                    as UntypedBindingExpressionBase;
                 if (binding != null)
                 {
+                    if (!binding.IsRunning)
+                    {
+                        binding.Start();
+                    }
                     binding.UpdateTarget();
                 }
-                else
+                else if (snapshot?.BindingExpression != null)
+                {
+                    if (!snapshot.BindingExpression.IsRunning)
+                    {
+                        snapshot.BindingExpression.Start();
+                    }
+
+                    snapshot.BindingExpression.UpdateTarget();
+                }
+                else if (snapshot?.HadBinding != true)
                 {
                     row.ClearValue(DataGridRow.HeaderProperty);
                 }
@@ -468,15 +499,25 @@ internal
 
         internal void OnRowsMeasure()
         {
-            if (!MathUtilities.IsZero(DisplayData.PendingVerticalScrollHeight))
+            if (IsScrollStateRestoreActive)
             {
+                DisplayData.PendingVerticalScrollHeight = 0;
+            }
+            else if (!MathUtilities.IsZero(DisplayData.PendingVerticalScrollHeight))
+            {
+                _restoredScrollSlot = null;
                 ScrollSlotsByHeight(DisplayData.PendingVerticalScrollHeight);
                 DisplayData.PendingVerticalScrollHeight = 0;
             }
 
-            _scrollStateManager.TryRestore();
+            if (_scrollStateManager != null && _scrollStateManager.TryRestore())
+            {
+                MarkScrollStateRestored(null);
+            }
+            TryRestorePendingScrollStateOnMeasure();
 
             SyncLogicalScrollableOffset();
+            TickScrollRestoreGuard();
         }
 
         private void SyncLogicalScrollableOffset()
@@ -513,9 +554,10 @@ internal
                 // column position back to what it was before the refresh
                 _desiredCurrentColumnIndex = CurrentColumnIndex;
                 var preserveLogicalOffset = UseLogicalScrollable &&
-                                            _pendingHierarchicalScrollOffset.HasValue &&
                                             DisplayData.FirstScrollingSlot >= 0 &&
-                                            !clearRows;
+                                            !clearRows &&
+                                            (_pendingHierarchicalScrollOffset.HasValue ||
+                                             (_restoredScrollSlot.HasValue && _restoredScrollSlot.Value == DisplayData.FirstScrollingSlot));
                 double verticalOffset = _verticalOffset;
                 if (UseLogicalScrollable && _rowsPresenter != null)
                 {
@@ -589,9 +631,11 @@ internal
 
                 EnsureRowGroupSpacerColumn();
 
+                var suppressPendingScrollHeight = IsScrollStateRestoreActive ||
+                                                 (_restoredScrollSlot.HasValue && _restoredScrollSlot.Value == DisplayData.FirstScrollingSlot);
                 if (HasLegacyVerticalScrollBar)
                 {
-                    if (_scrollStateManager.PendingRestore)
+                    if (suppressPendingScrollHeight)
                     {
                         DisplayData.PendingVerticalScrollHeight = 0;
                     }
@@ -600,7 +644,7 @@ internal
                         DisplayData.PendingVerticalScrollHeight = Math.Min(verticalOffset, GetLegacyVerticalScrollMaximum());
                     }
                 }
-                else if (_scrollStateManager.PendingRestore)
+                else if (suppressPendingScrollHeight)
                 {
                     DisplayData.PendingVerticalScrollHeight = 0;
                 }
@@ -1432,15 +1476,10 @@ internal
         {
             if (ShowRowNumbers)
             {
-                var snapshot = GetStoredRowHeaderSnapshot(row);
                 if (!GetIsAutoGeneratedRowHeader(row))
                 {
                     StoreRowHeaderSnapshot(row);
-                }
-                else if (snapshot == null || (snapshot.HadLocalValue && !ReferenceEquals(snapshot.DataContext, row.DataContext)))
-                {
-                    row.ClearValue(StoredRowHeaderSnapshotProperty);
-                    StoreRowHeaderSnapshot(row);
+                    SetIsAutoGeneratedRowHeader(row, true);
                 }
 
                 ClearRowHeaderNumberOverride(row);
@@ -1449,15 +1488,18 @@ internal
                 {
                     SetRowHeaderNumberOverride(row, overrideHandle);
                 }
-
-                SetIsAutoGeneratedRowHeader(row, true);
+                else
+                {
+                    row.SetValue(DataGridRow.HeaderProperty, row.Index + 1);
+                }
             }
             else if (GetIsAutoGeneratedRowHeader(row))
             {
+                SetIsAutoGeneratedRowHeader(row, false);
                 ClearRowHeaderNumberOverride(row);
                 RestoreRowHeaderSnapshot(row);
-                SetIsAutoGeneratedRowHeader(row, false);
             }
+
         }
 
         internal void OnRowIndexChanged(DataGridRow row)

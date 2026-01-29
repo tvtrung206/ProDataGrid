@@ -2,12 +2,11 @@
 // Licensed under the MIT license. See LICENSE file in the project root for details.
 
 using System.Collections.ObjectModel;
-using System.Linq;
 using Avalonia.Controls;
 using Avalonia.Data;
 using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
-using Avalonia.VisualTree;
+using Avalonia.Styling;
 using Xunit;
 
 namespace Avalonia.Controls.DataGridTests;
@@ -38,6 +37,13 @@ public class DataGridRowHeaderNumberTests
             CanUserAddRows = false,
             HeadersVisibility = DataGridHeadersVisibility.All
         };
+        grid.RowTheme = new ControlTheme(typeof(DataGridRow))
+        {
+            Setters =
+            {
+                new Setter(DataGridRow.HeaderProperty, new Binding(nameof(RowItem.Name)))
+            }
+        };
 
         grid.ColumnsInternal.Add(new DataGridTextColumn
         {
@@ -51,11 +57,6 @@ public class DataGridRowHeaderNumberTests
 
         try
         {
-            foreach (var row in GetRows(grid, items))
-            {
-                row.Bind(DataGridRow.HeaderProperty, new Binding(nameof(RowItem.Name)));
-            }
-
             Dispatcher.UIThread.RunJobs();
             grid.UpdateLayout();
 
@@ -80,14 +81,9 @@ public class DataGridRowHeaderNumberTests
 
     private static DataGridRow GetRow(DataGrid grid, RowItem item)
     {
-        return grid.GetVisualDescendants()
-            .OfType<DataGridRow>()
-            .First(r => ReferenceEquals(r.DataContext, item));
-    }
-
-    private static DataGridRow[] GetRows(DataGrid grid, ObservableCollection<RowItem> items)
-    {
-        return items.Select(item => GetRow(grid, item)).ToArray();
+        var row = grid.GetRowFromItem(item);
+        Assert.NotNull(row);
+        return row;
     }
 
     private sealed class RowItem

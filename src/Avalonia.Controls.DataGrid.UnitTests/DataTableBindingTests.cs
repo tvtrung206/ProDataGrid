@@ -5,6 +5,7 @@ using System.Linq;
 using Avalonia.Controls;
 using Avalonia.Data;
 using Avalonia.Data.Core.Plugins;
+using Avalonia.Headless.XUnit;
 using Avalonia.Threading;
 using Xunit;
 
@@ -24,7 +25,7 @@ namespace Avalonia.Controls.DataGridTests
                    ?? throw new InvalidOperationException("TypeDescriptorPropertyAccessorPlugin did not return an accessor.");
         }
 
-        [Theory]
+        [AvaloniaTheory]
         [InlineData("Name")]
         public void TypeDescriptorPlugin_Reads_DataRowView(string path)
         {
@@ -44,7 +45,7 @@ namespace Avalonia.Controls.DataGridTests
             Assert.Equal("Alice", textBlock.Text);
         }
 
-        [Fact]
+        [AvaloniaFact]
         public void TypeDescriptorPlugin_Writes_DataRowView()
         {
             var table = new DataTable();
@@ -60,7 +61,7 @@ namespace Avalonia.Controls.DataGridTests
             Assert.Equal("Bob", accessor.Value);
         }
 
-        [Fact]
+        [AvaloniaFact]
         public void TypeDescriptorPlugin_Notifies_On_Change()
         {
             var table = new DataTable();

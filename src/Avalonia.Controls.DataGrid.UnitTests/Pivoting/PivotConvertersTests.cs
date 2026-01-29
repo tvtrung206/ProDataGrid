@@ -2,6 +2,7 @@ using System;
 using System.Globalization;
 using Avalonia;
 using Avalonia.Controls.DataGridPivoting;
+using Avalonia.Data;
 using Avalonia.Data.Converters;
 using Avalonia.Media;
 using Xunit;
@@ -55,12 +56,13 @@ public class PivotConvertersTests
     }
 
     [Fact]
-    public void PivotArrayIndexConverter_ConvertBack_Throws()
+    public void PivotArrayIndexConverter_ConvertBack_Noops()
     {
         var converter = new PivotArrayIndexConverter(0);
 
-        Assert.Throws<NotSupportedException>(() =>
-            converter.ConvertBack(1, typeof(object), null, CultureInfo.InvariantCulture));
+        var result = converter.ConvertBack(1, typeof(object), null, CultureInfo.InvariantCulture);
+
+        Assert.Same(BindingOperations.DoNothing, result);
     }
 
     [Fact]

@@ -11,6 +11,7 @@ using Avalonia.Controls.Shapes;
 using Avalonia.Controls.Templates;
 using Avalonia.Controls.Utils;
 using Avalonia.Data;
+using Avalonia.Data.Core;
 using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.Utilities;
@@ -244,9 +245,27 @@ internal
 
         private void OnHeaderChanged(AvaloniaPropertyChangedEventArgs e)
         {
+            UpdateHeaderContent(forceBindingUpdate: true);
+        }
+
+        private void UpdateHeaderContent(bool forceBindingUpdate)
+        {
+            var binding = BindingOperations.GetBindingExpressionBase(this, HeaderProperty) as UntypedBindingExpressionBase;
+            if (binding != null)
+            {
+                if (!binding.IsRunning)
+                {
+                    binding.Start();
+                }
+                if (forceBindingUpdate)
+                {
+                    binding.UpdateTarget();
+                }
+            }
+
             if (_headerElement != null)
             {
-                _headerElement.Content = e.NewValue;
+                _headerElement.Content = Header;
             }
         }
 
@@ -587,10 +606,7 @@ internal
             if (_headerElement != null)
             {
                 _headerElement.Owner = this;
-                if (Header != null)
-                {
-                    _headerElement.Content = Header;
-                }
+                UpdateHeaderContent(forceBindingUpdate: true);
                 EnsureHeaderStyleAndVisibility(null);
             }
 
