@@ -4,6 +4,7 @@
 using System;
 using System.Globalization;
 using Avalonia;
+using Avalonia.Data;
 using Avalonia.Data.Converters;
 using Avalonia.Media;
 
@@ -40,7 +41,7 @@ namespace Avalonia.Controls.DataGridPivoting
 
         public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
-            throw new NotSupportedException();
+            return BindingOperations.DoNothing;
         }
     }
 
