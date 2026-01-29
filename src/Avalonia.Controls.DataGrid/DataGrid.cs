@@ -311,6 +311,7 @@ internal
         private Avalonia.Controls.DataGridConditionalFormatting.DataGridConditionalFormattingAdapter _conditionalFormattingAdapter;
         private Avalonia.Controls.DataGridConditionalFormatting.IDataGridConditionalFormattingModelFactory _conditionalFormattingModelFactory;
         private Avalonia.Controls.DataGridConditionalFormatting.IDataGridConditionalFormattingAdapterFactory _conditionalFormattingAdapterFactory;
+        private Avalonia.Controls.DataGridFormulas.IDataGridFormulaModel _formulaModel;
         private Avalonia.Controls.DataGridFilling.IDataGridFillModel _fillModel;
         private Avalonia.Controls.DataGridFilling.IDataGridFillModelFactory _fillModelFactory;
         private Avalonia.Controls.DataGridInteractions.IDataGridRangeInteractionModel _rangeInteractionModel;
@@ -586,6 +587,7 @@ internal
             SetFilteringModel(CreateFilteringModel(), initializing: true);
             SetSearchModel(CreateSearchModel(), initializing: true);
             SetConditionalFormattingModel(CreateConditionalFormattingModel(), initializing: true);
+            SetFormulaModel(CreateFormulaModel(), initializing: true);
             SetFillModel(CreateFillModel());
             SetRangeInteractionModel(CreateRangeInteractionModel());
             SetClipboardImportModel(CreateClipboardImportModel());
@@ -1844,6 +1846,11 @@ internal
             return _conditionalFormattingModelFactory?.Create() ?? new Avalonia.Controls.DataGridConditionalFormatting.ConditionalFormattingModel();
         }
 
+        protected virtual Avalonia.Controls.DataGridFormulas.IDataGridFormulaModel CreateFormulaModel()
+        {
+            return new Avalonia.Controls.DataGridFormulas.DataGridFormulaModel();
+        }
+
         /// <summary>
         /// Creates the default fill model for the grid. Override or set <see cref="FillModelFactory"/>
         /// before construction completes to supply a custom implementation.
@@ -2229,6 +2236,12 @@ internal
         {
             get => _conditionalFormattingModel;
             set => SetConditionalFormattingModel(value);
+        }
+
+        public Avalonia.Controls.DataGridFormulas.IDataGridFormulaModel FormulaModel
+        {
+            get => _formulaModel;
+            set => SetFormulaModel(value);
         }
 
         /// <summary>
@@ -4735,6 +4748,62 @@ internal
 
             RefreshConditionalFormatting();
             RaisePropertyChanged(ConditionalFormattingModelProperty, oldModel, _conditionalFormattingModel);
+        }
+
+        private void SetFormulaModel(
+            Avalonia.Controls.DataGridFormulas.IDataGridFormulaModel model,
+            bool initializing = false)
+        {
+            var oldModel = _formulaModel;
+            var newModel = model ?? CreateFormulaModel();
+
+            if (ReferenceEquals(oldModel, newModel))
+            {
+                return;
+            }
+
+            if (oldModel != null)
+            {
+                WeakEventHandlerManager.Unsubscribe<Avalonia.Controls.DataGridFormulas.DataGridFormulaInvalidatedEventArgs, DataGrid>(
+                    oldModel,
+                    nameof(Avalonia.Controls.DataGridFormulas.IDataGridFormulaModel.Invalidated),
+                    FormulaModel_Invalidated);
+                oldModel.Detach();
+            }
+
+            _formulaModel = newModel;
+
+            if (_formulaModel != null)
+            {
+                _formulaModel.Attach(this);
+                WeakEventHandlerManager.Subscribe<Avalonia.Controls.DataGridFormulas.IDataGridFormulaModel, Avalonia.Controls.DataGridFormulas.DataGridFormulaInvalidatedEventArgs, DataGrid>(
+                    _formulaModel,
+                    nameof(Avalonia.Controls.DataGridFormulas.IDataGridFormulaModel.Invalidated),
+                    FormulaModel_Invalidated);
+            }
+
+            if (!initializing)
+            {
+                RefreshRowsAndColumns(clearRows: false);
+            }
+
+            RaisePropertyChanged(FormulaModelProperty, oldModel, _formulaModel);
+        }
+
+        private void FormulaModel_Invalidated(object sender, Avalonia.Controls.DataGridFormulas.DataGridFormulaInvalidatedEventArgs e)
+        {
+            if (_formulaModel is Avalonia.Controls.DataGridFormulas.DataGridFormulaModel model && !model.HasFormulas)
+            {
+                return;
+            }
+
+            if (e.RequiresRefresh)
+            {
+                RefreshRowsAndColumns(clearRows: false);
+                return;
+            }
+
+            InvalidateRowsMeasure(invalidateIndividualElements: true);
         }
 
         private void ConditionalFormattingAdapter_FormattingChanged(object sender, EventArgs e)

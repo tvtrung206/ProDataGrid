@@ -405,6 +405,23 @@ namespace Avalonia.Controls
             return definition;
         }
 
+        public DataGridFormulaColumnDefinition Formula(
+            object header,
+            string formula,
+            string formulaName = null,
+            Action<DataGridFormulaColumnDefinition> configure = null)
+        {
+            var definition = new DataGridFormulaColumnDefinition
+            {
+                Header = header,
+                Formula = formula,
+                FormulaName = formulaName
+            };
+
+            configure?.Invoke(definition);
+            return definition;
+        }
+
         private static TDefinition CreateBoundDefinition<TDefinition, TValue>(
             object header,
             CompiledBindingPath path,
