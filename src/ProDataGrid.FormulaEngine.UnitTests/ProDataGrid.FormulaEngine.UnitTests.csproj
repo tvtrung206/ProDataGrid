@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <OutputType>Library</OutputType>
+    <IsTestProject>true</IsTestProject>
+    <IsPackable>false</IsPackable>
+    <Nullable>enable</Nullable>
+    <RootNamespace>ProDataGrid.FormulaEngine.Tests</RootNamespace>
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>$(MSBuildThisFileDirectory)/../../build/avalonia.snk</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+
+  <Import Project="../../build/SharedVersion.props" />
+
+  <ItemGroup>
+    <ProjectReference Include="../ProDataGrid.FormulaEngine/ProDataGrid.FormulaEngine.csproj" />
+    <ProjectReference Include="../ProDataGrid.FormulaEngine.Excel/ProDataGrid.FormulaEngine.Excel.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="Compatibility\\ExcelCompatibilityCorpus.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

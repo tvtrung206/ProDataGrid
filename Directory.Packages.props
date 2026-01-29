@@ -8,6 +8,7 @@
   </PropertyGroup>
   <!-- Avalonia packages -->
   <ItemGroup>
+    <PackageVersion Include="BenchmarkDotNet" Version="0.13.12" />
     <PackageVersion Include="Avalonia" Version="$(AvaloniaVersion)" />
     <PackageVersion Include="Avalonia.Controls.ColorPicker" Version="$(AvaloniaVersion)" />
     <PackageVersion Include="Avalonia.Desktop" Version="$(AvaloniaVersion)" />
