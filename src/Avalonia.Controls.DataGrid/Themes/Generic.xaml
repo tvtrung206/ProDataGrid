@@ -5,7 +5,8 @@
         xmlns:filtering="clr-namespace:Avalonia.Controls.DataGridFiltering"
         xmlns:pivoting="clr-namespace:Avalonia.Controls.DataGridPivoting"
         xmlns:reporting="clr-namespace:Avalonia.Controls.DataGridReporting"
-        xmlns:banding="clr-namespace:Avalonia.Controls.DataGridBanding">
+        xmlns:banding="clr-namespace:Avalonia.Controls.DataGridBanding"
+        x:Class="Avalonia.Controls.DataGridThemes.DataGridGenericTheme">
   <Styles.Resources>
     <ResourceDictionary>
       <!-- StreamGeometry Icons -->

@@ -1,5 +1,6 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:datagridThemes="clr-namespace:Avalonia.Controls.DataGridThemes;assembly=Avalonia.Controls.DataGrid"
              x:Class="ProDiagnostics.Viewer.App"
              RequestedThemeVariant="Light">
 
@@ -35,7 +36,7 @@
 
   <Application.Styles>
     <FluentTheme />
-    <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.v2.xaml" />
+    <datagridThemes:DataGridFluentV2Theme />
 
     <Style Selector="Window">
       <Setter Property="FontFamily" Value="{StaticResource AppFont}" />
