@@ -481,7 +481,10 @@ namespace Avalonia.Controls.DataGridFormulas
 
             foreach (var item in _itemSubscriptionCounts.Keys)
             {
-                item.PropertyChanged -= Item_PropertyChanged;
+                WeakEventHandlerManager.Unsubscribe<PropertyChangedEventArgs, DataGridFormulaModel>(
+                    item,
+                    nameof(INotifyPropertyChanged.PropertyChanged),
+                    Item_PropertyChanged);
             }
 
             _itemSubscriptionCounts.Clear();
@@ -536,7 +539,10 @@ namespace Avalonia.Controls.DataGridFormulas
             }
 
             _itemSubscriptionCounts[inpc] = 1;
-            inpc.PropertyChanged += Item_PropertyChanged;
+            WeakEventHandlerManager.Subscribe<INotifyPropertyChanged, PropertyChangedEventArgs, DataGridFormulaModel>(
+                inpc,
+                nameof(INotifyPropertyChanged.PropertyChanged),
+                Item_PropertyChanged);
         }
 
         private void RemoveItemSubscription(object? item)
@@ -555,7 +561,10 @@ namespace Avalonia.Controls.DataGridFormulas
             if (count <= 0)
             {
                 _itemSubscriptionCounts.Remove(inpc);
-                inpc.PropertyChanged -= Item_PropertyChanged;
+                WeakEventHandlerManager.Unsubscribe<PropertyChangedEventArgs, DataGridFormulaModel>(
+                    inpc,
+                    nameof(INotifyPropertyChanged.PropertyChanged),
+                    Item_PropertyChanged);
                 return;
             }
 
