@@ -388,6 +388,7 @@ internal
         /// </summary>
         internal void ClearRowSelection(int slotException, bool setAnchorSlot)
         {
+            ClearSelectionModelForRowSelection(slotException);
             _noSelectionChangeCount++;
             try
             {
