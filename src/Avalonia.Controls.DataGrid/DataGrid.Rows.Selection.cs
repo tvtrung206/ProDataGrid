@@ -6,6 +6,7 @@
 using System;
 using System.Linq;
 using System.Diagnostics;
+using Avalonia.Controls.Selection;
 
 namespace Avalonia.Controls
 {
@@ -111,21 +112,10 @@ namespace Avalonia.Controls
             {
                 AnchorSlot = -1;
             }
+            ClearSelectionModelForRowSelection(null);
+
             if (_selectedItems.Count > 0)
             {
-                if (_selectionModelAdapter != null && !_syncingSelectionModel)
-                {
-                    _syncingSelectionModel = true;
-                    try
-                    {
-                        _selectionModelAdapter.Clear();
-                    }
-                    finally
-                    {
-                        _syncingSelectionModel = false;
-                    }
-                }
-
                 _noSelectionChangeCount++;
                 try
                 {
@@ -150,6 +140,43 @@ namespace Avalonia.Controls
                     NoSelectionChangeCount--;
                 }
             }
+        }
+
+        private bool ClearSelectionModelForRowSelection(int? slotException)
+        {
+            if (_selectionModelAdapter == null || _syncingSelectionModel)
+            {
+                return false;
+            }
+
+            var model = _selectionModelAdapter.Model;
+            var selectionIndex = slotException.HasValue ? SelectionIndexFromSlot(slotException.Value) : -1;
+            var hasSelection = model.SelectedIndexes is { Count: > 0 } || model.SelectedIndex >= 0;
+            if (!hasSelection && selectionIndex < 0)
+            {
+                return false;
+            }
+
+            var previousSync = _syncingSelectionModel;
+            _syncingSelectionModel = true;
+            try
+            {
+                using (model.BatchUpdate())
+                {
+                    _selectionModelAdapter.Clear();
+                    if (selectionIndex >= 0)
+                    {
+                        _selectionModelAdapter.Select(selectionIndex);
+                    }
+                }
+            }
+            finally
+            {
+                _syncingSelectionModel = previousSync;
+            }
+
+            UpdateSelectionSnapshot();
+            return true;
         }
 
 
